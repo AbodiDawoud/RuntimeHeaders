@@ -34,9 +34,9 @@ struct BookmarkListingView: View {
                     ClearButton(tint: .pink, placement: .topBarTrailing, action: manager.clearBookmarks)
                 }
                 
-                ToolbarItem(placement: .primaryAction) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button(action: dismiss.callAsFunction) {
-                        Image(systemName: "arrow.down.circle.fill")
+                        Image(systemName: "arrow.uturn.backward.circle.fill")
                             .foregroundStyle(.secondary)
                             .symbolRenderingMode(.hierarchical)
                     }

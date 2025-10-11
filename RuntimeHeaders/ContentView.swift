@@ -40,9 +40,12 @@ struct ContentView: View {
 
 private struct _ContentView: View {
     private static let dscRootNode = CDUtilities.dyldSharedCacheImageRootNode
-    @State private var showBookmarksView: Bool = false
     @Binding var selectedObject: RuntimeObjectType?
     @StateObject private var viewModel = RuntimeObjectsViewModel()
+    
+    @State private var showBookmarkView: Bool = false
+    @Namespace private var animation
+    
     
     var body: some View {
         NavigationStack {
@@ -69,8 +72,19 @@ private struct _ContentView: View {
                     }
                 }
                 
-                BookmarkCardView()
-                    .onTapGesture { showBookmarksView.toggle() }
+                Section {
+                    Button {
+                        showBookmarkView.toggle()
+                    } label: {
+                        Label("Bookmarks", systemImage: "bookmark")
+                            .backport { view in
+                                if #available(iOS 18, *) {
+                                    view.matchedTransitionSource(id: "bookmarks", in: animation)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .inlinedNavigationTitle("Header Viewer")
             .toolbar { toolbarContent }
@@ -83,7 +97,16 @@ private struct _ContentView: View {
                         .environmentObject(RuntimeListings.shared)
                 }
             }
-            .fullScreenCover(isPresented: $showBookmarksView, content: BookmarkListingView.init)
+            .sheet(isPresented: $showBookmarkView) {
+                BookmarkListingView()
+                    .backport { view in
+                        if #available(iOS 18, *) {
+                            view
+                                .disableZoomInteractiveDismiiss()
+                                .navigationTransition(.zoom(sourceID: "bookmarks", in: animation))
+                        }
+                    }
+            }
         }
     }
     
