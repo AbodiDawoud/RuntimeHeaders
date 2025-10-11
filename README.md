@@ -1,9 +1,10 @@
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/e2bb84b1-88ac-41c6-9026-b40aa49a8b81" alt="app icon" title="sfsymbols" height=140>
+  <img src="https://github.com/user-attachments/assets/c32404fb-12ab-4335-b764-4b391e24374e" alt="app icon" title="sfsymbols" height=150>
 </p>
 
-# HeaderViewer-V2
+# Runtime Headers
 [![swift-version](https://img.shields.io/badge/swift-5-orange.svg)](https://github.com/apple/swift)
+![iOS-version](https://img.shields.io/badge/iOS-17-blue)
 [![license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
 
 This application gives you access to iOS’s system internals. Thanks to [Leptos](https://github.com/leptos-null) for his incredible work. This is my own custom fork of his [HeaderView](https://github.com/leptos-null/HeaderViewer) project with many new add-ons.
