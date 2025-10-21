@@ -21,7 +21,7 @@ class CodePreferences: ObservableObject {
     let maxFontSize: Int = 24
     
     
-    func apply(from theme: Theme) {
+    func apply(_ theme: Theme) {
         self.colors.standard = theme.standard
         self.colors.comment = theme.comment
         self.colors.keyword = theme.keyword
@@ -36,41 +36,18 @@ class CodePreferences: ObservableObject {
         print("new theme applied: \(selectedTheme)")
     }
     
-    func toggleThemeBasedOnColorScheme() {
-        let loweredTheme = selectedTheme.lowercased()
-        if loweredTheme == "system" { return }
+    func toggleThemeBasedOnColorScheme(_ newScheme: ColorScheme) {
+        let theme = selectedTheme.lowercased()
+        if theme == "system" { return }
         
-        if loweredTheme.contains("xcode") {
-            if loweredTheme.contains("dark") {
-                apply(from: .xcodeLight)
-                return
-            }
-            
-            
-            apply(from: .xcodeDark)
-            return
-        }
-        
-        if loweredTheme.contains("github") {
-            if loweredTheme.contains("dark") {
-                apply(from: .githubLight)
-                return
-            }
-            
-
-            apply(from: .githubDark)
-            return
-        }
-        
-        if loweredTheme.contains("solarized") {
-            if loweredTheme.contains("dark") {
-                apply(from: .solarizedLight)
-                return
-            }
-            
-
-            apply(from: .solarizedDark)
-            return
+        if newScheme == .dark {
+            if theme.contains("xcode") { return apply(.xcodeDark) }
+            if theme.contains("github") { return apply(.githubDark) }
+            if theme.contains("solarized") { return apply(.solarizedDark) }
+        } else {
+            if theme.contains("xcode") { return apply(.xcodeLight) }
+            if theme.contains("github") { return apply(.githubLight) }
+            if theme.contains("solarized") { return apply(.solarizedLight) }
         }
     }
     

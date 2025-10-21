@@ -5,21 +5,23 @@
 
 import SwiftUI
 
-class SettingsManager: ObservableObject {
-    static let shared = SettingsManager()
+class PreferenceController: ObservableObject {
+    static let shared = PreferenceController()
     
     private let defaults = UserDefaults.standard
-    private let settingsKey = "appSettings" // The used key to save user preferences in UserDefaults
-    @Published var preferences: AppSettings {
+    private let ds_key = "com.runtimeHeaders.preferences"
+    
+    @Published var preferences: Preferences {
         didSet { saveSettings() }
     }
     
-    @AppStorage("formattedCacheSize") var cacheSize: String = ""
+    @AppStorage("formattedCacheSize") 
+    var cacheSize: String = ""
     
     
     init() {
-        guard let savedData = defaults.data(forKey: settingsKey),
-              let decodedSettings = try? JSONDecoder().decode(AppSettings.self, from: savedData)
+        guard let savedData = defaults.data(forKey: ds_key),
+              let decodedSettings = try? JSONDecoder().decode(Preferences.self, from: savedData)
         else {
             // When the app starts for the first time, register and then save default values
             self.preferences = Self.registerDefaultSettings()
@@ -33,11 +35,11 @@ class SettingsManager: ObservableObject {
     
     private func saveSettings() {
         let encodedData = try? JSONEncoder().encode(preferences)
-        defaults.set(encodedData, forKey: settingsKey)
+        defaults.set(encodedData, forKey: ds_key)
     }
     
-    private static func registerDefaultSettings() -> AppSettings {
-        let settings = AppSettings(
+    private static func registerDefaultSettings() -> Preferences {
+        let settings = Preferences(
             historyEnabled: true,
             historyBadgeEnabled: true,
             historyLimit: 0, // unlimited
@@ -105,7 +107,7 @@ class SettingsManager: ObservableObject {
 }
 
 
-struct AppSettings: Codable {
+struct Preferences: Codable {
     var historyEnabled: Bool
     var historyBadgeEnabled: Bool
     var historyLimit: Int

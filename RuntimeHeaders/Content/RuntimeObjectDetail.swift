@@ -25,16 +25,12 @@ struct RuntimeObjectDetail: View {
         guard let parentPath else { print("not valid parent path"); return }
         let isLoaded = RuntimeListings.shared.isImageLoaded(path: parentPath)
         
-        if isLoaded == false {
+        if !isLoaded {
             do {
                 try CDUtilities.loadImage(at: parentPath)
-                print("Loaded framework: \(parentPath)")
             } catch {
                 print(error.localizedDescription)
             }
-        } else {
-            print("Image not loaded for bookmark parent: \(String(describing: parentPath))")
-            print("Framework Path: \(parentPath), Is Loaded: \(isLoaded)")
         }
     }
     

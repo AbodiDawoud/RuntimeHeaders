@@ -8,11 +8,12 @@ import ClassDumpRuntime
 
 struct SemanticStringView: View {
     @ObservedObject var preferences = CodePreferences.shared
-    @ObservedObject var bookmarkManager = BookmarkManager.shared
+    @ObservedObject var bookmarkManager = BookmarksStore.shared
     
     let semanticString: CDSemanticString
     let fileName: String
     
+    @State private var fileExportCoordinator: FileExportCoordinator?
     
     private let lines: [SemanticLine]
     private let longestLineIndex: Int?
@@ -84,6 +85,8 @@ struct SemanticStringView: View {
         }
     }
 
+    
+    
     func copyFileName() {
         UIPasteboard.general.string = fileName
     }
@@ -133,18 +136,25 @@ struct SemanticStringView: View {
     }
     
     private func presentDocumentPicker(for location: URL) {
-        let keyWindow = UIWindow.value(forKey: "keyWindow") as! UIWindow
+        fileExportCoordinator = FileExportCoordinator()
         let documentPicker = UIDocumentPickerViewController(forExporting: [location])
-
-        keyWindow.rootViewController!.present(documentPicker, animated: true)
+        documentPicker.delegate = fileExportCoordinator
+        
+        let scene = UIApplication.shared.connectedScenes.first as! UIWindowScene
+        let newWindow = UIWindow(windowScene: scene)
+        newWindow.windowLevel = .alert + 1
+        
+        
+        newWindow.rootViewController = UIViewController()
+        
+        fileExportCoordinator!.exportWindow = newWindow
+        fileExportCoordinator!.exportWindow!.isHidden = false
+        fileExportCoordinator!.exportWindow!.rootViewController!.present(documentPicker, animated: true)
     }
     
     private func presentActivityViewController() {
         let tempUrl = createTempUrl(for: lines)
-        let keyWindow = UIWindow.value(forKey: "keyWindow") as! UIWindow
-        
-        let controller = UIActivityViewController(activityItems: [tempUrl], applicationActivities: nil)
-        keyWindow.rootViewController!.present(controller, animated: true)
+        ActivityControllerPresenter.present(with: [tempUrl])
     }
     
     func toggleBookmark() {
@@ -153,6 +163,24 @@ struct SemanticStringView: View {
     
     var bookmarked: Bool {
         return bookmarkManager.isBookmarked(fileName)
+    }
+    
+    
+    private class FileExportCoordinator: NSObject, UIDocumentPickerDelegate {
+        var exportWindow: UIWindow?
+
+        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+            print(#function)
+            controller.dismiss(animated: true)
+            exportWindow!.rootViewController = nil
+            exportWindow = nil
+        }
+        
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            print(#function, urls)
+            controller.dismiss(animated: true)
+            exportWindow = nil
+        }
     }
 }
 

@@ -6,10 +6,10 @@
 import SwiftUI
 
 struct AppearancePopoverView: View {
-    @ObservedObject var settingsManager = SettingsManager.shared
+    @ObservedObject var settingsManager = PreferenceController.shared
     
     
-    var appAppearance: String {
+    var preferredColorScheme: String {
         settingsManager.preferences.preferredColorScheme
     }
     
@@ -35,7 +35,7 @@ struct AppearancePopoverView: View {
     
     var systemSchemeBinding: Binding<Bool> {
         .init {
-            return appAppearance == "nil"
+            return preferredColorScheme == "nil"
         } set: {
             settingsManager.preferences.preferredColorScheme = $0 ? "nil" : "dark"
         }
@@ -64,8 +64,8 @@ struct AppearancePopoverView: View {
                     .font(.subheadline)
                     .padding(.bottom, -5)
                 
-                Image(systemName: appAppearance == scheme ? "checkmark.circle.fill": "circle")
-                    .foregroundStyle(appAppearance == scheme ? Color.white : Color.secondary, .blue)
+                Image(systemName: preferredColorScheme == scheme ? "checkmark.circle.fill": "circle")
+                    .foregroundStyle(preferredColorScheme == scheme ? Color.white : Color.secondary, .blue)
                     .fontWeight(.light)
                     .imageScale(.large)
             }

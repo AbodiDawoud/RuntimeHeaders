@@ -209,23 +209,23 @@ fileprivate struct ThemesContainerView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
                     Button("Xcode", systemImage: "hammer.fill") {
-                        codePreferences.apply(from: xcodeTheme)
+                        codePreferences.apply(xcodeTheme)
                     }
                     .buttonStyle(ThemeButtonStyle(darkTeal))
                     
                     Button("Github", image: .githubFaceFill) {
-                        codePreferences.apply(from: githubTheme)
+                        codePreferences.apply(githubTheme)
                     }
                     .buttonStyle(ThemeButtonStyle(darkPurple))
                     
                     Button("Solarized", image: .yinYang) {
-                        codePreferences.apply(from: solarizedTheme)
+                        codePreferences.apply(solarizedTheme)
                     }
                     .buttonStyle(ThemeButtonStyle(.plum))
                     
                     
                     Button("Default System", systemImage: "return") {
-                        codePreferences.apply(from: Theme.system)
+                        codePreferences.apply(Theme.system)
                     }
                     .buttonStyle(ThemeButtonStyle(swiftColor))
                 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BD77F8F02EA7306D009E7839 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77F8EF2EA7306D009E7839 /* ActivityController.swift */; };
 		BD8A38DA2E9ADA3B00F1B486 /* FiraCode-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38C72E9ADA3B00F1B486 /* FiraCode-Regular.ttf */; };
 		BD8A38DB2E9ADA3B00F1B486 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38CC2E9ADA3B00F1B486 /* Colors.xcassets */; };
 		BD8A38DC2E9ADA3B00F1B486 /* ConsolaVD3-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38C62E9ADA3B00F1B486 /* ConsolaVD3-Regular.ttf */; };
@@ -24,13 +25,13 @@
 		BD8A38E92E9ADA3B00F1B486 /* RuntimeObjectType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38C12E9ADA3B00F1B486 /* RuntimeObjectType.swift */; };
 		BD8A38EA2E9ADA3B00F1B486 /* RuntimeObjectRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38B52E9ADA3B00F1B486 /* RuntimeObjectRow.swift */; };
 		BD8A38EB2E9ADA3B00F1B486 /* ImageRuntimeObjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D22E9ADA3B00F1B486 /* ImageRuntimeObjectsViewModel.swift */; };
-		BD8A38EC2E9ADA3B00F1B486 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D52E9ADA3B00F1B486 /* SettingsManager.swift */; };
+		BD8A38EC2E9ADA3B00F1B486 /* AppPreferencesController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D52E9ADA3B00F1B486 /* AppPreferencesController.swift */; };
 		BD8A38ED2E9ADA3B00F1B486 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38AE2E9ADA3B00F1B486 /* SettingsView.swift */; };
 		BD8A38EE2E9ADA3B00F1B486 /* RuntimeListings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D32E9ADA3B00F1B486 /* RuntimeListings.swift */; };
 		BD8A38EF2E9ADA3B00F1B486 /* SemanticColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38C32E9ADA3B00F1B486 /* SemanticColor.swift */; };
 		BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38B42E9ADA3B00F1B486 /* RuntimeObjectDetail.swift */; };
 		BD8A38F12E9ADA3B00F1B486 /* Bookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38BF2E9ADA3B00F1B486 /* Bookmark.swift */; };
-		BD8A38F22E9ADA3B00F1B486 /* BookmarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38CF2E9ADA3B00F1B486 /* BookmarManager.swift */; };
+		BD8A38F22E9ADA3B00F1B486 /* BookmarksStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38CF2E9ADA3B00F1B486 /* BookmarksStore.swift */; };
 		BD8A38F32E9ADA3B00F1B486 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38B12E9ADA3B00F1B486 /* HistoryView.swift */; };
 		BD8A38F42E9ADA3B00F1B486 /* CodePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D02E9ADA3B00F1B486 /* CodePreferences.swift */; };
 		BD8A38F52E9ADA3B00F1B486 /* BookmarkListing.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38B02E9ADA3B00F1B486 /* BookmarkListing.swift */; };
@@ -61,6 +62,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BD77F8EF2EA7306D009E7839 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
 		BD8A38AC2E9ADA3B00F1B486 /* AppearancePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearancePopover.swift; sourceTree = "<group>"; };
 		BD8A38AD2E9ADA3B00F1B486 /* CodeAppearanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeAppearanceView.swift; sourceTree = "<group>"; };
 		BD8A38AE2E9ADA3B00F1B486 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -89,13 +91,13 @@
 		BD8A38C92E9ADA3B00F1B486 /* Lilex-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Lilex-Regular.ttf"; sourceTree = "<group>"; };
 		BD8A38CB2E9ADA3B00F1B486 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BD8A38CC2E9ADA3B00F1B486 /* Colors.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Colors.xcassets; sourceTree = "<group>"; };
-		BD8A38CF2E9ADA3B00F1B486 /* BookmarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarManager.swift; sourceTree = "<group>"; };
+		BD8A38CF2E9ADA3B00F1B486 /* BookmarksStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookmarksStore.swift; sourceTree = "<group>"; };
 		BD8A38D02E9ADA3B00F1B486 /* CodePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodePreferences.swift; sourceTree = "<group>"; };
 		BD8A38D12E9ADA3B00F1B486 /* HistoryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryManager.swift; sourceTree = "<group>"; };
 		BD8A38D22E9ADA3B00F1B486 /* ImageRuntimeObjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageRuntimeObjectsViewModel.swift; sourceTree = "<group>"; };
 		BD8A38D32E9ADA3B00F1B486 /* RuntimeListings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeListings.swift; sourceTree = "<group>"; };
 		BD8A38D42E9ADA3B00F1B486 /* RuntimeObjectsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectsViewModel.swift; sourceTree = "<group>"; };
-		BD8A38D52E9ADA3B00F1B486 /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
+		BD8A38D52E9ADA3B00F1B486 /* AppPreferencesController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPreferencesController.swift; sourceTree = "<group>"; };
 		BD8A38D72E9ADA3B00F1B486 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		BD8A38D82E9ADA3B00F1B486 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BD8A39002E9ADB4700F1B486 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -190,13 +192,14 @@
 		BD8A38D62E9ADA3B00F1B486 /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				BD8A38CF2E9ADA3B00F1B486 /* BookmarManager.swift */,
+				BD8A38CF2E9ADA3B00F1B486 /* BookmarksStore.swift */,
 				BD8A38D02E9ADA3B00F1B486 /* CodePreferences.swift */,
 				BD8A38D12E9ADA3B00F1B486 /* HistoryManager.swift */,
 				BD8A38D22E9ADA3B00F1B486 /* ImageRuntimeObjectsViewModel.swift */,
 				BD8A38D32E9ADA3B00F1B486 /* RuntimeListings.swift */,
 				BD8A38D42E9ADA3B00F1B486 /* RuntimeObjectsViewModel.swift */,
-				BD8A38D52E9ADA3B00F1B486 /* SettingsManager.swift */,
+				BD8A38D52E9ADA3B00F1B486 /* AppPreferencesController.swift */,
+				BD77F8EF2EA7306D009E7839 /* ActivityController.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -317,6 +320,7 @@
 				BD8A38E22E9ADA3B00F1B486 /* RuntimeObjectsList.swift in Sources */,
 				BD8A38E32E9ADA3B00F1B486 /* HistoryManager.swift in Sources */,
 				BD8A38E42E9ADA3B00F1B486 /* View+.swift in Sources */,
+				BD77F8F02EA7306D009E7839 /* ActivityController.swift in Sources */,
 				BD8A38E52E9ADA3B00F1B486 /* ImageRuntimeObjectsView.swift in Sources */,
 				BD8A38E62E9ADA3B00F1B486 /* NamedNodeRow.swift in Sources */,
 				BD8A38E72E9ADA3B00F1B486 /* LabelStyles.swift in Sources */,
@@ -324,13 +328,13 @@
 				BD8A38E92E9ADA3B00F1B486 /* RuntimeObjectType.swift in Sources */,
 				BD8A38EA2E9ADA3B00F1B486 /* RuntimeObjectRow.swift in Sources */,
 				BD8A38EB2E9ADA3B00F1B486 /* ImageRuntimeObjectsViewModel.swift in Sources */,
-				BD8A38EC2E9ADA3B00F1B486 /* SettingsManager.swift in Sources */,
+				BD8A38EC2E9ADA3B00F1B486 /* AppPreferencesController.swift in Sources */,
 				BD8A38ED2E9ADA3B00F1B486 /* SettingsView.swift in Sources */,
 				BD8A38EE2E9ADA3B00F1B486 /* RuntimeListings.swift in Sources */,
 				BD8A38EF2E9ADA3B00F1B486 /* SemanticColor.swift in Sources */,
 				BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */,
 				BD8A38F12E9ADA3B00F1B486 /* Bookmark.swift in Sources */,
-				BD8A38F22E9ADA3B00F1B486 /* BookmarManager.swift in Sources */,
+				BD8A38F22E9ADA3B00F1B486 /* BookmarksStore.swift in Sources */,
 				BD8A38F32E9ADA3B00F1B486 /* HistoryView.swift in Sources */,
 				BD8A38F42E9ADA3B00F1B486 /* CodePreferences.swift in Sources */,
 				BD8A38F52E9ADA3B00F1B486 /* BookmarkListing.swift in Sources */,
@@ -497,7 +501,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.RuntimeHeaders;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
@@ -541,7 +545,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.2;
+				MARKETING_VERSION = 1.3;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.RuntimeHeaders;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;

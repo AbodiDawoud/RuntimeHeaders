@@ -7,7 +7,7 @@ import SwiftUI
 
 
 struct SettingsView: View {
-    @ObservedObject private var manager: SettingsManager = .shared
+    @ObservedObject private var manager: PreferenceController = .shared
     @EnvironmentObject private var historyManager: HistoryManager
     
     @State private var showAppearancePopover: Bool = false
@@ -78,7 +78,7 @@ struct SettingsView: View {
 }
 
 struct CacheSection: View {
-    @ObservedObject private var manager: SettingsManager = .shared
+    @ObservedObject private var manager: PreferenceController = .shared
     @State private var showCacheClearConfirmation: Bool = false
     
     var body: some View {

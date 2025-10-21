@@ -8,7 +8,7 @@ import ClassDumpRuntime
 
 
 struct BookmarkListingView: View {
-    @ObservedObject var manager = BookmarkManager.shared
+    @ObservedObject var manager = BookmarksStore.shared
     @Environment(\.dismiss) private var dismiss
     @State private var refreshId: UUID?
     
@@ -103,7 +103,7 @@ struct BookmarkListingView: View {
     NavigationStack {
         BookmarkListingView()
             .onAppear {
-                BookmarkManager.shared.bookmarks = bookmarks
+                BookmarksStore.shared.bookmarks = bookmarks
             }
     }
 }

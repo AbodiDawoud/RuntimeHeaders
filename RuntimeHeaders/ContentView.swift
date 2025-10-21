@@ -30,7 +30,7 @@ struct ContentView: View {
         }
         .navigationSplitViewStyle(.balanced)
         .onChange(of: selectedObject) { _, newValue in
-            if SettingsManager.shared.preferences.historyEnabled {
+            if PreferenceController.shared.preferences.historyEnabled {
                 historyManager.addObject(newValue)
             }
         }
@@ -65,7 +65,7 @@ private struct _ContentView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 10) {
                             Label("Runtime Objects", image: "document.badge.gearshape.fill")
-                            Text("This list is a bit buggy and slow to deal with, use with caution.")
+                            Text("This list is a bit buggy and slow to deal with on older devices, use with caution.")
                                 .font(.system(size: 14))
                                 .foregroundStyle(.gray)
                         }
@@ -76,7 +76,7 @@ private struct _ContentView: View {
                     Button {
                         showBookmarkView.toggle()
                     } label: {
-                        Label("Bookmarks", systemImage: "bookmark")
+                        bookmarksButtonLabel
                             .backport { view in
                                 if #available(iOS 18, *) {
                                     view.matchedTransitionSource(id: "bookmarks", in: animation)
@@ -123,8 +123,27 @@ private struct _ContentView: View {
         }
     }
     
+    private var bookmarksButtonLabel: some View {
+        LabeledContent {
+            HStack(spacing: 12) {
+                Text("\(BookmarksStore.shared.bookmarks.count)")
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 4.6)
+                    .background(.thinMaterial, in: .rect(cornerRadius: 8))
+                
+                Image(systemName: "arrow.up.right")
+                    .foregroundStyle(.gray.opacity(0.75))
+            }
+            .font(.footnote)
+            .fontWeight(.medium)
+        } label: {
+            Label("Bookmarks", systemImage: "bookmark")
+        }
+    }
+    
     func assignNodePath(_ path: String) {
-        if BookmarkManager.lastNodePath == path { return }
-        BookmarkManager.lastNodePath = path
+        if BookmarksStore.lastNodePath == path { return }
+        BookmarksStore.lastNodePath = path
     }
 }

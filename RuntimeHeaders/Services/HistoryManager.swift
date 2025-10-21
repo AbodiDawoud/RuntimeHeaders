@@ -44,7 +44,7 @@ class HistoryManager: ObservableObject {
         
         
         // If no more size for the new object, remove the oldest object and insert the new object at the first index
-        let limit = SettingsManager.shared.preferences.historyLimit
+        let limit = PreferenceController.shared.preferences.historyLimit
         if previousData.count >= limit && limit != 0 {
             let oldestObjectIndex = previousData.endIndex - 1
             historyItems.remove(at: oldestObjectIndex)

@@ -17,7 +17,7 @@ struct HeaderViewerApp: App {
 
 
 private struct _HomeView: View {
-    @ObservedObject var settingsManager = SettingsManager.shared
+    @ObservedObject var settingsManager = PreferenceController.shared
 
     var body: some View {
         TabView {
@@ -35,10 +35,10 @@ private struct _HomeView: View {
         }
         .preferredColorScheme(settingsManager.preferences.colorScheme())
         .onAppear(perform: setTabBarAppearance)
-        .onChange(
-            of: settingsManager.preferences.preferredColorScheme,
-            CodePreferences.shared.toggleThemeBasedOnColorScheme
-        )
+        .onChange(of: settingsManager.preferences.preferredColorScheme) { _, newValue in
+            let newScheme: ColorScheme = newValue == "light" ? .light : .dark
+            CodePreferences.shared.toggleThemeBasedOnColorScheme(newScheme)
+        }
     }
     
     func setTabBarAppearance() {
