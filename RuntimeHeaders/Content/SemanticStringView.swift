@@ -17,6 +17,7 @@ struct SemanticStringView: View {
     
     private let lines: [SemanticLine]
     private let longestLineIndex: Int?
+    private let lineNumberColumnWidth: CGFloat
     
     init(_ semanticString: CDSemanticString, fileName: String) {
         self.semanticString = semanticString
@@ -25,6 +26,8 @@ struct SemanticStringView: View {
         let (lines, longestLineIndex) = semanticString.semanticLines()
         self.lines = lines
         self.longestLineIndex = longestLineIndex
+        let digitCount = max(2, String(max(lines.count - 1, 0)).count)
+        self.lineNumberColumnWidth = CGFloat(digitCount * 9)
     }
     
     var body: some View {
@@ -35,7 +38,7 @@ struct SemanticStringView: View {
                     // without having to render all the lines
                     if let longestLineIndex {
                         SemanticLineView(line: lines[longestLineIndex])
-                            .padding(.horizontal, 0) // add some extra space, just in case
+                            .padding(.horizontal, 12) // add some extra space, just in case
                             .opacity(0)
                     }
                     
@@ -44,8 +47,9 @@ struct SemanticStringView: View {
                             HStack(spacing: 12) {
                                 if !preferences.hideLineNumbers {
                                     Text("\(index)")
-                                        .font(.caption)
+                                        .font(.caption.monospacedDigit())
                                         .foregroundColor(.secondary)
+                                        .frame(width: lineNumberColumnWidth, alignment: .trailing)
                                 }
                                 
                                 SemanticLineView(line: lines[index])
@@ -201,7 +205,9 @@ struct SemanticLineView: View {
                 }
             }
         }
-        .lineLimit(1, reservesSpace: true)
+        // Preserve the full rendered width so long declarations scroll horizontally
+        // instead of being compressed and truncated by the surrounding layout.
+        .fixedSize(horizontal: true, vertical: false)
         .padding(.vertical, 1) // effectively line spacing
     }
 }
