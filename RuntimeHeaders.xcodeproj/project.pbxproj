@@ -9,6 +9,14 @@
 /* Begin PBXBuildFile section */
 		BD58379D2F87F29700473B0A /* FeaturedFramework.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379C2F87F29700473B0A /* FeaturedFramework.swift */; };
 		BD58379F2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */; };
+		BE0000012F90000100000001 /* ResolvedRuntimeInstance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000011 /* ResolvedRuntimeInstance.swift */; };
+		BE0000012F90000100000002 /* InspectableProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000012 /* InspectableProperty.swift */; };
+		BE0000012F90000100000003 /* InspectableMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000013 /* InspectableMethod.swift */; };
+		BE0000012F90000100000004 /* InvocationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000014 /* InvocationResult.swift */; };
+		BE0000012F90000100000005 /* RuntimeInvocationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000015 /* RuntimeInvocationEngine.swift */; };
+		BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */; };
+		BE0000012F90000100000007 /* RuntimeObjectInspectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000017 /* RuntimeObjectInspectorViewModel.swift */; };
+		BE0000012F90000100000008 /* RuntimeObjectInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000018 /* RuntimeObjectInspectorView.swift */; };
 		BD77F8F02EA7306D009E7839 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77F8EF2EA7306D009E7839 /* ActivityController.swift */; };
 		BD8A38DA2E9ADA3B00F1B486 /* FiraCode-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38C72E9ADA3B00F1B486 /* FiraCode-Regular.ttf */; };
 		BD8A38DB2E9ADA3B00F1B486 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38CC2E9ADA3B00F1B486 /* Colors.xcassets */; };
@@ -66,6 +74,14 @@
 /* Begin PBXFileReference section */
 		BD58379C2F87F29700473B0A /* FeaturedFramework.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFramework.swift; sourceTree = "<group>"; };
 		BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFrameworkContainerView.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000011 /* ResolvedRuntimeInstance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResolvedRuntimeInstance.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000012 /* InspectableProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectableProperty.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000013 /* InspectableMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectableMethod.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000014 /* InvocationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvocationResult.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000015 /* RuntimeInvocationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInvocationEngine.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInstanceResolver.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000017 /* RuntimeObjectInspectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectInspectorViewModel.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000018 /* RuntimeObjectInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectInspectorView.swift; sourceTree = "<group>"; };
 		BD77F8EF2EA7306D009E7839 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
 		BD8A38AC2E9ADA3B00F1B486 /* AppearancePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearancePopover.swift; sourceTree = "<group>"; };
 		BD8A38AD2E9ADA3B00F1B486 /* CodeAppearanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeAppearanceView.swift; sourceTree = "<group>"; };
@@ -143,6 +159,7 @@
 				BD8A38B62E9ADA3B00F1B486 /* RuntimeObjectsList.swift */,
 				BD8A38B72E9ADA3B00F1B486 /* SemanticStringView.swift */,
 				BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */,
+				BE0000012F90000100000018 /* RuntimeObjectInspectorView.swift */,
 			);
 			path = Content;
 			sourceTree = "<group>";
@@ -169,6 +186,10 @@
 				BD8A38C32E9ADA3B00F1B486 /* SemanticColor.swift */,
 				BD8A38C42E9ADA3B00F1B486 /* Theme.swift */,
 				BD58379C2F87F29700473B0A /* FeaturedFramework.swift */,
+				BE0000012F90000100000011 /* ResolvedRuntimeInstance.swift */,
+				BE0000012F90000100000012 /* InspectableProperty.swift */,
+				BE0000012F90000100000013 /* InspectableMethod.swift */,
+				BE0000012F90000100000014 /* InvocationResult.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -206,6 +227,9 @@
 				BD8A38D42E9ADA3B00F1B486 /* RuntimeObjectsViewModel.swift */,
 				BD8A38D52E9ADA3B00F1B486 /* AppPreferencesController.swift */,
 				BD77F8EF2EA7306D009E7839 /* ActivityController.swift */,
+				BE0000012F90000100000015 /* RuntimeInvocationEngine.swift */,
+				BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */,
+				BE0000012F90000100000017 /* RuntimeObjectInspectorViewModel.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -332,13 +356,21 @@
 				BD8A38E72E9ADA3B00F1B486 /* LabelStyles.swift in Sources */,
 				BD8A38E82E9ADA3B00F1B486 /* ClearButton.swift in Sources */,
 				BD58379F2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift in Sources */,
+				BE0000012F90000100000008 /* RuntimeObjectInspectorView.swift in Sources */,
 				BD8A38E92E9ADA3B00F1B486 /* RuntimeObjectType.swift in Sources */,
 				BD8A38EA2E9ADA3B00F1B486 /* RuntimeObjectRow.swift in Sources */,
 				BD58379D2F87F29700473B0A /* FeaturedFramework.swift in Sources */,
+				BE0000012F90000100000001 /* ResolvedRuntimeInstance.swift in Sources */,
+				BE0000012F90000100000002 /* InspectableProperty.swift in Sources */,
+				BE0000012F90000100000003 /* InspectableMethod.swift in Sources */,
+				BE0000012F90000100000004 /* InvocationResult.swift in Sources */,
 				BD8A38EB2E9ADA3B00F1B486 /* ImageRuntimeObjectsViewModel.swift in Sources */,
 				BD8A38EC2E9ADA3B00F1B486 /* AppPreferencesController.swift in Sources */,
 				BD8A38ED2E9ADA3B00F1B486 /* SettingsView.swift in Sources */,
 				BD8A38EE2E9ADA3B00F1B486 /* RuntimeListings.swift in Sources */,
+				BE0000012F90000100000005 /* RuntimeInvocationEngine.swift in Sources */,
+				BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */,
+				BE0000012F90000100000007 /* RuntimeObjectInspectorViewModel.swift in Sources */,
 				BD8A38EF2E9ADA3B00F1B486 /* SemanticColor.swift in Sources */,
 				BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */,
 				BD8A38F12E9ADA3B00F1B486 /* Bookmark.swift in Sources */,

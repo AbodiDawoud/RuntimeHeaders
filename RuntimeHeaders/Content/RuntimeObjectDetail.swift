@@ -54,7 +54,7 @@ struct RuntimeObjectDetail: View {
                 if let cls = NSClassFromString(name) {
                     let semanticString: CDSemanticString = CDClassModel(with: cls).semanticLines(with: generationOptions)
                     
-                    SemanticStringView(semanticString, fileName: name)
+                    SemanticStringView(semanticString, fileName: name, runtimeType: type)
                 } else {
                     ImageNotFoundView(imageName: name)
                 }
@@ -63,7 +63,7 @@ struct RuntimeObjectDetail: View {
                 if let prtcl = NSProtocolFromString(name) {
                     let semanticString: CDSemanticString = CDProtocolModel(with: prtcl).semanticLines(with: generationOptions)
                     
-                    SemanticStringView(semanticString, fileName: name)
+                    SemanticStringView(semanticString, fileName: name, runtimeType: type)
                 } else {
                     ImageNotFoundView(imageName: name)
                 }
