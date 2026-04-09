@@ -16,10 +16,12 @@ struct IconicLabelStyle: LabelStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack {
             configuration.icon
+                .font(.callout)
                 .foregroundStyle(.white)
-                .frame(width: 36, height: 36)
+                .frame(width: 34, height: 34)
                 .symbolRenderingMode(.hierarchical)
                 .background(color.gradient, in: .rect(cornerRadius: 10.5))
+                .padding(.vertical, 1.2)
             
             configuration.title
         }

@@ -7,10 +7,11 @@ import SwiftUI
 
 @main
 struct HeaderViewerApp: App {
+    @ObservedObject var hm = HistoryManager()
+    
     var body: some Scene {
         WindowGroup {
-            _HomeView()
-                .environmentObject(HistoryManager())
+            _HomeView().environmentObject(hm)
         }
     }
 }
@@ -22,7 +23,7 @@ private struct _HomeView: View {
     var body: some View {
         TabView {
             ContentView().tabItem {
-                Label("Content", systemImage: "list.bullet.rectangle.fill")
+                Label("Content", systemImage: "externaldrive")
             }
             
             HistoryView().tabItem {

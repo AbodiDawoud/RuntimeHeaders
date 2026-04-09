@@ -24,7 +24,7 @@ extension View {
     func inlinedNavigationTitle(_ title: String) -> some View {
         self
             .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.black, for: .navigationBar)
     }
 }

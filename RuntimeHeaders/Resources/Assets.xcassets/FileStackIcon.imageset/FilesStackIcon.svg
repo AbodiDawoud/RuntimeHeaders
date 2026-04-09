@@ -1,0 +1,28 @@
+<svg width="122" height="142" viewBox="0 0 122 142" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="0.224562" y="0.201543" width="91.4676" height="126.715" rx="4.97296" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 0.151598 10.7665)" fill="white"/>
+<rect x="0.224562" y="0.201543" width="91.4676" height="126.715" rx="4.97296" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 0.151598 10.7665)" stroke="#EDEDED" stroke-width="0.432431"/>
+<rect width="28.9535" height="6.9189" rx="3.45945" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 5.39946 22.5146)" fill="#EDEDED"/>
+<rect width="45.8719" height="6.9189" rx="3.45945" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 37.3081 20.3711)" fill="#EDEDED"/>
+<rect width="77.8524" height="6.9189" rx="3.45945" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 5.82342 32.8843)" fill="#EDEDED"/>
+<rect width="77.8524" height="6.9189" rx="3.45945" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 6.24731 43.254)" fill="#EDEDED"/>
+<rect width="77.8524" height="6.9189" rx="3.45945" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 6.74205 55.3519)" fill="#EDEDED"/>
+<rect width="77.8524" height="6.9189" rx="3.45945" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 7.14846 65.2896)" fill="#EDEDED"/>
+<rect width="77.8524" height="6.9189" rx="3.45945" transform="matrix(0.997751 -0.0670244 0.0408525 0.999165 7.55476 75.2272)" fill="#EDEDED"/>
+<g clip-path="url(#clip0_34_760)">
+<rect x="30.8111" y="0.733533" width="91.6247" height="126.972" rx="5.18918" transform="rotate(10 30.8111 0.733533)" fill="white"/>
+<rect x="33.396" y="13.4681" width="28.9535" height="6.9189" rx="3.45945" transform="rotate(10 33.396 13.4681)" fill="#EDEDED"/>
+<rect x="64.8905" y="19.0214" width="45.8719" height="6.9189" rx="3.45945" transform="rotate(10 64.8905 19.0214)" fill="#EDEDED"/>
+<rect x="31.5938" y="23.6888" width="77.8524" height="6.9189" rx="3.45945" transform="rotate(10 31.5938 23.6888)" fill="#EDEDED"/>
+<rect x="29.7916" y="33.9095" width="77.8524" height="6.9189" rx="3.45945" transform="rotate(10 29.7916 33.9095)" fill="#EDEDED"/>
+<rect x="27.6891" y="45.8336" width="77.8524" height="6.9189" rx="3.45945" transform="rotate(10 27.6891 45.8336)" fill="#EDEDED"/>
+<rect x="25.962" y="55.6284" width="77.8524" height="6.9189" rx="3.45945" transform="rotate(10 25.962 55.6284)" fill="#EDEDED"/>
+<rect x="24.2349" y="65.4232" width="77.8524" height="6.9189" rx="3.45945" transform="rotate(10 24.2349 65.4232)" fill="#EDEDED"/>
+<rect x="22.1323" y="77.3474" width="24.3327" height="6.32512" rx="3.16256" transform="rotate(10 22.1323 77.3474)" fill="#EDEDED"/>
+</g>
+<rect x="30.9865" y="0.984009" width="91.1923" height="126.54" rx="4.97296" transform="rotate(10 30.9865 0.984009)" stroke="#EDEDED" stroke-width="0.432431"/>
+<defs>
+<clipPath id="clip0_34_760">
+<rect x="30.8111" y="0.733533" width="91.6247" height="126.972" rx="5.18918" transform="rotate(10 30.8111 0.733533)" fill="white"/>
+</clipPath>
+</defs>
+</svg>

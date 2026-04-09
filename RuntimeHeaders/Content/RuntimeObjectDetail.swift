@@ -69,7 +69,9 @@ struct RuntimeObjectDetail: View {
                 }
             }
         }
-        .inlinedNavigationTitle(type.name)
+        .navigationTitle(type.name)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
         .fullScreenCover(isPresented: $showCodeAppearanceCover, content: CodeAppearanceView.init)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

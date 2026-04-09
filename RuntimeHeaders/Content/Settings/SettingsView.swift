@@ -36,19 +36,21 @@ struct SettingsView: View {
                 
                 Section("History") {
                     Toggle(
-                        "History Enabled",
-                        systemImage: "clock.arrow.circlepath",
+                        "Track History",
+                        image: .clockArrowTriangleheadClockwiseRotate90PathDotted,
                         isOn: $manager.preferences.historyEnabled.animation()
                     )
                     .labelStyle(IconicLabelStyle(Color(red: 0.92549, green: 0.411765, blue: 0.505882)))
+                    .tint(Color(red: 0.352941, green: 0.619608, blue: 0.729412))
                     
                     if manager.preferences.historyEnabled {
                         Toggle(
                             "Badge Enabled",
-                            image: .dotsNeedleBottom100Percent,
+                            systemImage: "app.badge.clock.fill",
                             isOn: $manager.preferences.historyBadgeEnabled.animation()
                         )
                         .labelStyle(IconicLabelStyle(Color(red: 0.352941, green: 0.619608, blue: 0.729412)))
+                        .tint(Color(red: 0.352941, green: 0.619608, blue: 0.729412))
                         
                         Stepper(value: $manager.preferences.historyLimit.animation(), in: 0...100, step: 10) {
                             let limit = manager.preferences.historyLimit == 0 ? "Unlimited" : String(manager.preferences.historyLimit)
@@ -89,7 +91,7 @@ struct CacheSection: View {
                 LabeledContent {
                     Text(manager.cacheSize)
                 } label: {
-                    Label("Cache Size", systemImage: "bubbles.and.sparkles.fill")
+                    Label("Cache Size", systemImage: "bolt.fill")
                         .labelStyle(IconicLabelStyle(Color(red: 0.384314, green: 0.717647, blue: 0.490196)))
                 }
             }

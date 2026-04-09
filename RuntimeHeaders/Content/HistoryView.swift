@@ -17,7 +17,12 @@ struct HistoryView: View {
                     Section { historyStatusView }
                 }
                 
-                ForEach(manager.historyItems) { obj in
+                if manager.historyCount > 3 {
+                    LatestHistoryContainerView()
+                }
+                
+                
+                ForEach(_h_items) { obj in
                     NavigationLink {
                         RuntimeObjectDetail(type: obj)
                     } label: {
@@ -61,5 +66,67 @@ struct HistoryView: View {
                     )
                 )
         }
+    }
+    
+    // history items
+    var _h_items: [RuntimeObjectType] {
+        if manager.historyCount > 3 {
+            return Array(manager.historyItems.dropFirst(3))
+        }
+        return manager.historyItems
+    }
+}
+
+
+struct LatestHistoryContainerView: View {
+    @EnvironmentObject private var manager: HistoryManager
+    @Environment(\.colorScheme) private var scheme
+    
+    var body: some View {
+        Section {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 15) {
+                    ForEach(Array(manager.historyItems.prefix(3))) { obj in
+                        NavigationLink {
+                            RuntimeObjectDetail(type: obj)
+                        } label: {
+                            rowView(obj)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(.init())
+            .listRowSeparator(.hidden)
+        } header: {
+            Text("Latest Items")
+        } footer: {
+            Text("Quickly access your most recent viewed objects..")
+        }
+    }
+    
+    func rowView(_ object: RuntimeObjectType) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(.fileStackIcon)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 24, height: 24)
+                .shadow(radius: 6, y: 2.8)
+            
+            Text(object.name)
+                .font(.system(size: 15, weight: .semibold))
+                .lineLimit(1)
+        }
+        .padding(.vertical, 13)
+        .padding(.horizontal, 16)
+        .background(
+            Color(
+                scheme == .dark ? UIColor.systemGray6 : UIColor.systemBackground
+            ),
+            in: .rect(cornerRadius: 17)
+        )
+        .listRowInsets(.init(top: 0, leading: 0, bottom: 0, trailing: 0))
+        .listRowBackground(Color.clear)
     }
 }

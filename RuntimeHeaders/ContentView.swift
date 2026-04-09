@@ -38,18 +38,20 @@ struct ContentView: View {
 }
 
 
-private struct _ContentView: View {
-    private static let dscRootNode = CDUtilities.dyldSharedCacheImageRootNode
+struct _ContentView: View {
+    static let dscRootNode = CDUtilities.dyldSharedCacheImageRootNode
     @Binding var selectedObject: RuntimeObjectType?
     @StateObject private var viewModel = RuntimeObjectsViewModel()
     
     @State private var showBookmarkView: Bool = false
     @Namespace private var animation
-    
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
         NavigationStack {
             Form {
+                FFContainerView()
+                
                 Section("Root") {
                     NavigationLink(value: Self.dscRootNode) {
                         Label("System Images", systemImage: "folder.badge.gear")
@@ -86,7 +88,8 @@ private struct _ContentView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .inlinedNavigationTitle("Header Viewer")
+            .navigationTitle("Header Viewer")
+            .toolbarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .navigationDestination(for: NamedNode.self) { namedNode in
                 if namedNode.isLeaf {
@@ -116,8 +119,7 @@ private struct _ContentView: View {
                 let githubLink = URL(string: "https://github.com/leptos-null/HeaderViewer")!
                 UIApplication.shared.open(githubLink)
             } label: {
-                Image(.logoGithubCircleFill)
-                    .imageScale(.large)
+                Image(.githubFaceFill)
             }
             .buttonStyle(.plain)
         }
@@ -130,13 +132,12 @@ private struct _ContentView: View {
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 4.6)
-                    .background(.thinMaterial, in: .rect(cornerRadius: 8))
+                    .background(Color(white: colorScheme == .dark ? 0.145 : 0.965), in: .rect(cornerRadius: 8))
                 
                 Image(systemName: "arrow.up.right")
                     .foregroundStyle(.gray.opacity(0.75))
             }
-            .font(.footnote)
-            .fontWeight(.medium)
+            .font(.footnote.weight(.medium))
         } label: {
             Label("Bookmarks", systemImage: "bookmark")
         }
