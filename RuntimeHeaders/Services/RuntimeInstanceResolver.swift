@@ -3,256 +3,29 @@
 //  RuntimeHeaders
 //
 
-import Foundation
-import ObjectiveC.runtime
-
+import RuntimeInspectorKit
 
 enum RuntimeInstanceResolver {
-    private static let singletonSelectors = [
-        "sharedInstance",
-        "shared",
-        "sharedManager",
-        "sharedApplication",
-        "defaultCenter",
-        "current",
-    ]
-
     static func resolutionOptions(type: RuntimeObjectType) -> RuntimeInstanceResolutionOptions {
-        let autoResolvedInstance = resolveKnownSingleton(type: type)
-        let manualCandidates = discoverManualCandidates(type: type)
+        guard case .class(let className) = type else {
+            return RuntimeInstanceResolutionOptions(autoResolvedInstance: nil, manualCandidates: [])
+        }
 
-        return RuntimeInstanceResolutionOptions(
-            autoResolvedInstance: autoResolvedInstance,
-            manualCandidates: manualCandidates
-        )
+        return RuntimeInspector.resolutionOptions(forClassNamed: className)
     }
-    
-
-    static func resolveKnownSingleton(type: RuntimeObjectType) -> ResolvedRuntimeInstance? {
-        guard case .class(let className) = type,
-              let cls = NSClassFromString(className)
-        else { return nil }
-
-        for selectorName in singletonSelectors {
-            let selector = NSSelectorFromString(selectorName)
-            guard let method = class_getClassMethod(cls, selector) else { continue }
-
-            let argumentCount = max(Int(method_getNumberOfArguments(method)) - 2, 0)
-            let returnType = RuntimeInvocationEngine.methodReturnType(method)
-
-            guard argumentCount == 0,
-                  RuntimeInvocationEngine.returnKind(for: returnType) == .object
-            else { continue }
-
-            guard let object = try? RuntimeInvocationEngine.invokeClassObjectMethod(on: cls, selector: selector) else {
-                continue
-            }
-
-            return ResolvedRuntimeInstance(
-                className: className,
-                selectorName: selectorName,
-                acquisitionDescription: selectorName,
-                subjectKind: .instance,
-                targetClass: cls,
-                object: object
-            )
-        }
-
-        return nil
-    }
-    
-
-    static func discoverManualCandidates(type: RuntimeObjectType) -> [RuntimeInstanceCandidate] {
-        guard case .class = type,
-              let metaClass = metaclass(for: type)
-        else { return [] }
-
-        var seen = Set<String>()
-        var candidates: [RuntimeInstanceCandidate] = []
-        var count: UInt32 = 0
-
-        if let methods = class_copyMethodList(metaClass, &count) {
-            defer { free(methods) }
-
-            for index in 0..<Int(count) {
-                let method = methods[index]
-                let selectorName = NSStringFromSelector(method_getName(method))
-                let argumentCount = max(Int(method_getNumberOfArguments(method)) - 2, 0)
-                let returnType = RuntimeInvocationEngine.methodReturnType(method)
-
-                guard argumentCount == 0 else { continue }
-                guard RuntimeInvocationEngine.returnKind(for: returnType) == .object else { continue }
-                guard shouldOfferManualSelector(named: selectorName) else { continue }
-                guard seen.insert(selectorName).inserted else { continue }
-
-                candidates.append(
-                    RuntimeInstanceCandidate(
-                        selectorName: selectorName,
-                        displayName: selectorName,
-                        subtitle: "Zero-argument class getter",
-                        kind: .classGetter
-                    )
-                )
-            }
-        }
-
-        if supportsZeroArgumentInitialization(type: type) {
-            candidates.append(
-                RuntimeInstanceCandidate(
-                    selectorName: "init",
-                    displayName: "init()",
-                    subtitle: "Create a new zero-argument instance",
-                    kind: .zeroArgumentInitializer
-                )
-            )
-        }
-
-        return candidates.sorted { lhs, rhs in
-            if singletonSelectors.contains(lhs.selectorName), singletonSelectors.contains(rhs.selectorName) == false { return true }
-            if singletonSelectors.contains(rhs.selectorName), singletonSelectors.contains(lhs.selectorName) == false { return false }
-            if lhs.kind == .zeroArgumentInitializer, rhs.kind != .zeroArgumentInitializer { return false }
-            if rhs.kind == .zeroArgumentInitializer, lhs.kind != .zeroArgumentInitializer { return true }
-            return lhs.displayName.localizedCaseInsensitiveCompare(rhs.displayName) == .orderedAscending
-        }
-    }
-    
 
     static func resolve(type: RuntimeObjectType, candidate: RuntimeInstanceCandidate) -> ResolvedRuntimeInstance? {
-        switch candidate.kind {
-        case .classGetter:
-            resolve(type: type, selectorName: candidate.selectorName)
-        case .zeroArgumentInitializer:
-            createZeroArgumentInstance(type: type)
-        }
+        guard case .class(let className) = type else { return nil }
+        return RuntimeInspector.resolve(classNamed: className, candidate: candidate)
     }
 
-    
     static func resolve(type: RuntimeObjectType, selectorName: String) -> ResolvedRuntimeInstance? {
-        guard case .class(let className) = type,
-              let cls = NSClassFromString(className)
-        else { return nil }
-
-        let selector = NSSelectorFromString(selectorName)
-        guard let method = class_getClassMethod(cls, selector) else { return nil }
-
-        let argumentCount = max(Int(method_getNumberOfArguments(method)) - 2, 0)
-        let returnType = RuntimeInvocationEngine.methodReturnType(method)
-        guard argumentCount == 0,
-              RuntimeInvocationEngine.returnKind(for: returnType) == .object
-        else { return nil }
-
-        guard let object = try? RuntimeInvocationEngine.invokeClassObjectMethod(on: cls, selector: selector) else {
-            return nil
-        }
-
-        return ResolvedRuntimeInstance(
-            className: className,
-            selectorName: selectorName,
-            acquisitionDescription: selectorName,
-            subjectKind: .instance,
-            targetClass: cls,
-            object: object
-        )
+        guard case .class(let className) = type else { return nil }
+        return RuntimeInspector.resolve(classNamed: className, selectorName: selectorName)
     }
 
-    
     static func resolveClassObject(type: RuntimeObjectType) -> ResolvedRuntimeInstance? {
-        guard case .class(let className) = type,
-              let cls = NSClassFromString(className)
-        else { return nil }
-
-        return ResolvedRuntimeInstance(
-            className: className,
-            selectorName: className,
-            acquisitionDescription: className,
-            subjectKind: .classObject,
-            targetClass: cls,
-            object: nil
-        )
-    }
-    
-
-    static func createZeroArgumentInstance(type: RuntimeObjectType) -> ResolvedRuntimeInstance? {
-        guard case .class(let className) = type,
-              let cls = NSClassFromString(className)
-        else { return nil }
-
-        let allocSelector = NSSelectorFromString("alloc")
-        let initSelector = NSSelectorFromString("init")
-
-        guard let allocMethod = class_getClassMethod(cls, allocSelector),
-              let initMethod = class_getInstanceMethod(cls, initSelector)
-        else { return nil }
-
-        let allocArgCount = max(Int(method_getNumberOfArguments(allocMethod)) - 2, 0)
-        let initArgCount = max(Int(method_getNumberOfArguments(initMethod)) - 2, 0)
-        let allocReturnType = RuntimeInvocationEngine.methodReturnType(allocMethod)
-        let initReturnType = RuntimeInvocationEngine.methodReturnType(initMethod)
-
-        guard allocArgCount == 0,
-              initArgCount == 0,
-              RuntimeInvocationEngine.returnKind(for: allocReturnType) == .object,
-              RuntimeInvocationEngine.returnKind(for: initReturnType) == .object
-        else { return nil }
-
-        guard let allocatedObject = try? RuntimeInvocationEngine.invokeClassObjectMethod(on: cls, selector: allocSelector),
-              let initializedObject = try? RuntimeInvocationEngine.invokeInstanceObjectMethod(on: allocatedObject, selector: initSelector)
-        else { return nil }
-
-        return ResolvedRuntimeInstance(
-            className: className,
-            selectorName: "init",
-            acquisitionDescription: "alloc -> init()",
-            subjectKind: .instance,
-            targetClass: cls,
-            object: initializedObject
-        )
-    }
-    
-
-    private static func metaclass(for type: RuntimeObjectType) -> AnyClass? {
-        guard case .class(let className) = type,
-              let cls = NSClassFromString(className)
-        else { return nil }
-
-        return object_getClass(cls)
-    }
-
-    private static func shouldOfferManualSelector(named selectorName: String) -> Bool {
-        let lowered = selectorName.lowercased()
-        let excludedNames = [
-            "alloc",
-            "new",
-            "copy",
-            "mutablecopy",
-            "class",
-            "superclass",
-        ]
-        let excludedPrefixes = [
-            ".cxx",
-            "_",
-            "init",
-        ]
-
-        guard excludedNames.contains(lowered) == false else { return false }
-        return excludedPrefixes.allSatisfy { lowered.hasPrefix($0) == false }
-    }
-
-    private static func supportsZeroArgumentInitialization(type: RuntimeObjectType) -> Bool {
-        guard case .class(let className) = type,
-              let cls = NSClassFromString(className),
-              let allocMethod = class_getClassMethod(cls, NSSelectorFromString("alloc")),
-              let initMethod = class_getInstanceMethod(cls, NSSelectorFromString("init"))
-        else { return false }
-
-        let allocArgCount = max(Int(method_getNumberOfArguments(allocMethod)) - 2, 0)
-        let initArgCount = max(Int(method_getNumberOfArguments(initMethod)) - 2, 0)
-        let allocReturnType = RuntimeInvocationEngine.methodReturnType(allocMethod)
-        let initReturnType = RuntimeInvocationEngine.methodReturnType(initMethod)
-
-        return allocArgCount == 0 &&
-            initArgCount == 0 &&
-            RuntimeInvocationEngine.returnKind(for: allocReturnType) == .object &&
-            RuntimeInvocationEngine.returnKind(for: initReturnType) == .object
+        guard case .class(let className) = type else { return nil }
+        return RuntimeInspector.resolveClassObject(classNamed: className)
     }
 }

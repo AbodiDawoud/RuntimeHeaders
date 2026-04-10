@@ -1,12 +1,6 @@
-//
-//  RuntimeInvocationEngine.swift
-//  RuntimeHeaders
-//
-
-import Foundation
 import Darwin
+import Foundation
 import ObjectiveC.runtime
-
 
 enum RuntimeInvocationEngine {
     private static let objcMessageSendPointer: UnsafeMutableRawPointer = {
@@ -68,7 +62,6 @@ enum RuntimeInvocationEngine {
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             function(object, selector)
             return "Completed"
-
         case .object:
             typealias Function = @convention(c) (AnyObject, Selector) -> Unmanaged<AnyObject>?
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
@@ -76,22 +69,18 @@ enum RuntimeInvocationEngine {
                 throw RuntimeInvocationError.nilObjectReturn(methodName)
             }
             return describe(value: result)
-
         case .bool:
             typealias Function = @convention(c) (AnyObject, Selector) -> Bool
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             return function(object, selector) ? "true" : "false"
-
         case .integer:
             typealias Function = @convention(c) (AnyObject, Selector) -> Int
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             return String(function(object, selector))
-
         case .unsignedInteger:
             typealias Function = @convention(c) (AnyObject, Selector) -> UInt
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             return String(function(object, selector))
-
         case .floatingPoint:
             if returnTypeEncoding == "f" {
                 typealias Function = @convention(c) (AnyObject, Selector) -> Float
@@ -102,7 +91,6 @@ enum RuntimeInvocationEngine {
                 let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
                 return String(function(object, selector))
             }
-
         case .unsupported:
             throw RuntimeInvocationError.unsupportedReturnType(returnTypeEncoding)
         }
@@ -120,7 +108,6 @@ enum RuntimeInvocationEngine {
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             function(cls, selector)
             return "Completed"
-
         case .object:
             typealias Function = @convention(c) (AnyClass, Selector) -> Unmanaged<AnyObject>?
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
@@ -128,22 +115,18 @@ enum RuntimeInvocationEngine {
                 throw RuntimeInvocationError.nilObjectReturn(methodName)
             }
             return describe(value: result)
-
         case .bool:
             typealias Function = @convention(c) (AnyClass, Selector) -> Bool
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             return function(cls, selector) ? "true" : "false"
-
         case .integer:
             typealias Function = @convention(c) (AnyClass, Selector) -> Int
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             return String(function(cls, selector))
-
         case .unsignedInteger:
             typealias Function = @convention(c) (AnyClass, Selector) -> UInt
             let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
             return String(function(cls, selector))
-
         case .floatingPoint:
             if returnTypeEncoding == "f" {
                 typealias Function = @convention(c) (AnyClass, Selector) -> Float
@@ -154,7 +137,6 @@ enum RuntimeInvocationEngine {
                 let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
                 return String(function(cls, selector))
             }
-
         case .unsupported:
             throw RuntimeInvocationError.unsupportedReturnType(returnTypeEncoding)
         }
@@ -182,24 +164,19 @@ enum RuntimeInvocationEngine {
         switch value {
         case let string as String:
             string
-            
         case let number as NSNumber:
             number.stringValue
-            
         case let url as URL:
             url.absoluteString
-            
         case let array as [Any]:
             "[\(array.count) items] " + String(describing: array)
-            
         case let dictionary as [AnyHashable: Any]:
             "[\(dictionary.count) pairs] " + String(describing: dictionary)
-            
-        default: String(describing: value)
+        default:
+            String(describing: value)
         }
     }
 }
-
 
 enum RuntimeInvocationError: LocalizedError {
     case missingMethod(String)

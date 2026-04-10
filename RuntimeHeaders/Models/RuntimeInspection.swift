@@ -1,45 +1,23 @@
 //
 //  RuntimeInspection.swift
 //  RuntimeHeaders
-    
+//
 
-import Foundation
+import RuntimeInspectorKit
 
-enum InspectableMethodReturnKind: String {
-    case void
-    case object
-    case bool
-    case integer
-    case unsignedInteger
-    case floatingPoint
-    case unsupported
-}
+typealias InspectableMethodReturnKind = RuntimeInspectorKit.InspectableMethodReturnKind
+typealias RuntimeInstanceCandidateKind = RuntimeInspectorKit.RuntimeInstanceCandidateKind
+typealias RuntimeInstanceCandidate = RuntimeInspectorKit.RuntimeInstanceCandidate
+typealias RuntimeInstanceResolutionOptions = RuntimeInspectorKit.RuntimeInstanceResolutionOptions
 
 
-enum RuntimeInstanceCandidateKind {
-    case classGetter
-    case zeroArgumentInitializer
-}
+typealias InspectableProperty = RuntimeInspectorKit.InspectableProperty
+typealias InspectableMethod = RuntimeInspectorKit.InspectableMethod
+typealias InvocationResult = RuntimeInspectorKit.InvocationResult
 
 
-struct RuntimeInstanceCandidate: Identifiable {
-    let selectorName: String
-    let displayName: String
-    let subtitle: String
-    let kind: RuntimeInstanceCandidateKind
-
-    var id: String { kindId + ":" + selectorName }
-
-    private var kindId: String {
-        switch kind {
-        case .classGetter: "getter"
-        case .zeroArgumentInitializer: "initializer"
-        }
-    }
-}
+typealias RuntimeInspectionSubjectKind = RuntimeInspectorKit.RuntimeInspectionSubjectKind
+typealias ResolvedRuntimeInstance = RuntimeInspectorKit.ResolvedRuntimeInstance
 
 
-struct RuntimeInstanceResolutionOptions {
-    let autoResolvedInstance: ResolvedRuntimeInstance?
-    let manualCandidates: [RuntimeInstanceCandidate]
-}
+typealias RuntimeObjectInspectorViewModel = RuntimeInspectorKit.RuntimeObjectInspectorViewModel
