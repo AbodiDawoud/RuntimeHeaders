@@ -9,6 +9,11 @@ enum RuntimeObjectType {
     case `class`(named: String)
     case `protocol`(named: String)
 
+    var isClass: Bool {
+        if case .class = self { return true }
+        return false
+    }
+
     
     var name: String {
         switch self {

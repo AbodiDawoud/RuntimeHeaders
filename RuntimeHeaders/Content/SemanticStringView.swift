@@ -12,16 +12,22 @@ struct SemanticStringView: View {
     
     let semanticString: CDSemanticString
     let fileName: String
+    let runtimeType: RuntimeObjectType?
     
     @State private var fileExportCoordinator: FileExportCoordinator?
+    @State private var resolvedInstance: ResolvedRuntimeInstance?
+    @State private var showRuntimeInspector: Bool = false
+    @State private var selectorChooser: RuntimeSelectorChooserState?
+    @State private var runtimeInspectorError: String?
     
     private let lines: [SemanticLine]
     private let longestLineIndex: Int?
     private let lineNumberColumnWidth: CGFloat
     
-    init(_ semanticString: CDSemanticString, fileName: String) {
+    init(_ semanticString: CDSemanticString, fileName: String, runtimeType: RuntimeObjectType? = nil) {
         self.semanticString = semanticString
         self.fileName = fileName
+        self.runtimeType = runtimeType
         
         let (lines, longestLineIndex) = semanticString.semanticLines()
         self.lines = lines
@@ -77,6 +83,12 @@ struct SemanticStringView: View {
             Divider()
             
             Button("Search Web", systemImage: "magnifyingglass.circle", action: searchOnSafari)
+
+            if runtimeType?.isClass == true {
+                Divider()
+                Button("Inspect Live Object", systemImage: "shippingbox", action: openRuntimeInspector)
+                Button("Inspect Class Members", systemImage: "shippingbox.and.arrow.backward", action: openClassInspector)
+            }
             
             Divider()
             Button(
@@ -86,6 +98,23 @@ struct SemanticStringView: View {
             )
             Button("Save", systemImage: "arrow.down.document", action: saveFileContent)
             Button("Share", systemImage: "square.and.arrow.up", action: presentActivityViewController)
+        }
+        .fullScreenCover(item: $resolvedInstance) {
+            RuntimeObjectInspectorView(resolvedInstance: $0)
+        }
+        .sheet(item: $selectorChooser) { chooser in
+            RuntimeSelectorChooserView(
+                className: chooser.className,
+                selectorCandidates: chooser.selectorCandidates,
+                onSelect: resolveRuntimeInspector
+            )
+        }
+        .alert("Live Object Unavailable", isPresented: runtimeInspectorAlertBinding) {
+            Button("OK", role: .cancel) {
+                runtimeInspectorError = nil
+            }
+        } message: {
+            Text(runtimeInspectorError ?? "No live object could be resolved.")
         }
     }
 
@@ -168,6 +197,61 @@ struct SemanticStringView: View {
     var bookmarked: Bool {
         return bookmarkManager.isBookmarked(fileName)
     }
+
+    
+    private var runtimeInspectorAlertBinding: Binding<Bool> {
+        Binding(
+            get: { runtimeInspectorError != nil },
+            set: { isPresented in
+                if isPresented == false {
+                    runtimeInspectorError = nil
+                }
+            }
+        )
+    }
+
+    func openRuntimeInspector() {
+        guard let runtimeType else { return }
+        let options = RuntimeInstanceResolver.resolutionOptions(type: runtimeType)
+
+        if let resolvedInstance = options.autoResolvedInstance {
+            self.resolvedInstance = resolvedInstance
+            return
+        }
+
+        if options.manualCandidates.isEmpty {
+            runtimeInspectorError = "No shared or singleton-style live object was detected for \(fileName)."
+            return
+        }
+
+        selectorChooser = RuntimeSelectorChooserState(
+            className: fileName,
+            selectorCandidates: options.manualCandidates
+        )
+    }
+
+    func openClassInspector() {
+        guard let runtimeType else { return }
+
+        guard let resolvedInstance = RuntimeInstanceResolver.resolveClassObject(type: runtimeType) else {
+            runtimeInspectorError = "Class members are unavailable for \(fileName)."
+            return
+        }
+
+        self.resolvedInstance = resolvedInstance
+    }
+
+    func resolveRuntimeInspector(candidate: RuntimeInstanceCandidate) {
+        guard let runtimeType else { return }
+        selectorChooser = nil
+
+        guard let resolvedInstance = RuntimeInstanceResolver.resolve(type: runtimeType, candidate: candidate) else {
+            runtimeInspectorError = "'\(candidate.displayName)' did not resolve a live object for \(fileName)."
+            return
+        }
+
+        self.resolvedInstance = resolvedInstance
+    }
     
     
     private class FileExportCoordinator: NSObject, UIDocumentPickerDelegate {
@@ -187,6 +271,116 @@ struct SemanticStringView: View {
         }
     }
 }
+
+
+private struct RuntimeSelectorChooserView: View {
+    let className: String
+    let selectorCandidates: [RuntimeInstanceCandidate]
+    let onSelect: (RuntimeInstanceCandidate) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText: String = ""
+    @State private var customSelectorName: String = ""
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Detected Class Getters") {
+                    if filteredCandidates.isEmpty {
+                        Text("No matching selectors")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(filteredCandidates) { candidate in
+                            Button {
+                                submit(candidate)
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(candidate.displayName)
+                                        .font(.headline)
+                                    Text(candidate.subtitle)
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                Section {
+                    TextField("sharedSession", text: $customSelectorName)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+
+                    Button("Try Selector", systemImage: "play.circle.fill") {
+                        submitCustomSelector()
+                    }
+                    .disabled(trimmedCustomSelector.isEmpty)
+                } header: {
+                    Text("Custom Selector")
+                } footer: {
+                    Text("Choose a detected live-object entry point or enter another zero-argument class selector for \(className).")
+                }
+            }
+            .navigationTitle("Choose Live Object Getter")
+            .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: dismiss.callAsFunction) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private var filteredCandidates: [RuntimeInstanceCandidate] {
+        if searchText.isEmpty { return selectorCandidates }
+        return selectorCandidates.filter {
+            $0.displayName.localizedCaseInsensitiveContains(searchText) ||
+            $0.selectorName.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    private var trimmedCustomSelector: String {
+        customSelectorName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private func submit(_ candidate: RuntimeInstanceCandidate) {
+        dismiss()
+        onSelect(candidate)
+    }
+
+    private func submitCustomSelector() {
+        let trimmedName = trimmedCustomSelector
+        guard trimmedName.isEmpty == false else { return }
+        let candidate = RuntimeInstanceCandidate(
+            selectorName: trimmedName,
+            displayName: trimmedName,
+            subtitle: "Custom zero-argument class getter",
+            kind: .classGetter
+        )
+        dismiss()
+        onSelect(candidate)
+    }
+}
+
+
+private struct RuntimeSelectorChooserState: Identifiable {
+    let className: String
+    let selectorCandidates: [RuntimeInstanceCandidate]
+
+    var id: String { className }
+}
+
+
+
+
+// MARK: -  Semantic Line
 
 struct SemanticLineView: View {
     let line: SemanticLine
@@ -213,15 +407,13 @@ struct SemanticLineView: View {
 }
 
 
-
-
-
 struct SemanticLine: Identifiable {
     let number: Int
     let content: [SemanticRun]
     
     var id: Int { number }
 }
+
 
 struct SemanticRun: Identifiable {
     let id: Int  // it is the caller's responsibility to set a unique id relative to the container
@@ -234,6 +426,7 @@ enum SemanticOptimizedType {
     case text(Text)
     case navigation(RuntimeObjectType, Text)
 }
+
 
 struct SemanticOptimizedRun: Identifiable {
     let id: Int

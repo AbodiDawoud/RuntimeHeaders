@@ -1,0 +1,23 @@
+//
+//  RuntimeInspection.swift
+//  RuntimeHeaders
+//
+
+import RuntimeInspectorKit
+
+typealias InspectableMethodReturnKind = RuntimeInspectorKit.InspectableMethodReturnKind
+typealias RuntimeInstanceCandidateKind = RuntimeInspectorKit.RuntimeInstanceCandidateKind
+typealias RuntimeInstanceCandidate = RuntimeInspectorKit.RuntimeInstanceCandidate
+typealias RuntimeInstanceResolutionOptions = RuntimeInspectorKit.RuntimeInstanceResolutionOptions
+
+
+typealias InspectableProperty = RuntimeInspectorKit.InspectableProperty
+typealias InspectableMethod = RuntimeInspectorKit.InspectableMethod
+typealias InvocationResult = RuntimeInspectorKit.InvocationResult
+
+
+typealias RuntimeInspectionSubjectKind = RuntimeInspectorKit.RuntimeInspectionSubjectKind
+typealias ResolvedRuntimeInstance = RuntimeInspectorKit.ResolvedRuntimeInstance
+
+
+typealias RuntimeObjectInspectorViewModel = RuntimeInspectorKit.RuntimeObjectInspectorViewModel
