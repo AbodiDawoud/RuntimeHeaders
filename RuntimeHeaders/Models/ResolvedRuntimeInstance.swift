@@ -5,23 +5,62 @@
 
 import Foundation
 
+enum RuntimeInspectionSubjectKind {
+    case instance
+    case classObject
+}
+
 struct ResolvedRuntimeInstance {
     let className: String
     let selectorName: String
-    let object: AnyObject
+    let acquisitionDescription: String
+    let subjectKind: RuntimeInspectionSubjectKind
+    let targetClass: AnyClass
+    let object: AnyObject?
 
     var displayName: String {
-        NSStringFromClass(type(of: object))
+        switch subjectKind {
+        case .instance:
+            guard let object else { return className }
+            return NSStringFromClass(type(of: object))
+        case .classObject:
+            return NSStringFromClass(targetClass)
+        }
     }
 
-    var pointerDescription: String {
-        let pointer = Unmanaged.passUnretained(object).toOpaque()
-        return String(describing: pointer)
+    var pointerDescription: String? {
+        switch subjectKind {
+        case .instance:
+            guard let object else { return nil }
+            let pointer = Unmanaged.passUnretained(object).toOpaque()
+            return String(describing: pointer)
+        case .classObject:
+            let pointer = unsafeBitCast(targetClass, to: UnsafeRawPointer.self)
+            return String(describing: pointer)
+        }
+    }
+
+    var inspectorTitle: String {
+        switch subjectKind {
+        case .instance:
+            "Live Object"
+        case .classObject:
+            "Class Members"
+        }
+    }
+
+    var subjectDescription: String {
+        switch subjectKind {
+        case .instance:
+            "Instance"
+        case .classObject:
+            "Class"
+        }
     }
 }
 
 extension ResolvedRuntimeInstance: Identifiable {
     var id: String {
-        className + ":" + selectorName + ":" + pointerDescription
+        "\(className)"
     }
 }

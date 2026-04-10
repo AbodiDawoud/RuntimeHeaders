@@ -22,7 +22,7 @@ struct RuntimeObjectDetail: View {
     init(type: RuntimeObjectType, parentPath: String? = nil) {
         self.type = type
         
-        guard let parentPath else { print("not valid parent path"); return }
+        guard let parentPath, !parentPath.isEmpty else { return }
         let isLoaded = RuntimeListings.shared.isImageLoaded(path: parentPath)
         
         if !isLoaded {

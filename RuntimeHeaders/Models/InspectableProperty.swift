@@ -15,7 +15,9 @@ struct InspectableProperty: Identifiable {
     let isInherited: Bool
     let isNSObjectMember: Bool
     let isAccessibilityRelated: Bool
+    let isClassMember: Bool
+    let isDirectIvar: Bool
 
-    var id: String { name }
+    var id: String { "\(isDirectIvar ? "ivar" : "property"):\(name)" }
     var isReadable: Bool { errorMessage == nil }
 }

@@ -11,6 +11,8 @@ struct RuntimeObjectInspectorView: View {
     @State private var includeInheritedMembers: Bool = false
     @State private var includeNSObjectMembers: Bool = false
     @State private var includeAccessibilityMembers: Bool = false
+    @State private var includePrivateMethods: Bool = false
+    @State private var includeArgumentMethods: Bool = false
 
     init(resolvedInstance: ResolvedRuntimeInstance) {
         _viewModel = StateObject(wrappedValue: RuntimeObjectInspectorViewModel(resolvedInstance: resolvedInstance))
@@ -19,14 +21,16 @@ struct RuntimeObjectInspectorView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Instance") {
+                Section(viewModel.resolvedInstance.subjectDescription) {
                     inspectorRow("Resolved Class", value: viewModel.resolvedInstance.className)
-                    inspectorRow("Live Type", value: viewModel.resolvedInstance.displayName)
-                    inspectorRow("Singleton Selector", value: viewModel.resolvedInstance.selectorName)
-                    inspectorRow("Pointer", value: viewModel.resolvedInstance.pointerDescription)
+                    inspectorRow(viewModel.isInspectingClass ? "Runtime Class" : "Live Type", value: viewModel.resolvedInstance.displayName)
+                    inspectorRow("Acquired Via", value: viewModel.resolvedInstance.acquisitionDescription)
+                    if let pointerDescription = viewModel.resolvedInstance.pointerDescription {
+                        inspectorRow("Pointer", value: pointerDescription)
+                    }
                 }
 
-                Section("Properties") {
+                Section(viewModel.isInspectingClass ? "Static Values" : "Properties") {
                     if filteredProperties.isEmpty {
                         Text("No properties match the current filters.")
                             .foregroundStyle(.secondary)
@@ -37,18 +41,33 @@ struct RuntimeObjectInspectorView: View {
                     }
                 }
 
-                Section("Safe Methods") {
+                Section(viewModel.isInspectingClass ? "Callable Class Methods" : "Safe Methods") {
                     if filteredMethods.isEmpty {
                         Text("No methods match the current filters.")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredMethods) { method in
-                            Button {
-                                viewModel.invoke(method)
-                            } label: {
-                                methodRow(method)
+                            Group {
+                                if method.isSafeToInvoke {
+                                    Button {
+                                        viewModel.invoke(method)
+                                    } label: {
+                                        methodRow(method)
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
+                                    methodRow(method)
+                                }
                             }
-                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                if disabledMethods.isEmpty == false {
+                    Section(viewModel.isInspectingClass ? "Unavailable Class Methods" : "Unavailable Methods") {
+                        ForEach(disabledMethods) { method in
+                            methodRow(method)
+                                .opacity(0.72)
                         }
                     }
                 }
@@ -68,7 +87,7 @@ struct RuntimeObjectInspectorView: View {
                     }
                 }
             }
-            .inlinedNavigationTitle("Live Object")
+            .inlinedNavigationTitle(viewModel.resolvedInstance.inspectorTitle)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: dismiss.callAsFunction) {
@@ -91,6 +110,8 @@ struct RuntimeObjectInspectorView: View {
                         Toggle("Include Superclass Members", isOn: $includeInheritedMembers)
                         Toggle("Include NSObject Members", isOn: $includeNSObjectMembers)
                         Toggle("Include Accessibility Members", isOn: $includeAccessibilityMembers)
+                        Toggle("Include Private Methods", isOn: $includePrivateMethods)
+                        Toggle("Include Methods With Arguments", isOn: $includeArgumentMethods)
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                             .foregroundStyle(.secondary)
@@ -101,22 +122,28 @@ struct RuntimeObjectInspectorView: View {
         }
     }
 
-    private var filteredProperties: [InspectableProperty] {
-        viewModel.properties.filter { property in
+    private var filteredMethods: [InspectableMethod] {
+        viewModel.methods.filter { method in
+            method.isSafeToInvoke &&
             shouldIncludeMember(
-                isInherited: property.isInherited,
-                isNSObjectMember: property.isNSObjectMember,
-                isAccessibilityRelated: property.isAccessibilityRelated
+                isInherited: method.isInherited,
+                isNSObjectMember: method.isNSObjectMember,
+                isAccessibilityRelated: method.isAccessibilityRelated,
+                isPrivateMethod: method.isPrivateMethod,
+                hasArguments: method.argumentCount > 0
             )
         }
     }
 
-    private var filteredMethods: [InspectableMethod] {
+    private var disabledMethods: [InspectableMethod] {
         viewModel.methods.filter { method in
+            method.isSafeToInvoke == false &&
             shouldIncludeMember(
                 isInherited: method.isInherited,
                 isNSObjectMember: method.isNSObjectMember,
-                isAccessibilityRelated: method.isAccessibilityRelated
+                isAccessibilityRelated: method.isAccessibilityRelated,
+                isPrivateMethod: method.isPrivateMethod,
+                hasArguments: method.argumentCount > 0
             )
         }
     }
@@ -124,8 +151,16 @@ struct RuntimeObjectInspectorView: View {
     private func shouldIncludeMember(
         isInherited: Bool,
         isNSObjectMember: Bool,
-        isAccessibilityRelated: Bool
+        isAccessibilityRelated: Bool,
+        isPrivateMethod: Bool = false,
+        hasArguments: Bool = false
     ) -> Bool {
+        if includeArgumentMethods == false && hasArguments {
+            return false
+        }
+        if includePrivateMethods == false && isPrivateMethod {
+            return false
+        }
         if includeAccessibilityMembers == false && isAccessibilityRelated {
             return false
         }
@@ -136,6 +171,16 @@ struct RuntimeObjectInspectorView: View {
             return false
         }
         return true
+    }
+
+    private var filteredProperties: [InspectableProperty] {
+        viewModel.properties.filter { property in
+            shouldIncludeMember(
+                isInherited: property.isInherited,
+                isNSObjectMember: property.isNSObjectMember,
+                isAccessibilityRelated: property.isAccessibilityRelated
+            )
+        }
     }
 
     private func inspectorRow(_ title: String, value: String) -> some View {
@@ -167,7 +212,7 @@ struct RuntimeObjectInspectorView: View {
 
                 Spacer(minLength: 12)
 
-                Text(property.getterName)
+                Text(property.isDirectIvar ? "Direct ivar" : property.getterName)
                     .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
@@ -200,20 +245,23 @@ struct RuntimeObjectInspectorView: View {
 
                 Text(methodSubtitle(for: method))
                     .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                    .foregroundColor(method.isSafeToInvoke ? .secondary : .orange)
             }
 
             Spacer(minLength: 12)
 
-            Image(systemName: "play.circle.fill")
-                .foregroundStyle(.blue)
+            Image(systemName: method.isSafeToInvoke ? "play.circle.fill" : "lock.circle")
+                .foregroundStyle(method.isSafeToInvoke ? .blue : .secondary)
         }
         .padding(.vertical, 2)
     }
 
     private func methodSubtitle(for method: InspectableMethod) -> String {
+        if let blockedReason = method.invocationBlockedReason {
+            return blockedReason
+        }
         if method.returnKind == .void {
-            return "Action"
+            return method.isClassMethod ? "Class action" : "Action"
         }
         return "Returns \(method.returnTypeEncoding)"
     }

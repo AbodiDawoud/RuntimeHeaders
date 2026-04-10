@@ -25,6 +25,5 @@ extension View {
         self
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(.black, for: .navigationBar)
     }
 }

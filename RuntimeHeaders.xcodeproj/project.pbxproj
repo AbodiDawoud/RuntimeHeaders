@@ -9,14 +9,6 @@
 /* Begin PBXBuildFile section */
 		BD58379D2F87F29700473B0A /* FeaturedFramework.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379C2F87F29700473B0A /* FeaturedFramework.swift */; };
 		BD58379F2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */; };
-		BE0000012F90000100000001 /* ResolvedRuntimeInstance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000011 /* ResolvedRuntimeInstance.swift */; };
-		BE0000012F90000100000002 /* InspectableProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000012 /* InspectableProperty.swift */; };
-		BE0000012F90000100000003 /* InspectableMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000013 /* InspectableMethod.swift */; };
-		BE0000012F90000100000004 /* InvocationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000014 /* InvocationResult.swift */; };
-		BE0000012F90000100000005 /* RuntimeInvocationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000015 /* RuntimeInvocationEngine.swift */; };
-		BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */; };
-		BE0000012F90000100000007 /* RuntimeObjectInspectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000017 /* RuntimeObjectInspectorViewModel.swift */; };
-		BE0000012F90000100000008 /* RuntimeObjectInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000018 /* RuntimeObjectInspectorView.swift */; };
 		BD77F8F02EA7306D009E7839 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77F8EF2EA7306D009E7839 /* ActivityController.swift */; };
 		BD8A38DA2E9ADA3B00F1B486 /* FiraCode-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38C72E9ADA3B00F1B486 /* FiraCode-Regular.ttf */; };
 		BD8A38DB2E9ADA3B00F1B486 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38CC2E9ADA3B00F1B486 /* Colors.xcassets */; };
@@ -55,6 +47,15 @@
 		BD8A38FD2E9ADA3B00F1B486 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D72E9ADA3B00F1B486 /* App.swift */; };
 		BD8A38FE2E9ADA3B00F1B486 /* RuntimeObjectsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D42E9ADA3B00F1B486 /* RuntimeObjectsViewModel.swift */; };
 		BD8A38FF2E9ADA3B00F1B486 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D82E9ADA3B00F1B486 /* ContentView.swift */; };
+		BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */; };
+		BE0000012F90000100000001 /* ResolvedRuntimeInstance.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000011 /* ResolvedRuntimeInstance.swift */; };
+		BE0000012F90000100000002 /* InspectableProperty.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000012 /* InspectableProperty.swift */; };
+		BE0000012F90000100000003 /* InspectableMethod.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000013 /* InspectableMethod.swift */; };
+		BE0000012F90000100000004 /* InvocationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000014 /* InvocationResult.swift */; };
+		BE0000012F90000100000005 /* RuntimeInvocationEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000015 /* RuntimeInvocationEngine.swift */; };
+		BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */; };
+		BE0000012F90000100000007 /* RuntimeObjectInspectorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000017 /* RuntimeObjectInspectorViewModel.swift */; };
+		BE0000012F90000100000008 /* RuntimeObjectInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000018 /* RuntimeObjectInspectorView.swift */; };
 		C04090CA2D2759260013D8F7 /* ClassDumpRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = C04090C92D2759260013D8F7 /* ClassDumpRuntime */; };
 /* End PBXBuildFile section */
 
@@ -74,14 +75,6 @@
 /* Begin PBXFileReference section */
 		BD58379C2F87F29700473B0A /* FeaturedFramework.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFramework.swift; sourceTree = "<group>"; };
 		BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFrameworkContainerView.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000011 /* ResolvedRuntimeInstance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResolvedRuntimeInstance.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000012 /* InspectableProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectableProperty.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000013 /* InspectableMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectableMethod.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000014 /* InvocationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvocationResult.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000015 /* RuntimeInvocationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInvocationEngine.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInstanceResolver.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000017 /* RuntimeObjectInspectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectInspectorViewModel.swift; sourceTree = "<group>"; };
-		BE0000012F90000100000018 /* RuntimeObjectInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectInspectorView.swift; sourceTree = "<group>"; };
 		BD77F8EF2EA7306D009E7839 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
 		BD8A38AC2E9ADA3B00F1B486 /* AppearancePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearancePopover.swift; sourceTree = "<group>"; };
 		BD8A38AD2E9ADA3B00F1B486 /* CodeAppearanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeAppearanceView.swift; sourceTree = "<group>"; };
@@ -121,6 +114,15 @@
 		BD8A38D72E9ADA3B00F1B486 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		BD8A38D82E9ADA3B00F1B486 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		BD8A39002E9ADB4700F1B486 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInspection.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000011 /* ResolvedRuntimeInstance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResolvedRuntimeInstance.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000012 /* InspectableProperty.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectableProperty.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000013 /* InspectableMethod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectableMethod.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000014 /* InvocationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvocationResult.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000015 /* RuntimeInvocationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInvocationEngine.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInstanceResolver.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000017 /* RuntimeObjectInspectorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectInspectorViewModel.swift; sourceTree = "<group>"; };
+		BE0000012F90000100000018 /* RuntimeObjectInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectInspectorView.swift; sourceTree = "<group>"; };
 		FAD661F42B81D1210000D2A6 /* RuntimeHeaders.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RuntimeHeaders.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -190,6 +192,7 @@
 				BE0000012F90000100000012 /* InspectableProperty.swift */,
 				BE0000012F90000100000013 /* InspectableMethod.swift */,
 				BE0000012F90000100000014 /* InvocationResult.swift */,
+				BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -371,6 +374,7 @@
 				BE0000012F90000100000005 /* RuntimeInvocationEngine.swift in Sources */,
 				BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */,
 				BE0000012F90000100000007 /* RuntimeObjectInspectorViewModel.swift in Sources */,
+				BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */,
 				BD8A38EF2E9ADA3B00F1B486 /* SemanticColor.swift in Sources */,
 				BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */,
 				BD8A38F12E9ADA3B00F1B486 /* Bookmark.swift in Sources */,

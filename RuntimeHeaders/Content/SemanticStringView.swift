@@ -16,6 +16,7 @@ struct SemanticStringView: View {
     
     @State private var fileExportCoordinator: FileExportCoordinator?
     @State private var resolvedInstance: ResolvedRuntimeInstance?
+    @State private var showRuntimeInspector: Bool = false
     @State private var selectorChooser: RuntimeSelectorChooserState?
     @State private var runtimeInspectorError: String?
     
@@ -85,9 +86,8 @@ struct SemanticStringView: View {
 
             if runtimeType?.isClass == true {
                 Divider()
-                Button("Inspect Live Object", systemImage: "sparkles.rectangle.stack") {
-                    openRuntimeInspector()
-                }
+                Button("Inspect Live Object", systemImage: "shippingbox", action: openRuntimeInspector)
+                Button("Inspect Class Members", systemImage: "shippingbox.and.arrow.backward", action: openClassInspector)
             }
             
             Divider()
@@ -99,16 +99,14 @@ struct SemanticStringView: View {
             Button("Save", systemImage: "arrow.down.document", action: saveFileContent)
             Button("Share", systemImage: "square.and.arrow.up", action: presentActivityViewController)
         }
-        .fullScreenCover(item: $resolvedInstance) { resolvedInstance in
-            RuntimeObjectInspectorView(resolvedInstance: resolvedInstance)
+        .fullScreenCover(item: $resolvedInstance) {
+            RuntimeObjectInspectorView(resolvedInstance: $0)
         }
         .sheet(item: $selectorChooser) { chooser in
             RuntimeSelectorChooserView(
                 className: chooser.className,
                 selectorCandidates: chooser.selectorCandidates,
-                onSelect: { selectorName in
-                    resolveRuntimeInspector(selectorName: selectorName)
-                }
+                onSelect: resolveRuntimeInspector
             )
         }
         .alert("Live Object Unavailable", isPresented: runtimeInspectorAlertBinding) {
@@ -200,6 +198,7 @@ struct SemanticStringView: View {
         return bookmarkManager.isBookmarked(fileName)
     }
 
+    
     private var runtimeInspectorAlertBinding: Binding<Bool> {
         Binding(
             get: { runtimeInspectorError != nil },
@@ -231,12 +230,23 @@ struct SemanticStringView: View {
         )
     }
 
-    func resolveRuntimeInspector(selectorName: String) {
+    func openClassInspector() {
+        guard let runtimeType else { return }
+
+        guard let resolvedInstance = RuntimeInstanceResolver.resolveClassObject(type: runtimeType) else {
+            runtimeInspectorError = "Class members are unavailable for \(fileName)."
+            return
+        }
+
+        self.resolvedInstance = resolvedInstance
+    }
+
+    func resolveRuntimeInspector(candidate: RuntimeInstanceCandidate) {
         guard let runtimeType else { return }
         selectorChooser = nil
 
-        guard let resolvedInstance = RuntimeInstanceResolver.resolve(type: runtimeType, selectorName: selectorName) else {
-            runtimeInspectorError = "'\(selectorName)' did not resolve a live object for \(fileName)."
+        guard let resolvedInstance = RuntimeInstanceResolver.resolve(type: runtimeType, candidate: candidate) else {
+            runtimeInspectorError = "'\(candidate.displayName)' did not resolve a live object for \(fileName)."
             return
         }
 
@@ -262,17 +272,11 @@ struct SemanticStringView: View {
     }
 }
 
-private struct RuntimeSelectorChooserState: Identifiable {
-    let className: String
-    let selectorCandidates: [String]
-
-    var id: String { className }
-}
 
 private struct RuntimeSelectorChooserView: View {
     let className: String
-    let selectorCandidates: [String]
-    let onSelect: (String) -> Void
+    let selectorCandidates: [RuntimeInstanceCandidate]
+    let onSelect: (RuntimeInstanceCandidate) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var searchText: String = ""
@@ -286,14 +290,14 @@ private struct RuntimeSelectorChooserView: View {
                         Text("No matching selectors")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(filteredCandidates, id: \.self) { selectorName in
+                        ForEach(filteredCandidates) { candidate in
                             Button {
-                                submit(selectorName)
+                                submit(candidate)
                             } label: {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(selectorName)
+                                    Text(candidate.displayName)
                                         .font(.headline)
-                                    Text("Zero-argument class getter")
+                                    Text(candidate.subtitle)
                                         .font(.footnote)
                                         .foregroundStyle(.secondary)
                                 }
@@ -309,13 +313,13 @@ private struct RuntimeSelectorChooserView: View {
                         .autocorrectionDisabled()
 
                     Button("Try Selector", systemImage: "play.circle.fill") {
-                        submit(customSelectorName)
+                        submitCustomSelector()
                     }
                     .disabled(trimmedCustomSelector.isEmpty)
                 } header: {
                     Text("Custom Selector")
                 } footer: {
-                    Text("Choose one of the detected class getters or enter another zero-argument class selector for \(className).")
+                    Text("Choose a detected live-object entry point or enter another zero-argument class selector for \(className).")
                 }
             }
             .navigationTitle("Choose Live Object Getter")
@@ -334,22 +338,49 @@ private struct RuntimeSelectorChooserView: View {
         }
     }
 
-    private var filteredCandidates: [String] {
+    private var filteredCandidates: [RuntimeInstanceCandidate] {
         if searchText.isEmpty { return selectorCandidates }
-        return selectorCandidates.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        return selectorCandidates.filter {
+            $0.displayName.localizedCaseInsensitiveContains(searchText) ||
+            $0.selectorName.localizedCaseInsensitiveContains(searchText)
+        }
     }
 
     private var trimmedCustomSelector: String {
         customSelectorName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func submit(_ selectorName: String) {
-        let trimmedName = selectorName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmedName.isEmpty == false else { return }
+    private func submit(_ candidate: RuntimeInstanceCandidate) {
         dismiss()
-        onSelect(trimmedName)
+        onSelect(candidate)
+    }
+
+    private func submitCustomSelector() {
+        let trimmedName = trimmedCustomSelector
+        guard trimmedName.isEmpty == false else { return }
+        let candidate = RuntimeInstanceCandidate(
+            selectorName: trimmedName,
+            displayName: trimmedName,
+            subtitle: "Custom zero-argument class getter",
+            kind: .classGetter
+        )
+        dismiss()
+        onSelect(candidate)
     }
 }
+
+
+private struct RuntimeSelectorChooserState: Identifiable {
+    let className: String
+    let selectorCandidates: [RuntimeInstanceCandidate]
+
+    var id: String { className }
+}
+
+
+
+
+// MARK: -  Semantic Line
 
 struct SemanticLineView: View {
     let line: SemanticLine
@@ -376,15 +407,13 @@ struct SemanticLineView: View {
 }
 
 
-
-
-
 struct SemanticLine: Identifiable {
     let number: Int
     let content: [SemanticRun]
     
     var id: Int { number }
 }
+
 
 struct SemanticRun: Identifiable {
     let id: Int  // it is the caller's responsibility to set a unique id relative to the container
@@ -397,6 +426,7 @@ enum SemanticOptimizedType {
     case text(Text)
     case navigation(RuntimeObjectType, Text)
 }
+
 
 struct SemanticOptimizedRun: Identifiable {
     let id: Int
