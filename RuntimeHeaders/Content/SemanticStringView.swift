@@ -4,6 +4,7 @@
 
 import SwiftUI
 import ClassDumpRuntime
+import SyntaxHighlighting
 
 
 struct SemanticStringView: View {
@@ -29,7 +30,7 @@ struct SemanticStringView: View {
         self.fileName = fileName
         self.runtimeType = runtimeType
         
-        let (lines, longestLineIndex) = semanticString.semanticLines()
+        let (lines, longestLineIndex) = semanticLinesFromString(semanticString)
         self.lines = lines
         self.longestLineIndex = longestLineIndex
         let digitCount = max(2, String(max(lines.count - 1, 0)).count)
@@ -273,126 +274,18 @@ struct SemanticStringView: View {
 }
 
 
-private struct RuntimeSelectorChooserView: View {
-    let className: String
-    let selectorCandidates: [RuntimeInstanceCandidate]
-    let onSelect: (RuntimeInstanceCandidate) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var searchText: String = ""
-    @State private var customSelectorName: String = ""
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section("Detected Class Getters") {
-                    if filteredCandidates.isEmpty {
-                        Text("No matching selectors")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(filteredCandidates) { candidate in
-                            Button {
-                                submit(candidate)
-                            } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(candidate.displayName)
-                                        .font(.headline)
-                                    Text(candidate.subtitle)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                }
-
-                Section {
-                    TextField("sharedSession", text: $customSelectorName)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    Button("Try Selector", systemImage: "play.circle.fill") {
-                        submitCustomSelector()
-                    }
-                    .disabled(trimmedCustomSelector.isEmpty)
-                } header: {
-                    Text("Custom Selector")
-                } footer: {
-                    Text("Choose a detected live-object entry point or enter another zero-argument class selector for \(className).")
-                }
-            }
-            .navigationTitle("Choose Live Object Getter")
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(action: dismiss.callAsFunction) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
-    private var filteredCandidates: [RuntimeInstanceCandidate] {
-        if searchText.isEmpty { return selectorCandidates }
-        return selectorCandidates.filter {
-            $0.displayName.localizedCaseInsensitiveContains(searchText) ||
-            $0.selectorName.localizedCaseInsensitiveContains(searchText)
-        }
-    }
-
-    private var trimmedCustomSelector: String {
-        customSelectorName.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private func submit(_ candidate: RuntimeInstanceCandidate) {
-        dismiss()
-        onSelect(candidate)
-    }
-
-    private func submitCustomSelector() {
-        let trimmedName = trimmedCustomSelector
-        guard trimmedName.isEmpty == false else { return }
-        let candidate = RuntimeInstanceCandidate(
-            selectorName: trimmedName,
-            displayName: trimmedName,
-            subtitle: "Custom zero-argument class getter",
-            kind: .classGetter
-        )
-        dismiss()
-        onSelect(candidate)
-    }
-}
-
-
-private struct RuntimeSelectorChooserState: Identifiable {
-    let className: String
-    let selectorCandidates: [RuntimeInstanceCandidate]
-
-    var id: String { className }
-}
-
-
-
-
-// MARK: -  Semantic Line
 
 struct SemanticLineView: View {
     let line: SemanticLine
     
     var body: some View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
-            ForEach(SemanticOptimizedRun.optimize(lineContent: line.content)) {
+            ForEach(SemanticOptimizedRun.optimize(lineContent: line.content, colors: CodePreferences.shared.colors)) {
                 switch $0.type {
                 case .text(let text):
                     text
-                case .navigation(let runtimeObjectType, let text):
-                    NavigationLink(value: runtimeObjectType) {
+                case .semanticLink(let type, let string, let text):
+                    NavigationLink(value: runtimeObjectType(for: type, named: string)) {
                         text
                     }
                     .buttonStyle(.plain)
@@ -404,165 +297,11 @@ struct SemanticLineView: View {
         .fixedSize(horizontal: true, vertical: false)
         .padding(.vertical, 1) // effectively line spacing
     }
-}
 
-
-struct SemanticLine: Identifiable {
-    let number: Int
-    let content: [SemanticRun]
-    
-    var id: Int { number }
-}
-
-
-struct SemanticRun: Identifiable {
-    let id: Int  // it is the caller's responsibility to set a unique id relative to the container
-    let string: String
-    let type: CDSemanticType
-}
-
-
-enum SemanticOptimizedType {
-    case text(Text)
-    case navigation(RuntimeObjectType, Text)
-}
-
-
-struct SemanticOptimizedRun: Identifiable {
-    let id: Int
-    let type: SemanticOptimizedType
-    
-    
-    static func optimize(lineContent: [SemanticRun]) -> [Self] {
-        var ret: [Self] = []
-        
-        var currentText: Text?
-        var currentLength: Int = 0
-        
-        func pushRun() {
-            if let prefix = currentText {
-                ret.append(.init(id: ret.count, type: .text(prefix)))
-                currentText = nil
-                currentLength = 0
-            }
+    private func runtimeObjectType(for semanticType: CDSemanticType, named name: String) -> RuntimeObjectType {
+        switch semanticType {
+        case .protocol: return .protocol(named: name)
+        default: return .class(named: name)
         }
-        
-        for content in lineContent {
-            func pushText(_ provider: (Text) -> Text) {
-                let str = content.string
-                let text = provider(Text(str))
-                
-                if let prefix = currentText {
-                    currentText = prefix + text
-                } else {
-                    currentText = text
-                }
-                
-                currentLength += str.count
-                // optimization tuning parameter:
-                // too low -> laying out each line may take a long time
-                // too high -> Text may fail to layout
-                if currentLength > 512 {
-                    pushRun()
-                }
-            }
-            
-            func pushNavigation(_ objectType: RuntimeObjectType, _ provider: (Text) -> Text) {
-                pushRun()
-                let text = provider(
-                    Text(content.string)
-                )
-
-                ret.append(
-                    .init(id: ret.count, type: .navigation(objectType, text))
-                )
-            }
-             
-            switch content.type {
-            case .standard:
-                pushText {
-                    $0.foregroundColor(CodePreferences.shared.colors.standard)
-                }
-            case .comment:
-                pushText {
-                    $0.foregroundColor(CodePreferences.shared.colors.comment)
-                }
-            case .keyword:
-                pushText {
-                    $0.foregroundColor(CodePreferences.shared.colors.keyword)
-                }
-            case .variable:
-                pushText {
-                    $0.foregroundColor(CodePreferences.shared.colors.variable)
-                }
-            case .recordName:
-                pushText {
-                    $0.foregroundColor(CodePreferences.shared.colors.recordName)
-                }
-            case .class:
-                pushNavigation(.class(named: content.string)) {
-                    $0.foregroundColor(CodePreferences.shared.colors.class)
-                }
-            case .protocol:
-                pushNavigation(.protocol(named: content.string)) {
-                    $0.foregroundColor(CodePreferences.shared.colors.protocol)
-                }
-            case .numeric:
-                pushText {
-                    $0.foregroundColor(CodePreferences.shared.colors.number)
-                }
-            default:
-                pushText {
-                    $0.foregroundColor(CodePreferences.shared.colors.defaultValue)
-                }
-            }
-        }
-        
-        pushRun()
-        
-        return ret
-    }
-}
-
-
-private extension CDSemanticString {
-    func semanticLines() -> (lines: [SemanticLine], longestLineIndex: Int?) {
-        var lines: [SemanticLine] = []
-        var longestLineIndex: Int?
-        var longestLineLength: Int = 0
-        
-        var current: [SemanticRun] = []
-        var currentLineLength = 0
-        
-        func pushLine() {
-            let upcomingIndex = lines.count
-            lines.append(SemanticLine(number: upcomingIndex, content: current))
-            if currentLineLength > longestLineLength {
-                longestLineLength = currentLineLength
-                longestLineIndex = upcomingIndex
-            }
-            current = []
-            currentLineLength = 0
-        }
-        
-        self.enumerateTypes { str, type in
-            func pushRun(string: String) {
-                current.append(SemanticRun(id: current.count, string: string, type: type))
-                currentLineLength += string.count
-            }
-            
-            var movingSubstring: String = str
-            while let lineBreakIndex = movingSubstring.firstIndex(of: "\n") {
-                pushRun(string: String(movingSubstring[..<lineBreakIndex]))
-                pushLine()
-                // index after because we don't want to include '\n' in the output
-                movingSubstring = String(movingSubstring[movingSubstring.index(after: lineBreakIndex)...])
-            }
-            pushRun(string: movingSubstring)
-        }
-        if !current.isEmpty {
-            pushLine()
-        }
-        return (lines, longestLineIndex)
     }
 }

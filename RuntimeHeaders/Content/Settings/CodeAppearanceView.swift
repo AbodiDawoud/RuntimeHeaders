@@ -4,6 +4,7 @@
     
 
 import SwiftUI
+import SyntaxHighlighting
 
 
 struct CodeAppearanceView: View {
@@ -178,12 +179,10 @@ fileprivate struct CodePreview: View {
 
     func lineRow(_ line: SemanticLine) -> some View {
         HStack(alignment: .lastTextBaseline, spacing: 0) {
-            ForEach(SemanticOptimizedRun.optimize(lineContent: line.content)) {
+            ForEach(SemanticOptimizedRun.optimize(lineContent: line.content, colors: preferences.colors)) {
                 switch $0.type {
-                case .text(let text):
-                    text
-                case .navigation(_, let text):
-                    text
+                case .text(let text): text
+                case .semanticLink(_, _, let text): text
                 }
             }
         }

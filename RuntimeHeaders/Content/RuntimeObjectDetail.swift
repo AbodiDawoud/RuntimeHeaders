@@ -7,7 +7,6 @@ import SwiftUI
 import ObjectiveC
 import ClassDumpRuntime
 
-
 struct RuntimeObjectDetail: View {
     private let type: RuntimeObjectType
     

@@ -1,0 +1,15 @@
+{
+  "originHash" : "7f6ff41a41ec4cec4a8c6aee15a2461841ee61e9f4c350897206ff5f1fbadf31",
+  "pins" : [
+    {
+      "identity" : "classdumpruntime",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/leptos-null/ClassDumpRuntime",
+      "state" : {
+        "branch" : "master",
+        "revision" : "be0ad7a001c6582ac13679837731eff0f657f0fc"
+      }
+    }
+  ],
+  "version" : 3
+}

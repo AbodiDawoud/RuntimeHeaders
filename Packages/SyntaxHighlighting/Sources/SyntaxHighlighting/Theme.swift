@@ -1,28 +1,50 @@
 //
-//  CodeColorTheme.swift
-//  HeaderViewer
-    
+//  Theme.swift
+//  SyntaxHighlighting
 
 import SwiftUI
 
-
-struct Theme {
-    var name: String
+public struct Theme {
+    public var name: String
     
-    var standard: Color
-    var comment: Color
-    var keyword: Color
-    var variable: Color
-    var number: Color
-    var recordName: Color
-    var `class`: Color
-    var `protocol`: Color
-    var defaultValue: Color
+    public var standard: Color
+    public var comment: Color
+    public var keyword: Color
+    public var variable: Color
+    public var number: Color
+    public var recordName: Color
+    public var `class`: Color
+    public var `protocol`: Color
+    public var defaultValue: Color
+    
+    public init(
+        name: String,
+        standard: Color,
+        comment: Color,
+        keyword: Color,
+        variable: Color,
+        number: Color,
+        recordName: Color,
+        `class`: Color,
+        `protocol`: Color,
+        defaultValue: Color
+    ) {
+        self.name = name
+        self.standard = standard
+        self.comment = comment
+        self.keyword = keyword
+        self.variable = variable
+        self.number = number
+        self.recordName = recordName
+        self.class = `class`
+        self.protocol = `protocol`
+        self.defaultValue = defaultValue
+    }
 }
 
 
 extension Theme {
-    static let system = Theme(
+    @MainActor public static let system = Theme(
         name: "System",
         standard: Color.primary,
         comment: Color.gray,
@@ -35,7 +57,7 @@ extension Theme {
         defaultValue: Color.primary
     )
     
-    static let xcodeLight = Theme(
+    @MainActor public static let xcodeLight = Theme(
         name: "Xcode Light",
         standard: Color(hex: "#000000"),       // Standard text (black)
         comment: Color(hex: "#A0A0A0"),        // Comments (light gray)
@@ -48,7 +70,7 @@ extension Theme {
         defaultValue: Color(hex: "#000000")    // Fallback (black)
     )
     
-    static let xcodeDark = Theme(
+    @MainActor public static let xcodeDark = Theme(
         name: "Xcode Dark",
         // Mapped from Xcode 16.4 Default (Dark).xccolortheme.
         standard: Color(hex: "#DDDDDE"),       // xcode.syntax.plain composited over source background
@@ -62,7 +84,7 @@ extension Theme {
         defaultValue: Color(hex: "#DDDDDE")
     )
     
-    static let githubLight = Theme(
+    @MainActor public static let githubLight = Theme(
         name: "Github Light",
         standard: Color(hex: "#24292e"),     // GitHub text color
         comment: Color(hex: "#6a737d"),      // muted comment gray
@@ -75,7 +97,7 @@ extension Theme {
         defaultValue: Color(hex: "#24292e")  // fallback text
     )
     
-    static let githubDark = Theme(
+    @MainActor public static let githubDark = Theme(
         name: "GithubDark",
         standard: Color(hex: "#c9d1d9"),     // default text (grayish white)
         comment: Color(hex: "#8b949e"),      // light gray for muted comments
@@ -88,7 +110,7 @@ extension Theme {
         defaultValue: Color(hex: "#c9d1d9")  // same as standard
     )
 
-    static let solarizedLight = Theme(
+    @MainActor public static let solarizedLight = Theme(
         name: "Solarized Light",
         standard: Color(hex: "#586e75"),
         comment: Color(hex: "#93a1a1"),
@@ -101,7 +123,7 @@ extension Theme {
         defaultValue: Color(hex: "#586e75")
     )
     
-    static let solarizedDark = Theme(
+    @MainActor public static let solarizedDark = Theme(
         name: "Solarized Dark",
         standard: Color(hex: "#93a1a1"),
         comment: Color(hex: "#586e75"),
@@ -113,4 +135,31 @@ extension Theme {
         protocol: Color(hex: "#cb4b16"),
         defaultValue: Color(hex: "#93a1a1")
     )
+}
+
+
+public extension Color {
+    func toHex() -> String {
+        let components = UIColor(self).cgColor.components!
+        
+        let r = Int(components[0] * 255)
+        let g = Int(components[1] * 255)
+        let b = Int(components[2] * 255)
+        
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
+    
+    init(hex: String) {
+        var hexSanitized = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        hexSanitized = hexSanitized.replacingOccurrences(of: "#", with: "")
+
+        var rgb: UInt64 = 0
+        Scanner(string: hexSanitized).scanHexInt64(&rgb)
+
+        let r = Double((rgb >> 16) & 0xFF) / 255.0
+        let g = Double((rgb >> 8) & 0xFF) / 255.0
+        let b = Double(rgb & 0xFF) / 255.0
+
+        self.init(red: r, green: g, blue: b)
+    }
 }
