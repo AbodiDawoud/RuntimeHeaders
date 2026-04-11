@@ -30,8 +30,15 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         methods = collectMethods(excluding: propertyNames)
     }
 
-    public func invoke(_ method: InspectableMethod) {
+    public func invoke(_ method: InspectableMethod, arguments: [RuntimeInvocationArgument] = []) {
         do {
+            guard arguments.count == method.argumentCount else {
+                throw RuntimeInvocationError.invalidArgumentList(
+                    expected: method.argumentCount,
+                    actual: arguments.count
+                )
+            }
+
             let selector = NSSelectorFromString(method.selectorName)
             let value: String
 
@@ -43,9 +50,13 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                 value = try RuntimeInvocationEngine.invokeInstanceMethod(
                     on: object,
                     selector: selector,
-                    returnTypeEncoding: method.returnTypeEncoding
+                    returnTypeEncoding: method.returnTypeEncoding,
+                    arguments: arguments
                 )
             case .classObject:
+                guard arguments.isEmpty else {
+                    throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
+                }
                 value = try RuntimeInvocationEngine.invokeClassMethod(
                     on: resolvedInstance.targetClass,
                     selector: selector,
@@ -215,11 +226,19 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                 guard shouldIncludeMethod(named: selectorName) else { continue }
 
                 let argumentCount = max(Int(method_getNumberOfArguments(method)) - 2, 0)
+                let arguments = RuntimeInvocationEngine.methodArgumentTypes(method).enumerated().map { index, encoding in
+                    InspectableMethodArgument(
+                        index: index,
+                        typeEncoding: encoding,
+                        kind: RuntimeInvocationEngine.argumentKind(for: encoding)
+                    )
+                }
                 let returnType = RuntimeInvocationEngine.methodReturnType(method)
                 let returnKind = RuntimeInvocationEngine.returnKind(for: returnType)
                 let blockedReason = invocationBlockedReason(
                     selectorName: selectorName,
                     argumentCount: argumentCount,
+                    arguments: arguments,
                     returnKind: returnKind
                 )
 
@@ -228,6 +247,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                         selectorName: selectorName,
                         returnTypeEncoding: returnType,
                         argumentCount: argumentCount,
+                        arguments: arguments,
                         returnKind: returnKind,
                         isSafeToInvoke: blockedReason == nil,
                         invocationBlockedReason: blockedReason,
@@ -372,10 +392,17 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     private func invocationBlockedReason(
         selectorName: String,
         argumentCount: Int,
+        arguments: [InspectableMethodArgument],
         returnKind: InspectableMethodReturnKind
     ) -> String? {
-        if argumentCount > 0 {
-            return "Requires \(argumentCount) argument\(argumentCount == 1 ? "" : "s")"
+        if isInspectingClass && argumentCount > 0 {
+            return "Class methods with arguments are not supported yet"
+        }
+        if argumentCount > 3 {
+            return "Requires \(argumentCount) arguments"
+        }
+        if let unsupportedArgument = arguments.first(where: { $0.kind == .unsupported }) {
+            return "Unsupported argument type \(unsupportedArgument.typeEncoding)"
         }
         if returnKind == .unsupported {
             return "Unsupported return type"

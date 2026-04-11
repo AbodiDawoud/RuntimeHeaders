@@ -101,7 +101,10 @@ struct CodeAppearanceView: View {
     }
     
     func resetAppearance() {
-        
+        preferences.apply(.system)
+        preferences.fontSize = 16
+        preferences.fontName = "SFMono-Regular"
+        preferences.hideLineNumbers = true
     }
 }
 

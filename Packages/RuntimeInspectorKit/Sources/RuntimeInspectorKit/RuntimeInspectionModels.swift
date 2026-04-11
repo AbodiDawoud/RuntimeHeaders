@@ -84,6 +84,43 @@ public enum InspectableMethodReturnKind: String {
     case unsupported
 }
 
+public enum InspectableMethodArgumentKind: String {
+    case bool
+    case integer
+    case unsignedInteger
+    case floatingPoint
+    case string
+    case unsupported
+}
+
+public struct InspectableMethodArgument: Identifiable {
+    public let index: Int
+    public let typeEncoding: String
+    public let kind: InspectableMethodArgumentKind
+
+    public init(index: Int, typeEncoding: String, kind: InspectableMethodArgumentKind) {
+        self.index = index
+        self.typeEncoding = typeEncoding
+        self.kind = kind
+    }
+
+    public var id: Int {
+        index
+    }
+
+    public var displayName: String {
+        "Argument \(index + 1)"
+    }
+}
+
+public enum RuntimeInvocationArgument {
+    case bool(Bool)
+    case integer(Int)
+    case unsignedInteger(UInt)
+    case double(Double)
+    case string(String)
+}
+
 public struct InspectableProperty: Identifiable {
     public let name: String
     public let getterName: String
@@ -139,6 +176,7 @@ public struct InspectableMethod: Identifiable {
     public let selectorName: String
     public let returnTypeEncoding: String
     public let argumentCount: Int
+    public let arguments: [InspectableMethodArgument]
     public let returnKind: InspectableMethodReturnKind
     public let isSafeToInvoke: Bool
     public let invocationBlockedReason: String?
@@ -153,6 +191,7 @@ public struct InspectableMethod: Identifiable {
         selectorName: String,
         returnTypeEncoding: String,
         argumentCount: Int,
+        arguments: [InspectableMethodArgument],
         returnKind: InspectableMethodReturnKind,
         isSafeToInvoke: Bool,
         invocationBlockedReason: String?,
@@ -166,6 +205,7 @@ public struct InspectableMethod: Identifiable {
         self.selectorName = selectorName
         self.returnTypeEncoding = returnTypeEncoding
         self.argumentCount = argumentCount
+        self.arguments = arguments
         self.returnKind = returnKind
         self.isSafeToInvoke = isSafeToInvoke
         self.invocationBlockedReason = invocationBlockedReason

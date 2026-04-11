@@ -13,7 +13,10 @@ typealias RuntimeInstanceResolutionOptions = RuntimeInspectorKit.RuntimeInstance
 
 typealias InspectableProperty = RuntimeInspectorKit.InspectableProperty
 typealias InspectableMethod = RuntimeInspectorKit.InspectableMethod
+typealias InspectableMethodArgument = RuntimeInspectorKit.InspectableMethodArgument
+typealias InspectableMethodArgumentKind = RuntimeInspectorKit.InspectableMethodArgumentKind
 typealias InvocationResult = RuntimeInspectorKit.InvocationResult
+typealias RuntimeInvocationArgument = RuntimeInspectorKit.RuntimeInvocationArgument
 
 
 typealias RuntimeInspectionSubjectKind = RuntimeInspectorKit.RuntimeInspectionSubjectKind

@@ -8,17 +8,20 @@ import SwiftUI
 struct RuntimeObjectInspectorView: View {
     @StateObject private var viewModel: RuntimeObjectInspectorViewModel
     @Environment(\.dismiss) private var dismiss
+    
     @State private var includeInheritedMembers: Bool = false
     @State private var includeNSObjectMembers: Bool = false
     @State private var includeAccessibilityMembers: Bool = false
-    @State private var includePrivateMethods: Bool = false
-    @State private var includeArgumentMethods: Bool = false
-    @State private var allowSafetyFilteredMethods: Bool = false
+    @State private var includePrivateMethods: Bool = true
+    @State private var includeArgumentMethods: Bool = true
+    @State private var allowSafetyFilteredMethods: Bool = true
+    @State private var selectedArgumentMethod: InspectableMethod?
 
     init(resolvedInstance: ResolvedRuntimeInstance) {
         _viewModel = StateObject(wrappedValue: RuntimeObjectInspectorViewModel(resolvedInstance: resolvedInstance))
     }
 
+    
     var body: some View {
         NavigationStack {
             List {
@@ -56,7 +59,11 @@ struct RuntimeObjectInspectorView: View {
                             Group {
                                 if canInvoke(method) {
                                     Button {
-                                        viewModel.invoke(method)
+                                        if method.argumentCount > 0 {
+                                            selectedArgumentMethod = method
+                                        } else {
+                                            viewModel.invoke(method)
+                                        }
                                     } label: {
                                         methodRow(method)
                                     }
@@ -70,14 +77,14 @@ struct RuntimeObjectInspectorView: View {
                 }
 
                 if disabledMethods.isEmpty == false {
-                    Section(viewModel.isInspectingClass ? "Unavailable Class Methods" : "Unavailable Methods") {
-                        ForEach(disabledMethods) { method in
-                            methodRow(method)
-                                .opacity(0.72)
+                    Section("Unavailable Methods") {
+                        ForEach(disabledMethods) {
+                            methodRow($0)
+                                .opacity(0.75)
                         }
                     }
                 }
-
+                
                 if let lastInvocation = viewModel.lastInvocation {
                     Section("Last Result") {
                         inspectorRow("Selector", value: lastInvocation.selectorName)
@@ -94,6 +101,11 @@ struct RuntimeObjectInspectorView: View {
                 }
             }
             .inlinedNavigationTitle(viewModel.resolvedInstance.inspectorTitle)
+            .sheet(item: $selectedArgumentMethod) { method in
+                MethodInvocationArgumentsView(method: method) { arguments in
+                    viewModel.invoke(method, arguments: arguments)
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: dismiss.callAsFunction) {
@@ -105,10 +117,8 @@ struct RuntimeObjectInspectorView: View {
                 }
 
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Refresh", systemImage: "arrow.clockwise") {
-                        viewModel.refresh()
-                    }
-                    .buttonStyle(.plain)
+                    Button("Refresh", systemImage: "arrow.clockwise", action: viewModel.refresh)
+                        .buttonStyle(.plain)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -227,13 +237,13 @@ struct RuntimeObjectInspectorView: View {
 
                 Spacer(minLength: 12)
 
-                Text(property.isDirectIvar ? "Direct ivar" : property.getterName)
+                Text(property.isDirectIvar ? "Direct ivar" : "")
                     .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
             }
 
             if property.isValueLoaded == false {
-                Text("Tap to read value")
+                Text("Tap to read")
                     .font(.system(.footnote, design: .monospaced))
                     .foregroundStyle(.secondary)
             } else if let errorMessage = property.errorMessage {
@@ -283,7 +293,10 @@ struct RuntimeObjectInspectorView: View {
             return blockedReason
         }
         if method.returnKind == .void {
-            return method.isClassMethod ? "Class action" : "Action"
+            return method.argumentCount > 0 ? "\(method.argumentCount) argument\(method.argumentCount == 1 ? "" : "s")" : (method.isClassMethod ? "Class action" : "Action")
+        }
+        if method.argumentCount > 0 {
+            return "\(method.argumentCount) argument\(method.argumentCount == 1 ? "" : "s") -> \(method.returnTypeEncoding)"
         }
         return "Returns \(method.returnTypeEncoding)"
     }
