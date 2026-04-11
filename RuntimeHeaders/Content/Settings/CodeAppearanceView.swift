@@ -9,7 +9,7 @@ import SwiftUI
 struct CodeAppearanceView: View {
     @ObservedObject private var preferences = CodePreferences.shared
     @Environment(\.dismiss) private var dismiss
-    
+    @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         NavigationStack {
@@ -28,13 +28,15 @@ struct CodeAppearanceView: View {
                 
                 Section("Identifiers") {
                     colorPickerRow("Variable", color: $preferences.colors.variable, icon: "v.square.fill", colorStyle: .teal)
-                    colorPickerRow("Record", color: $preferences.colors.recordName, icon: "rectangle.on.rectangle", colorStyle: .cyan)
+                    colorPickerRow("Record", color: $preferences.colors.recordName, icon: "r.square.fill", colorStyle: .aqua)
                 }
+                .imageScale(.large)
                 
                 Section("Types") {
-                    colorPickerRow("Class", color: $preferences.colors.class, icon: "c.square.fill", colorStyle: .green)
-                    colorPickerRow("Protocol", color: $preferences.colors.protocol, icon: "p.square.fill", colorStyle: .mint)
+                    colorPickerRow("Class", color: $preferences.colors.class, icon: "c.square.fill", colorStyle: .spring)
+                    colorPickerRow("Protocol", color: $preferences.colors.protocol, icon: "p.square.fill", colorStyle: .plum)
                 }
+                .imageScale(.large)
                 
                 Section {
                     colorPickerRow("Number", color: $preferences.colors.number, icon: "number", colorStyle: .orange)
@@ -47,13 +49,16 @@ struct CodeAppearanceView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Text("Code Appearance")
-                        .font(.system(.body, design: .rounded, weight: .semibold))
+                    HStack {
+                        dismissButton
+                        
+                        Text("Code Appearance")
+                            .font(.system(.title3, design: .rounded, weight: .semibold))
+                    }
                 }
                 
-                ToolbarItem(placement: .topBarTrailing) { dismissButton }
+                ToolbarItem(placement: .topBarTrailing) { resetButton }
             }
-            .toolbarBackground(.visible, for: .navigationBar)
         }
     }
     
@@ -71,11 +76,32 @@ struct CodeAppearanceView: View {
     
     private var dismissButton: some View {
         Button(action: dismiss.callAsFunction) {
-            Image(systemName: "chevron.down.circle.fill")
+            Image(systemName: "arrow.uturn.backward.circle.fill")
                 .foregroundStyle(.gray)
+                .bold()
                 .symbolRenderingMode(.hierarchical)
         }
         .buttonStyle(.plain)
+    }
+    
+    private var resetButton: some View {
+        Button(action: resetAppearance) {
+            Text("Reset")
+                .font(.system(.subheadline, design: .default, weight: .medium))
+                .foregroundStyle(.gray.gradient)
+                .padding(.horizontal, 11)
+                .padding(.vertical, 5)
+                .background(
+                    Capsule()
+                        .stroke(Color.pink.opacity(0.06), lineWidth: 0.9)
+                        .fill(.gray.quinary.opacity(scheme == .light ? 0.4 : 0.95))
+                )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    func resetAppearance() {
+        
     }
 }
 
@@ -221,7 +247,7 @@ fileprivate struct ThemesContainerView: View {
                     Button("Solarized", image: .yinYang) {
                         codePreferences.apply(solarizedTheme)
                     }
-                    .buttonStyle(ThemeButtonStyle(.plum))
+                    .buttonStyle(ThemeButtonStyle(.strawberry))
                     
                     
                     Button("Default System", systemImage: "return") {
@@ -275,12 +301,12 @@ fileprivate struct ThemeButtonStyle: ButtonStyle {
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
             .foregroundStyle(foreground.gradient)
-            .background(foreground.opacity(0.2).gradient, in: Capsule())
-            .opacity(configuration.isPressed ? 0.7 : 1)
-            .overlay {
+            .background {
                 Capsule()
-                    .stroke(foreground.quaternary, lineWidth: 1.4)
+                    .stroke(foreground.quaternary, style: .init(lineWidth: 1, lineCap: .round, lineJoin: .round, dash: [7, 7]))
+                    .fill(foreground.opacity(0.18))
             }
+            .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 

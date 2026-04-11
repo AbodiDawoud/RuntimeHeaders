@@ -96,6 +96,7 @@ public struct InspectableProperty: Identifiable {
     public let isAccessibilityRelated: Bool
     public let isClassMember: Bool
     public let isDirectIvar: Bool
+    public let isValueLoaded: Bool
 
     public init(
         name: String,
@@ -108,7 +109,8 @@ public struct InspectableProperty: Identifiable {
         isNSObjectMember: Bool,
         isAccessibilityRelated: Bool,
         isClassMember: Bool,
-        isDirectIvar: Bool
+        isDirectIvar: Bool,
+        isValueLoaded: Bool = true
     ) {
         self.name = name
         self.getterName = getterName
@@ -121,6 +123,7 @@ public struct InspectableProperty: Identifiable {
         self.isAccessibilityRelated = isAccessibilityRelated
         self.isClassMember = isClassMember
         self.isDirectIvar = isDirectIvar
+        self.isValueLoaded = isValueLoaded
     }
 
     public var id: String {
@@ -128,7 +131,7 @@ public struct InspectableProperty: Identifiable {
     }
 
     public var isReadable: Bool {
-        errorMessage == nil
+        isValueLoaded && errorMessage == nil
     }
 }
 

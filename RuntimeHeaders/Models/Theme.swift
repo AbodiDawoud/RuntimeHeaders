@@ -50,15 +50,16 @@ extension Theme {
     
     static let xcodeDark = Theme(
         name: "Xcode Dark",
-        standard: Color(hex: "#FFFFFF"),       // Standard text (white)
-        comment: Color(red: 0.505882, green: 0.545098, blue: 0.592157),
-        keyword: Color(red: 0.937255, green: 0.505882, blue: 0.694118),
-        variable: Color(red: 0.411765, green: 0.682353, blue: 0.784314),
-        number: Color(red: 0.843137, green: 0.788235, blue: 0.52549),
-        recordName: Color(red: 0.933333, green: 0.533333, blue: 0.462745),     // Strings..
-        class: Color(red: 0.541176, green: 0.866667, blue: 0.984314),    // Class names
-        protocol: Color(red: 0.835294, green: 0.737255, blue: 0.984314), // Protocols Inheritance
-        defaultValue: Color(hex: "#FFFFFF")    // Fallback (rare case)
+        // Mapped from Xcode 16.4 Default (Dark).xccolortheme.
+        standard: Color(hex: "#DDDDDE"),       // xcode.syntax.plain composited over source background
+        comment: Color(hex: "#6C7986"),        // xcode.syntax.comment
+        keyword: Color(hex: "#FC5FA3"),        // xcode.syntax.keyword
+        variable: Color(hex: "#67B7A4"),       // xcode.syntax.identifier.variable
+        number: Color(hex: "#D0BF69"),         // xcode.syntax.number
+        recordName: Color(hex: "#FC6A5D"),     // xcode.syntax.string
+        class: Color(hex: "#9EF1DD"),          // xcode.syntax.identifier.class
+        protocol: Color(hex: "#D0A8FF"),       // xcode.syntax.identifier.type.system
+        defaultValue: Color(hex: "#DDDDDE")
     )
     
     static let githubLight = Theme(

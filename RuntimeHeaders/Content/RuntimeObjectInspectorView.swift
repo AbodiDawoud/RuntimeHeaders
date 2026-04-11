@@ -13,6 +13,7 @@ struct RuntimeObjectInspectorView: View {
     @State private var includeAccessibilityMembers: Bool = false
     @State private var includePrivateMethods: Bool = false
     @State private var includeArgumentMethods: Bool = false
+    @State private var allowSafetyFilteredMethods: Bool = false
 
     init(resolvedInstance: ResolvedRuntimeInstance) {
         _viewModel = StateObject(wrappedValue: RuntimeObjectInspectorViewModel(resolvedInstance: resolvedInstance))
@@ -36,19 +37,24 @@ struct RuntimeObjectInspectorView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredProperties) { property in
-                            propertyRow(property)
+                            Button {
+                                viewModel.read(property)
+                            } label: {
+                                propertyRow(property)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
                 }
 
-                Section(viewModel.isInspectingClass ? "Callable Class Methods" : "Safe Methods") {
+                Section(viewModel.isInspectingClass ? "Callable Class Methods" : callableMethodsSectionTitle) {
                     if filteredMethods.isEmpty {
                         Text("No methods match the current filters.")
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredMethods) { method in
                             Group {
-                                if method.isSafeToInvoke {
+                                if canInvoke(method) {
                                     Button {
                                         viewModel.invoke(method)
                                     } label: {
@@ -112,6 +118,7 @@ struct RuntimeObjectInspectorView: View {
                         Toggle("Include Accessibility Members", isOn: $includeAccessibilityMembers)
                         Toggle("Include Private Methods", isOn: $includePrivateMethods)
                         Toggle("Include Methods With Arguments", isOn: $includeArgumentMethods)
+                        Toggle("Allow Safety-Filtered Methods", isOn: $allowSafetyFilteredMethods)
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease.circle")
                             .foregroundStyle(.secondary)
@@ -124,7 +131,7 @@ struct RuntimeObjectInspectorView: View {
 
     private var filteredMethods: [InspectableMethod] {
         viewModel.methods.filter { method in
-            method.isSafeToInvoke &&
+            canInvoke(method) &&
             shouldIncludeMember(
                 isInherited: method.isInherited,
                 isNSObjectMember: method.isNSObjectMember,
@@ -135,9 +142,13 @@ struct RuntimeObjectInspectorView: View {
         }
     }
 
+    private var callableMethodsSectionTitle: String {
+        allowSafetyFilteredMethods ? "Callable Methods" : "Safe Methods"
+    }
+
     private var disabledMethods: [InspectableMethod] {
         viewModel.methods.filter { method in
-            method.isSafeToInvoke == false &&
+            canInvoke(method) == false &&
             shouldIncludeMember(
                 isInherited: method.isInherited,
                 isNSObjectMember: method.isNSObjectMember,
@@ -146,6 +157,10 @@ struct RuntimeObjectInspectorView: View {
                 hasArguments: method.argumentCount > 0
             )
         }
+    }
+
+    private func canInvoke(_ method: InspectableMethod) -> Bool {
+        method.isSafeToInvoke || (allowSafetyFilteredMethods && method.isBlockedBySafetyFilter)
     }
 
     private func shouldIncludeMember(
@@ -217,7 +232,11 @@ struct RuntimeObjectInspectorView: View {
                     .foregroundStyle(.secondary)
             }
 
-            if let errorMessage = property.errorMessage {
+            if property.isValueLoaded == false {
+                Text("Tap to read value")
+                    .font(.system(.footnote, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            } else if let errorMessage = property.errorMessage {
                 Text(errorMessage)
                     .font(.system(.footnote, design: .monospaced))
                     .foregroundStyle(.red)
@@ -245,18 +264,21 @@ struct RuntimeObjectInspectorView: View {
 
                 Text(methodSubtitle(for: method))
                     .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(method.isSafeToInvoke ? .secondary : .orange)
+                    .foregroundColor(canInvoke(method) ? .secondary : .orange)
             }
 
             Spacer(minLength: 12)
 
-            Image(systemName: method.isSafeToInvoke ? "play.circle.fill" : "lock.circle")
-                .foregroundStyle(method.isSafeToInvoke ? .blue : .secondary)
+            Image(systemName: canInvoke(method) ? "play.circle.fill" : "lock.circle")
+                .foregroundStyle(canInvoke(method) ? .blue : .secondary)
         }
         .padding(.vertical, 2)
     }
 
     private func methodSubtitle(for method: InspectableMethod) -> String {
+        if allowSafetyFilteredMethods && method.isBlockedBySafetyFilter {
+            return "Safety filter disabled"
+        }
         if let blockedReason = method.invocationBlockedReason {
             return blockedReason
         }
@@ -264,5 +286,11 @@ struct RuntimeObjectInspectorView: View {
             return method.isClassMethod ? "Class action" : "Action"
         }
         return "Returns \(method.returnTypeEncoding)"
+    }
+}
+
+private extension InspectableMethod {
+    var isBlockedBySafetyFilter: Bool {
+        invocationBlockedReason == "Blocked by safety filter"
     }
 }

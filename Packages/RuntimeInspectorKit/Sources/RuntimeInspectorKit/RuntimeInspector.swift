@@ -156,7 +156,8 @@ public enum RuntimeInspector {
         let allocSelector = NSSelectorFromString("alloc")
         let initSelector = NSSelectorFromString("init")
 
-        guard let allocMethod = class_getClassMethod(cls, allocSelector),
+        guard classDeclaresZeroArgumentInit(cls),
+              let allocMethod = class_getClassMethod(cls, allocSelector),
               let initMethod = class_getInstanceMethod(cls, initSelector)
         else { return nil }
 
@@ -207,6 +208,7 @@ public enum RuntimeInspector {
 
     private static func supportsZeroArgumentInitialization(forClassNamed className: String) -> Bool {
         guard let cls = NSClassFromString(className),
+              classDeclaresZeroArgumentInit(cls),
               let allocMethod = class_getClassMethod(cls, NSSelectorFromString("alloc")),
               let initMethod = class_getInstanceMethod(cls, NSSelectorFromString("init"))
         else { return false }
@@ -220,5 +222,16 @@ public enum RuntimeInspector {
             initArgCount == 0 &&
             RuntimeInvocationEngine.returnKind(for: allocReturnType) == .object &&
             RuntimeInvocationEngine.returnKind(for: initReturnType) == .object
+    }
+
+    private static func classDeclaresZeroArgumentInit(_ cls: AnyClass) -> Bool {
+        var count: UInt32 = 0
+        guard let methods = class_copyMethodList(cls, &count) else { return false }
+        defer { free(methods) }
+
+        return (0..<Int(count)).contains { index in
+            NSStringFromSelector(method_getName(methods[index])) == "init" &&
+                max(Int(method_getNumberOfArguments(methods[index])) - 2, 0) == 0
+        }
     }
 }

@@ -67,6 +67,19 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         }
     }
 
+    public func read(_ property: InspectableProperty) {
+        guard let index = properties.firstIndex(where: { $0.id == property.id }) else { return }
+
+        let updatedProperty: InspectableProperty
+        if property.isDirectIvar {
+            updatedProperty = readDirectIvar(property)
+        } else {
+            updatedProperty = readGetter(property)
+        }
+
+        properties[index] = updatedProperty
+    }
+
     private func collectProperties() -> [InspectableProperty] {
         var results: [InspectableProperty] = []
         var seen = Set<String>()
@@ -130,36 +143,22 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                         continue
                     }
 
-                    do {
-                        let value = try invoke(selector: getterSelector, returnTypeEncoding: returnType)
-                        results.append(
-                            makeProperty(
-                                name: name,
-                                getterName: getterName,
-                                attributes: attributes,
-                                valueDescription: value,
-                                errorMessage: nil,
-                                declaringClassName: declaringClassName,
-                                isDirectIvar: false
-                            )
+                    results.append(
+                        makeProperty(
+                            name: name,
+                            getterName: getterName,
+                            attributes: attributes,
+                            valueDescription: "",
+                            errorMessage: nil,
+                            declaringClassName: declaringClassName,
+                            isDirectIvar: false,
+                            isValueLoaded: false
                         )
-                    } catch {
-                        results.append(
-                            makeProperty(
-                                name: name,
-                                getterName: getterName,
-                                attributes: attributes,
-                                valueDescription: "",
-                                errorMessage: error.localizedDescription,
-                                declaringClassName: declaringClassName,
-                                isDirectIvar: false
-                            )
-                        )
-                    }
+                    )
                 }
             }
 
-            if isInspectingClass == false, let object = resolvedInstance.object {
+            if isInspectingClass == false, resolvedInstance.object != nil {
                 var ivarCount: UInt32 = 0
                 if let ivars = class_copyIvarList(cls, &ivarCount) {
                     defer { free(ivars) }
@@ -171,17 +170,16 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                         guard seen.insert(name).inserted else { continue }
 
                         let typeEncoding = ivar_getTypeEncoding(ivar).map { String(cString: $0) } ?? ""
-                        let valueResult = describeIvarValue(object: object, ivar: ivar, typeEncoding: typeEncoding)
-
                         results.append(
                             makeProperty(
                                 name: name,
                                 getterName: name,
                                 attributes: typeEncoding,
-                                valueDescription: valueResult.valueDescription,
-                                errorMessage: valueResult.errorMessage,
+                                valueDescription: "",
+                                errorMessage: nil,
                                 declaringClassName: declaringClassName,
-                                isDirectIvar: true
+                                isDirectIvar: true,
+                                isValueLoaded: false
                             )
                         )
                     }
@@ -291,7 +289,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         valueDescription: String,
         errorMessage: String?,
         declaringClassName: String,
-        isDirectIvar: Bool
+        isDirectIvar: Bool,
+        isValueLoaded: Bool = true
     ) -> InspectableProperty {
         InspectableProperty(
             name: name,
@@ -304,8 +303,54 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             isNSObjectMember: declaringClassName == "NSObject",
             isAccessibilityRelated: isAccessibilityRelated(name: name, alternateName: getterName),
             isClassMember: isInspectingClass,
-            isDirectIvar: isDirectIvar
+            isDirectIvar: isDirectIvar,
+            isValueLoaded: isValueLoaded
         )
+    }
+
+    private func readGetter(_ property: InspectableProperty) -> InspectableProperty {
+        do {
+            let value = try invoke(
+                selector: NSSelectorFromString(property.getterName),
+                returnTypeEncoding: propertyReturnType(for: property)
+            )
+
+            return property.withValue(value, errorMessage: nil)
+        } catch {
+            return property.withValue("", errorMessage: error.localizedDescription)
+        }
+    }
+
+    private func readDirectIvar(_ property: InspectableProperty) -> InspectableProperty {
+        guard let object = resolvedInstance.object else {
+            return property.withValue("", errorMessage: RuntimeInvocationError.nilObjectReturn(property.name).localizedDescription)
+        }
+        guard let declaringClass = NSClassFromString(property.declaringClassName),
+              let ivar = class_getInstanceVariable(declaringClass, property.name)
+        else {
+            return property.withValue("", errorMessage: "Ivar unavailable")
+        }
+
+        let valueResult = describeIvarValue(object: object, ivar: ivar, typeEncoding: property.attributes)
+        return property.withValue(valueResult.valueDescription, errorMessage: valueResult.errorMessage)
+    }
+
+    private func propertyReturnType(for property: InspectableProperty) throws -> String {
+        let selector = NSSelectorFromString(property.getterName)
+        let method: Method?
+
+        switch resolvedInstance.subjectKind {
+        case .instance:
+            method = class_getInstanceMethod(propertyTraversalRootClass, selector)
+        case .classObject:
+            method = class_getClassMethod(resolvedInstance.targetClass, selector)
+        }
+
+        guard let method else {
+            throw RuntimeInvocationError.missingMethod(property.getterName)
+        }
+
+        return RuntimeInvocationEngine.methodReturnType(method)
     }
 
     private func shouldIncludeMethod(named selectorName: String) -> Bool {
@@ -391,5 +436,24 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             return ("nil", nil)
         }
         return (RuntimeInvocationEngine.describe(value: value), nil)
+    }
+}
+
+private extension InspectableProperty {
+    func withValue(_ valueDescription: String, errorMessage: String?) -> InspectableProperty {
+        InspectableProperty(
+            name: name,
+            getterName: getterName,
+            attributes: attributes,
+            valueDescription: valueDescription,
+            errorMessage: errorMessage,
+            declaringClassName: declaringClassName,
+            isInherited: isInherited,
+            isNSObjectMember: isNSObjectMember,
+            isAccessibilityRelated: isAccessibilityRelated,
+            isClassMember: isClassMember,
+            isDirectIvar: isDirectIvar,
+            isValueLoaded: true
+        )
     }
 }
