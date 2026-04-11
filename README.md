@@ -3,9 +3,14 @@
 </p>
 
 # Runtime Headers
-[![swift-version](https://img.shields.io/badge/swift-5-orange.svg)](https://github.com/apple/swift)
-![iOS-version](https://img.shields.io/badge/iOS-17-blue)
-[![license](https://img.shields.io/badge/license-MIT-brightgreen.svg)](LICENSE)
+[![](https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-white.svg)](https://buymeacoffee.com/abodi)
+
+<div>
+  <img src="https://img.shields.io/badge/Platform-iOS_17+-000000?style=flat&logo=apple&logoColor=white" />
+  <img src="https://img.shields.io/badge/Swift-5-F05138?style=flat&logo=swift&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat" />
+</div>
+<br>
 
 This application gives you access to iOS’s system internals. Thanks to [Leptos](https://github.com/leptos-null) for his incredible work. This is my own custom fork of his [HeaderView](https://github.com/leptos-null/HeaderViewer) project with many new add-ons.
 
@@ -13,14 +18,15 @@ If you looking for macOS version, take a look at [RuntimeViewer](https://github.
 
 
 ## Features
-- New & Fresh UI
+- Live object Inspection.
 - New History system
 - New Bookmark system
 - Ability to adjust Code Appearance
 - Save/Share/Bookmark any class or protocol
 - New actions and menus
 - Improved project structure
-- Code clean up
+- Modern Looking UI
+- Clean Code
 - Focused on iOS/iPadOS
 - iOS 17+
 - And much more 
@@ -28,9 +34,9 @@ If you looking for macOS version, take a look at [RuntimeViewer](https://github.
 
 ## Screenshots
 
-<img src="https://github.com/user-attachments/assets/f7ad06a8-5080-4aac-9288-d8bd7d4304b0" height="300">
-<img src="https://github.com/user-attachments/assets/57fd3297-39b7-4a8e-8fa0-754aa4f81745" height="300">
-<img src="https://github.com/user-attachments/assets/a48a0afe-3832-40fa-95a4-3de4e234748c" height="300">
-<img src="https://github.com/user-attachments/assets/58e1af20-7843-4f9a-b904-1c628d70089c" height="300">
-<img src="https://github.com/user-attachments/assets/1f806b41-8282-4d0b-a064-721053b0a6af" height="300">
-<img src="https://github.com/user-attachments/assets/3ed1ef76-fabb-4cd9-861c-779f69ab5f25" height="300">
+<img height="300" alt="Home" src="https://github.com/user-attachments/assets/f848d4fb-47eb-422a-b1f8-f5c571c8aee6" />
+<img height="300" alt="History" src="https://github.com/user-attachments/assets/58437d59-842c-41d2-80b2-c7a305968ecd" />
+<img height="300" alt="Settings" src="https://github.com/user-attachments/assets/1850903a-5cc6-400d-8735-04634737ed6c" />
+<img height="300" alt="Bookmarks" src="https://github.com/user-attachments/assets/6ca33a0a-c938-474b-8929-1538fb5cf7e7" />
+<img height="300" alt="CodeAppearanceView" src="https://github.com/user-attachments/assets/e2ed8c22-0612-4d70-b284-ddac7bd0474b" />
+<img height="300" alt="Inspector" src="https://github.com/user-attachments/assets/8e108c94-98c4-4f30-836c-35d7ed75ce8e" />
