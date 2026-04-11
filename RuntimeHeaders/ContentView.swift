@@ -144,7 +144,12 @@ struct _ContentView: View {
     }
     
     func assignNodePath(_ path: String) {
-        if BookmarksStore.lastNodePath == path { return }
-        BookmarksStore.lastNodePath = path
+        if LastImagePathTracker.path == path { return }
+        LastImagePathTracker.path = path
     }
+}
+
+/// keeps track of the last opened bundle or framework.
+enum LastImagePathTracker {
+    static var path: String?
 }

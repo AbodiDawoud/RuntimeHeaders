@@ -52,10 +52,12 @@ final class CodePreferences: ObservableObject {
 
         if newScheme == .dark {
             if theme.contains("xcode") { return apply(.xcodeDark) }
+            if theme.contains("classic") { return apply(.classicDark) }
             if theme.contains("github") { return apply(.githubDark) }
             if theme.contains("solarized") { return apply(.solarizedDark) }
         } else {
             if theme.contains("xcode") { return apply(.xcodeLight) }
+            if theme.contains("classic") { return apply(.classicLight) }
             if theme.contains("github") { return apply(.githubLight) }
             if theme.contains("solarized") { return apply(.solarizedLight) }
         }

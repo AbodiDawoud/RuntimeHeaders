@@ -21,7 +21,7 @@ struct NamedNodeRow: View {
                 HStack {
                     Image(
                         systemName: child.isLeaf == false ? "folder" :
-                                    canLoad ? "lock.document" : "doc"
+                                    canLoad ? "lock.document" : "building.columns"
                     ).foregroundColor(canLoad ? .tangerine : .blue)
                     
                     Text(child.name)

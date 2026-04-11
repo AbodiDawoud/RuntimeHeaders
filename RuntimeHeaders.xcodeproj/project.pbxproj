@@ -30,7 +30,6 @@
 		BD8A38ED2E9ADA3B00F1B486 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38AE2E9ADA3B00F1B486 /* SettingsView.swift */; };
 		BD8A38EE2E9ADA3B00F1B486 /* RuntimeListings.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38D32E9ADA3B00F1B486 /* RuntimeListings.swift */; };
 		BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38B42E9ADA3B00F1B486 /* RuntimeObjectDetail.swift */; };
-		BD8A38F12E9ADA3B00F1B486 /* Bookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38BF2E9ADA3B00F1B486 /* Bookmark.swift */; };
 		BD8A38F22E9ADA3B00F1B486 /* BookmarksStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38CF2E9ADA3B00F1B486 /* BookmarksStore.swift */; };
 		BD8A38F32E9ADA3B00F1B486 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38B12E9ADA3B00F1B486 /* HistoryView.swift */; };
 		BD8A38F52E9ADA3B00F1B486 /* BookmarkListingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8A38B02E9ADA3B00F1B486 /* BookmarkListingView.swift */; };
@@ -48,6 +47,7 @@
 		BD995F8F2F8AD90500E203AE /* RuntimeSelectorChooserView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F8E2F8AD90500E203AE /* RuntimeSelectorChooserView.swift */; };
 		BD995F912F8AE47C00E203AE /* CodePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F902F8AE47C00E203AE /* CodePreferences.swift */; };
 		BD995F932F8AE4DA00E203AE /* RuntimeObjectType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F922F8AE4DA00E203AE /* RuntimeObjectType.swift */; };
+		BD995F952F8AFE8500E203AE /* Bookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F942F8AFE8500E203AE /* Bookmark.swift */; };
 		BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */; };
 		BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */; };
 		BE0000012F90000100000008 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000018 /* InspectorView.swift */; };
@@ -87,7 +87,6 @@
 		BD8A38BB2E9ADA3B00F1B486 /* LabelStyles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelStyles.swift; sourceTree = "<group>"; };
 		BD8A38BC2E9ADA3B00F1B486 /* View+.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+.swift"; sourceTree = "<group>"; };
 		BD8A38BD2E9ADA3B00F1B486 /* ZoomGesturesRemoval.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZoomGesturesRemoval.swift; sourceTree = "<group>"; };
-		BD8A38BF2E9ADA3B00F1B486 /* Bookmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bookmark.swift; sourceTree = "<group>"; };
 		BD8A38C02E9ADA3B00F1B486 /* NamedNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NamedNode.swift; sourceTree = "<group>"; };
 		BD8A38C22E9ADA3B00F1B486 /* RuntimeTypeSearchScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeTypeSearchScope.swift; sourceTree = "<group>"; };
 		BD8A38C62E9ADA3B00F1B486 /* ConsolaVD3-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "ConsolaVD3-Regular.ttf"; sourceTree = "<group>"; };
@@ -110,6 +109,7 @@
 		BD995F8E2F8AD90500E203AE /* RuntimeSelectorChooserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeSelectorChooserView.swift; sourceTree = "<group>"; };
 		BD995F902F8AE47C00E203AE /* CodePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodePreferences.swift; sourceTree = "<group>"; };
 		BD995F922F8AE4DA00E203AE /* RuntimeObjectType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectType.swift; sourceTree = "<group>"; };
+		BD995F942F8AFE8500E203AE /* Bookmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bookmark.swift; sourceTree = "<group>"; };
 		BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInspection.swift; sourceTree = "<group>"; };
 		BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInstanceResolver.swift; sourceTree = "<group>"; };
 		BE0000012F90000100000018 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
@@ -172,7 +172,7 @@
 		BD8A38C52E9ADA3B00F1B486 /* Models */ = {
 			isa = PBXGroup;
 			children = (
-				BD8A38BF2E9ADA3B00F1B486 /* Bookmark.swift */,
+				BD995F942F8AFE8500E203AE /* Bookmark.swift */,
 				BD995F862F8AC9A700E203AE /* History.swift */,
 				BD8A38C02E9ADA3B00F1B486 /* NamedNode.swift */,
 				BD8A38C22E9ADA3B00F1B486 /* RuntimeTypeSearchScope.swift */,
@@ -377,7 +377,7 @@
 				BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */,
 				BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */,
 				BD995F852F8AA2D900E203AE /* MethodInvocationArgumentsView.swift in Sources */,
-				BD8A38F12E9ADA3B00F1B486 /* Bookmark.swift in Sources */,
+				BD995F952F8AFE8500E203AE /* Bookmark.swift in Sources */,
 				BD8A38F22E9ADA3B00F1B486 /* BookmarksStore.swift in Sources */,
 				BD8A38F32E9ADA3B00F1B486 /* HistoryView.swift in Sources */,
 				BD8A38F52E9ADA3B00F1B486 /* BookmarkListingView.swift in Sources */,

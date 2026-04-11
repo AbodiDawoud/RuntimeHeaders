@@ -22,11 +22,11 @@ struct HistoryView: View {
                 }
                 
                 
-                ForEach(_h_items) { obj in
+                ForEach(_h_items) { item in
                     NavigationLink {
-                        RuntimeObjectDetail(type: obj)
+                        RuntimeObjectDetail(type: item.object, parentPath: item.parentPath)
                     } label: {
-                        RuntimeObjectRow(type: obj)
+                        RuntimeObjectRow(type: item.object)
                     }
                 }
                 .onDelete(perform: manager.removeObject)
@@ -69,7 +69,7 @@ struct HistoryView: View {
     }
     
     // history items
-    var _h_items: [RuntimeObjectType] {
+    var _h_items: [HistoryItem] {
         if manager.historyCount > 3 {
             return Array(manager.historyItems.dropFirst(3))
         }
@@ -86,11 +86,11 @@ struct LatestHistoryContainerView: View {
         Section {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
-                    ForEach(Array(manager.historyItems.prefix(3))) { obj in
+                    ForEach(Array(manager.historyItems.prefix(3))) { item in
                         NavigationLink {
-                            RuntimeObjectDetail(type: obj)
+                            RuntimeObjectDetail(type: item.object, parentPath: item.parentPath)
                         } label: {
-                            rowView(obj)
+                            rowView(item)
                         }
                         .buttonStyle(.plain)
                     }
@@ -106,7 +106,7 @@ struct LatestHistoryContainerView: View {
         }
     }
     
-    func rowView(_ object: RuntimeObjectType) -> some View {
+    func rowView(_ item: HistoryItem) -> some View {
         HStack(alignment: .center, spacing: 10) {
             Image(.fileStackIcon)
                 .resizable()
@@ -114,7 +114,7 @@ struct LatestHistoryContainerView: View {
                 .frame(width: 24, height: 24)
                 .shadow(radius: 6, y: 2.8)
             
-            Text(object.name)
+            Text(item.object.name)
                 .font(.system(size: 15, weight: .semibold))
                 .lineLimit(1)
         }

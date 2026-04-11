@@ -7,7 +7,7 @@ import Foundation
 
 
 final class HistoryManager: ObservableObject {
-    @Published var historyItems: [RuntimeObjectType] = []
+    @Published var historyItems: [HistoryItem] = []
     
     private let defaults = UserDefaults.standard
     private let key = "objectsHistory"
@@ -22,22 +22,24 @@ final class HistoryManager: ObservableObject {
     
     
     func addObject(_ newObject: RuntimeObjectType?) {
-        guard let newObject else { return }
-        guard !historyItems.contains(newObject) else { return }
+        let isAlreadyInHistory = historyItems.contains { $0.object == newObject }
+        guard let newObject, !isAlreadyInHistory else { return }
+        
+        
+        let newItem = HistoryItem(object: newObject, parentPath: LastImagePathTracker.path, seenAt: .now)
+        
 
-        var updatedHistory = historyItems
         let limit = PreferenceController.shared.preferences.historyLimit
-        if limit != 0, updatedHistory.count >= limit {
-            updatedHistory = Array(updatedHistory.prefix(limit - 1))
+        if limit != 0, historyItems.count >= limit {
+            historyItems = Array(historyItems.prefix(limit - 1))
         }
 
-        updatedHistory.insert(newObject, at: 0)
-        historyItems = updatedHistory
+        historyItems.insert(newItem, at: 0)
         syncHistory()
     }
     
-    func removeObject(_ object: RuntimeObjectType) {
-        historyItems.removeAll { $0 == object }
+    func removeObject(_ item: HistoryItem) {
+        historyItems.removeAll { $0 == item }
         syncHistory()
     }
     
@@ -70,15 +72,19 @@ final class HistoryManager: ObservableObject {
         historyItems = enforceLimit(on: restoreHistoryData())
     }
     
-    private func restoreHistoryData() -> [RuntimeObjectType] {
-        guard let data = defaults.data(forKey: key),
-              let objects = try? JSONDecoder().decode([RuntimeObjectType].self, from: data)
+    private func restoreHistoryData() -> [HistoryItem] {
+        guard let data = defaults.data(forKey: key)
         else { return [] }
-        
-        return objects
+
+        if let items = try? JSONDecoder().decode([HistoryItem].self, from: data) {
+            return items
+        }
+
+        guard let objects = try? JSONDecoder().decode([RuntimeObjectType].self, from: data) else { return [] }
+        return objects.map { HistoryItem(object: $0, parentPath: nil, seenAt: .now) }
     }
     
-    private func enforceLimit(on history: [RuntimeObjectType]) -> [RuntimeObjectType] {
+    private func enforceLimit(on history: [HistoryItem]) -> [HistoryItem] {
         let limit = PreferenceController.shared.preferences.historyLimit
         guard limit != 0 else { return history }
         return Array(history.prefix(limit))

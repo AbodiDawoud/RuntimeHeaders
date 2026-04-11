@@ -8,11 +8,6 @@ import Foundation
 class BookmarksStore: ObservableObject {
     static let shared = BookmarksStore()
     
-    // keeps track of the last opened bundle or framework.
-    // This property will be tied to saved bookmarks for dynamic load later on.
-    static var lastNodePath: String?
-    
-    
     @Published var bookmarks: [Bookmark] = []
     
     private let userDefaults: UserDefaults
@@ -25,7 +20,7 @@ class BookmarksStore: ObservableObject {
     }
     
     func toggleBookmark(for imageName: String) {
-        guard let parent = BookmarksStore.lastNodePath else { return }
+        guard let parent = LastImagePathTracker.path else { return }
         let b = Bookmark(name: imageName, parentPath: parent, date: Date.now)
         
         if let index = bookmarks.firstIndex(of: b) {
@@ -63,7 +58,7 @@ class BookmarksStore: ObservableObject {
     }
     
     func isBookmarked(_ imageName: String) -> Bool {
-        guard let path = BookmarksStore.lastNodePath else { return false }
+        guard let path = LastImagePathTracker.path else { return false }
         return bookmarks.contains { $0.name == imageName && $0.parentPath == path }
     }
     

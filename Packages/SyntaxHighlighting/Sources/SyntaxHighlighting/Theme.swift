@@ -59,15 +59,16 @@ extension Theme {
     
     @MainActor public static let xcodeLight = Theme(
         name: "Xcode Light",
-        standard: Color(hex: "#000000"),       // Standard text (black)
-        comment: Color(hex: "#A0A0A0"),        // Comments (light gray)
-        keyword: Color(hex: "#0000FF"),        // Keywords (bright blue)
-        variable: Color(hex: "#000000"),       // Variables (black, same as standard)
-        number: Color(hex: "#1C00CF"),         // Numbers (deep blue — your original is good)
-        recordName: Color(hex: "#C80000"),     // Structs/enums (rich red)
-        class: Color(hex: "#6E2CA0"),          // Class names (purple)
-        protocol: Color(hex: "#6E2CA0"),       // Protocols (same as class)
-        defaultValue: Color(hex: "#000000")    // Fallback (black)
+        // Mapped from Xcode 16.4 Default (Light).xccolortheme.
+        standard: Color(hex: "#262626"),       // xcode.syntax.plain composited over source background
+        comment: Color(hex: "#5D6C79"),        // xcode.syntax.comment
+        keyword: Color(hex: "#9B2393"),        // xcode.syntax.keyword
+        variable: Color(hex: "#326D74"),       // xcode.syntax.identifier.variable
+        number: Color(hex: "#1C00CF"),         // xcode.syntax.number
+        recordName: Color(hex: "#C41A16"),     // xcode.syntax.string
+        class: Color(hex: "#1C464A"),          // xcode.syntax.identifier.class
+        protocol: Color(hex: "#3900A0"),       // xcode.syntax.identifier.type.system
+        defaultValue: Color(hex: "#262626")
     )
     
     @MainActor public static let xcodeDark = Theme(
@@ -134,6 +135,97 @@ extension Theme {
         class: Color(hex: "#d33682"),
         protocol: Color(hex: "#cb4b16"),
         defaultValue: Color(hex: "#93a1a1")
+    )
+
+    @MainActor public static let classicLight = Theme(
+        name: "Classic Light",
+        standard: Color(hex: "#262626"),
+        comment: Color(hex: "#267507"),
+        keyword: Color(hex: "#9B2393"),
+        variable: Color(hex: "#326D74"),
+        number: Color(hex: "#1C00CF"),
+        recordName: Color(hex: "#C41A16"),
+        class: Color(hex: "#1C464A"),
+        protocol: Color(hex: "#3900A0"),
+        defaultValue: Color(hex: "#262626")
+    )
+
+    @MainActor public static let classicDark = Theme(
+        name: "Classic Dark",
+        standard: Color(hex: "#DDDDDE"),
+        comment: Color(hex: "#73A74E"),
+        keyword: Color(hex: "#FC5FA3"),
+        variable: Color(hex: "#67B7A4"),
+        number: Color(hex: "#D0BF69"),
+        recordName: Color(hex: "#FC6A5D"),
+        class: Color(hex: "#9EF1DD"),
+        protocol: Color(hex: "#D0A8FF"),
+        defaultValue: Color(hex: "#DDDDDE")
+    )
+
+    @MainActor public static let civic = Theme(
+        name: "Civic",
+        standard: Color(hex: "#E1E2E7"),
+        comment: Color(hex: "#45BB3E"),
+        keyword: Color(hex: "#D7008F"),
+        variable: Color(hex: "#1DA9A2"),
+        number: Color(hex: "#149C92"),
+        recordName: Color(hex: "#D3232E"),
+        class: Color(hex: "#1DA9A2"),
+        protocol: Color(hex: "#25908D"),
+        defaultValue: Color(hex: "#E1E2E7")
+    )
+
+    @MainActor public static let dusk = Theme(
+        name: "Dusk",
+        standard: Color(hex: "#FFFFFF"),
+        comment: Color(hex: "#41B645"),
+        keyword: Color(hex: "#B21889"),
+        variable: Color(hex: "#83C057"),
+        number: Color(hex: "#786DC4"),
+        recordName: Color(hex: "#DB2C38"),
+        class: Color(hex: "#83C057"),
+        protocol: Color(hex: "#00A0BE"),
+        defaultValue: Color(hex: "#FFFFFF")
+    )
+
+    @MainActor public static let midnight = Theme(
+        name: "Midnight",
+        standard: Color(hex: "#FFFFFF"),
+        comment: Color(hex: "#41CC45"),
+        keyword: Color(hex: "#D31895"),
+        variable: Color(hex: "#23FF83"),
+        number: Color(hex: "#786DFF"),
+        recordName: Color(hex: "#FF2C38"),
+        class: Color(hex: "#23FF83"),
+        protocol: Color(hex: "#00A0FF"),
+        defaultValue: Color(hex: "#FFFFFF")
+    )
+
+    @MainActor public static let sunset = Theme(
+        name: "Sunset",
+        standard: Color(hex: "#000000"),
+        comment: Color(hex: "#C3741C"),
+        keyword: Color(hex: "#294277"),
+        variable: Color(hex: "#476A97"),
+        number: Color(hex: "#294277"),
+        recordName: Color(hex: "#DF0700"),
+        class: Color(hex: "#B44500"),
+        protocol: Color(hex: "#B44500"),
+        defaultValue: Color(hex: "#000000")
+    )
+
+    @MainActor public static let lowKey = Theme(
+        name: "Low Key",
+        standard: Color(hex: "#000000"),
+        comment: Color(hex: "#435138"),
+        keyword: Color(hex: "#262C6A"),
+        variable: Color(hex: "#476A97"),
+        number: Color(hex: "#262C6A"),
+        recordName: Color(hex: "#702C51"),
+        class: Color(hex: "#476A97"),
+        protocol: Color(hex: "#476A97"),
+        defaultValue: Color(hex: "#000000")
     )
 }
 

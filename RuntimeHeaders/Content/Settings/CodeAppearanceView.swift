@@ -236,26 +236,12 @@ fileprivate struct ThemesContainerView: View {
         Section("Themes") {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
-                    Button("Xcode", systemImage: "hammer.fill") {
-                        codePreferences.apply(xcodeTheme)
+                    ForEach(themeOptions) { option in
+                        Button(option.title, systemImage: option.systemImage) {
+                            codePreferences.apply(option.theme)
+                        }
+                        .buttonStyle(ThemeButtonStyle(option.tint))
                     }
-                    .buttonStyle(ThemeButtonStyle(darkTeal))
-                    
-                    Button("Github", image: .githubFaceFill) {
-                        codePreferences.apply(githubTheme)
-                    }
-                    .buttonStyle(ThemeButtonStyle(darkPurple))
-                    
-                    Button("Solarized", image: .yinYang) {
-                        codePreferences.apply(solarizedTheme)
-                    }
-                    .buttonStyle(ThemeButtonStyle(.strawberry))
-                    
-                    
-                    Button("Default System", systemImage: "return") {
-                        codePreferences.apply(Theme.system)
-                    }
-                    .buttonStyle(ThemeButtonStyle(swiftColor))
                 }
                 .padding(.horizontal, 2)
             }
@@ -263,9 +249,28 @@ fileprivate struct ThemesContainerView: View {
             .listRowInsets(EdgeInsets())
         }
     }
-    
+
+    private var themeOptions: [ThemeOption] {
+        [
+            ThemeOption(title: "Xcode", systemImage: "hammer.fill", theme: xcodeTheme, tint: darkTeal),
+            ThemeOption(title: "Classic", systemImage: "macwindow", theme: classicTheme, tint: .mint),
+            ThemeOption(title: "Github", systemImage: "chevron.left.forwardslash.chevron.right", theme: githubTheme, tint: darkPurple),
+            ThemeOption(title: "Solarized", systemImage: "sun.max.fill", theme: solarizedTheme, tint: .strawberry),
+            ThemeOption(title: "Civic", systemImage: "building.columns.fill", theme: .civic, tint: .teal),
+            ThemeOption(title: "Dusk", systemImage: "sunset.fill", theme: .dusk, tint: .indigo),
+            ThemeOption(title: "Midnight", systemImage: "moon.stars.fill", theme: .midnight, tint: .blue),
+            ThemeOption(title: "Sunset", systemImage: "sun.horizon.fill", theme: .sunset, tint: .orange),
+            ThemeOption(title: "Low Key", systemImage: "circle.lefthalf.filled", theme: .lowKey, tint: .gray),
+            ThemeOption(title: "System", systemImage: "return", theme: .system, tint: swiftColor)
+        ]
+    }
+
     private var xcodeTheme: Theme {
         colorScheme == .dark ? .xcodeDark : .xcodeLight
+    }
+
+    private var classicTheme: Theme {
+        colorScheme == .dark ? .classicDark : .classicLight
     }
     
     private var githubTheme: Theme {
@@ -287,6 +292,15 @@ fileprivate struct ThemesContainerView: View {
     var darkTeal: Color {
         Color(UIColor.value(forKey: "systemDarkTealColor") as! UIColor)
     }
+}
+
+fileprivate struct ThemeOption: Identifiable {
+    let title: String
+    let systemImage: String
+    let theme: Theme
+    let tint: Color
+
+    var id: String { title }
 }
 
 
