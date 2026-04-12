@@ -8,13 +8,13 @@ import SwiftUI
 struct RuntimeObjectsList: View {
     let runtimeObjects: [RuntimeObjectType] // caller's responsibility to filter this
     
-    @Binding var selectedObject: RuntimeObjectType?
+    @EnvironmentObject private var navigation: AppNavigation
     @Binding var searchString: String
     @Binding var searchScope: RuntimeTypeSearchScope
     
     
     var body: some View {
-        List(runtimeObjects, selection: $selectedObject) {
+        List(runtimeObjects, selection: $navigation.selectedObject) {
             RuntimeObjectRow(type: $0)
         }
         .id(runtimeObjects) // don't try to diff the List

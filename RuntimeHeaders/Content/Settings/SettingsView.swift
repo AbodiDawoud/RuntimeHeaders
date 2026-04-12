@@ -34,18 +34,6 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 1.5)
 
-                Section {
-                    Toggle(
-                        "Open Last Framework on Launch",
-                        systemImage: "arrow.trianglehead.clockwise.rotate.90",
-                        isOn: $manager.preferences.restoreLastFrameworkOnLaunch.animation()
-                    )
-                    .labelStyle(IconicLabelStyle(.blue))
-                    .tint(.blue)
-                } footer: {
-                    Text("When enabled, the app navigates directly to the last framework or image list you viewed.")
-                }
-                .padding(.vertical, 1.5)
                 
                 Section("History") {
                     Toggle(
@@ -83,6 +71,7 @@ struct SettingsView: View {
                 .padding(.vertical, 1.5)
                 
                 
+                RestoreFrameworkSection()
                 CacheSection()
             }
             .buttonStyle(.plain)
@@ -92,7 +81,56 @@ struct SettingsView: View {
     }
 }
 
-struct CacheSection: View {
+fileprivate struct RestoreFrameworkSection: View {
+    @ObservedObject private var manager: PreferenceController = .shared
+    @Environment(\.colorScheme) private var scheme
+    
+    var body: some View {
+        Section {
+            Toggle(
+                "Open Last Framework on Launch",
+                systemImage: "arrow.trianglehead.clockwise.rotate.90",
+                isOn: $manager.preferences.restoreLastFrameworkOnLaunch.animation()
+            )
+            .labelStyle(IconicLabelStyle(.blue))
+            .tint(.blue)
+            
+            if let lastFrameworkPath = LastNodeTracker.path {
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("current")
+                            .foregroundStyle(.secondary)
+                            .textScale(.secondary)
+                            .font(.subheadline.weight(.medium))
+                            .textCase(.uppercase)
+                        Spacer()
+                        Button(action: LastNodeTracker.reset) {
+                            Text("Clear")
+                                .font(.system(.caption2, design: .default, weight: .medium))
+                                .foregroundStyle(.pink.gradient)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(
+                                    .pink.quinary.opacity(scheme == .light ? 0.4 : 0.95), in: .capsule
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    Text(lastFrameworkPath)
+                        .font(.subheadline)
+                }
+            }
+        } footer: {
+            Text("When enabled, the app navigates directly to the last framework or image list you viewed.")
+        }
+        .padding(.vertical, 1.5)
+    }
+}
+
+
+
+fileprivate struct CacheSection: View {
     @ObservedObject private var manager: PreferenceController = .shared
     @State private var showCacheClearConfirmation: Bool = false
     

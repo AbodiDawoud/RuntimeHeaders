@@ -15,7 +15,6 @@ struct RuntimeObjectRow: View {
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button("Copy", systemImage: "document.on.document.fill", action: copyName)
-                .tint(.gray)
         }
     }
     

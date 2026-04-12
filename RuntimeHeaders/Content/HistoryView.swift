@@ -7,6 +7,7 @@ import SwiftUI
  
 struct HistoryView: View {
     @EnvironmentObject private var manager: HistoryManager
+    @EnvironmentObject private var navigation: AppNavigation
     @ObservedObject private var settingsManager = PreferenceController.shared
     
     

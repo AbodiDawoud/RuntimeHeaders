@@ -9,11 +9,9 @@ import ClassDumpRuntime
 
 struct ImageRuntimeObjectsView: View {
     @StateObject private var viewModel: ImageRuntimeObjectsViewModel
-    @Binding private var selection: RuntimeObjectType?
     
-    init(namedNode: NamedNode, selection: Binding<RuntimeObjectType?>) {
+    init(namedNode: NamedNode) {
         _viewModel = StateObject(wrappedValue: ImageRuntimeObjectsViewModel(namedNode: namedNode))
-        _selection = selection
     }
     
     var body: some View {
@@ -35,7 +33,7 @@ struct ImageRuntimeObjectsView: View {
                 EmptyImageView(imageName: viewModel.imageName)
             } else {
                 RuntimeObjectsList(
-                    runtimeObjects: viewModel.runtimeObjects, selectedObject: $selection,
+                    runtimeObjects: viewModel.runtimeObjects,
                     searchString: $viewModel.searchString, searchScope: $viewModel.searchScope
                 )
                 .navigationTitle(viewModel.imageName)

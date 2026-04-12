@@ -48,6 +48,7 @@
 		BD995F912F8AE47C00E203AE /* CodePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F902F8AE47C00E203AE /* CodePreferences.swift */; };
 		BD995F932F8AE4DA00E203AE /* RuntimeObjectType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F922F8AE4DA00E203AE /* RuntimeObjectType.swift */; };
 		BD995F952F8AFE8500E203AE /* Bookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F942F8AFE8500E203AE /* Bookmark.swift */; };
+		BD995F972F8B3FF700E203AE /* NavigationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F962F8B3FF700E203AE /* NavigationRouter.swift */; };
 		BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */; };
 		BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */; };
 		BE0000012F90000100000008 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000018 /* InspectorView.swift */; };
@@ -110,6 +111,7 @@
 		BD995F902F8AE47C00E203AE /* CodePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodePreferences.swift; sourceTree = "<group>"; };
 		BD995F922F8AE4DA00E203AE /* RuntimeObjectType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectType.swift; sourceTree = "<group>"; };
 		BD995F942F8AFE8500E203AE /* Bookmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bookmark.swift; sourceTree = "<group>"; };
+		BD995F962F8B3FF700E203AE /* NavigationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationRouter.swift; sourceTree = "<group>"; };
 		BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInspection.swift; sourceTree = "<group>"; };
 		BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInstanceResolver.swift; sourceTree = "<group>"; };
 		BE0000012F90000100000018 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 				BD77F8EF2EA7306D009E7839 /* ActivityController.swift */,
 				BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */,
 				BD995F902F8AE47C00E203AE /* CodePreferences.swift */,
+				BD995F962F8B3FF700E203AE /* NavigationRouter.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -379,6 +382,7 @@
 				BD995F852F8AA2D900E203AE /* MethodInvocationArgumentsView.swift in Sources */,
 				BD995F952F8AFE8500E203AE /* Bookmark.swift in Sources */,
 				BD8A38F22E9ADA3B00F1B486 /* BookmarksStore.swift in Sources */,
+				BD995F972F8B3FF700E203AE /* NavigationRouter.swift in Sources */,
 				BD8A38F32E9ADA3B00F1B486 /* HistoryView.swift in Sources */,
 				BD8A38F52E9ADA3B00F1B486 /* BookmarkListingView.swift in Sources */,
 				BD995F912F8AE47C00E203AE /* CodePreferences.swift in Sources */,

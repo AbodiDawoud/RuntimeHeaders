@@ -8,16 +8,15 @@ import ClassDumpRuntime
 
 
 struct ContentView: View { 
-    @State private var selectedObject: RuntimeObjectType?
+    @StateObject private var navigation = AppNavigation()
     @EnvironmentObject private var historyManager: HistoryManager
-    
     
     
     var body: some View {
         NavigationSplitView {
-            _ContentView(selectedObject: $selectedObject)
+            _ContentView()
         } detail: {
-            if let selectedObject {
+            if let selectedObject = navigation.selectedObject {
                 NavigationStack {
                     RuntimeObjectDetail(type: selectedObject)
                         .navigationDestination(for: RuntimeObjectType.self) {
@@ -29,7 +28,8 @@ struct ContentView: View {
             }
         }
         .navigationSplitViewStyle(.balanced)
-        .onChange(of: selectedObject) { _, newValue in
+        .environmentObject(navigation)
+        .onChange(of: navigation.selectedObject) { _, newValue in
             if PreferenceController.shared.preferences.historyEnabled {
                 historyManager.addObject(newValue)
             }
@@ -40,20 +40,13 @@ struct ContentView: View {
 
 struct _ContentView: View {
     static let dscRootNode = CDUtilities.dyldSharedCacheImageRootNode
-    @Binding var selectedObject: RuntimeObjectType?
     @StateObject private var viewModel = RuntimeObjectsViewModel()
     
     @State private var showBookmarkView: Bool = false
     @State private var navigationPath: [NamedNode] = []
     @Namespace private var animation
     @Environment(\.colorScheme) private var colorScheme
-
-    init(selectedObject: Binding<RuntimeObjectType?>) {
-        _selectedObject = selectedObject
-        
-        if !PreferenceController.shared.preferences.restoreLastFrameworkOnLaunch { return }
-        _navigationPath = State(initialValue: LastNodeTracker.namedNode.map { [$0] } ?? [])
-    }
+    @EnvironmentObject private var navigation: AppNavigation
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -68,7 +61,6 @@ struct _ContentView: View {
                     NavigationLink {
                         RuntimeObjectsList(
                             runtimeObjects: viewModel.runtimeObjects,
-                            selectedObject: $selectedObject,
                             searchString: $viewModel.searchString,
                             searchScope: $viewModel.searchScope
                         )
@@ -101,7 +93,7 @@ struct _ContentView: View {
             .toolbar { toolbarContent }
             .navigationDestination(for: NamedNode.self) { namedNode in
                 if namedNode.isLeaf {
-                    ImageRuntimeObjectsView(namedNode: namedNode, selection: $selectedObject)
+                    ImageRuntimeObjectsView(namedNode: namedNode)
                         .onAppear { assignNodePath(namedNode.path) }
                 } else {
                     NamedNodeRow(node: namedNode)
@@ -179,5 +171,8 @@ enum LastNodeTracker {
             path = newValue?.path
         }
     }
+    
+    static func reset() {
+        self.path = nil
+    }
 }
-
