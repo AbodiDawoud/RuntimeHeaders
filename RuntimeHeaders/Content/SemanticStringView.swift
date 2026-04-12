@@ -10,6 +10,8 @@ import SyntaxHighlighting
 struct SemanticStringView: View {
     @ObservedObject var preferences = CodePreferences.shared
     @ObservedObject var bookmarkManager = BookmarksStore.shared
+    @EnvironmentObject private var navigation: AppNavigation
+    @Environment(\.dismiss) private var dismiss
     
     let semanticString: CDSemanticString
     let fileName: String
@@ -80,8 +82,8 @@ struct SemanticStringView: View {
             .animation(.snappy, value: geomProxy.size)
         }
         .toolbarTitleMenu {
-            Button("File Name", systemImage: "document.on.document", action: copyFileName)
-            Button("File Content", systemImage: "document.on.document", action: copyFileContent)
+            Button("File Name", systemImage: "square.on.square.dashed", action: copyFileName)
+            Button("File Content", systemImage: "square.on.square.dashed", action: copyFileContent)
             
             Divider()
             
@@ -95,9 +97,11 @@ struct SemanticStringView: View {
             
             Divider()
             
-            if let frameworkPath {
-                NavigationLink(value: _ContentView.dscRootNode.node(at: frameworkPath)) {
-                    Label("Go to Parent", systemImage: "arrow.right.circle.dotted")
+            if let frameworkPath, let node = _ContentView.dscRootNode.node(at: frameworkPath) {
+                Button("Go to Parent", systemImage: "arrow.right") {
+                    dismiss()
+                    navigation.selectedTab = .content
+                    navigation.openNode(node)
                 }
             }
             

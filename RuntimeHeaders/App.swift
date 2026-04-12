@@ -19,21 +19,27 @@ struct HeaderViewerApp: App {
 
 private struct _HomeView: View {
     @ObservedObject var settingsManager = PreferenceController.shared
-
+    @StateObject private var navigation = AppNavigation()
+    
+    
     var body: some View {
-        TabView {
+        TabView(selection: $navigation.selectedTab) {
             ContentView().tabItem {
                 Label("Content", systemImage: "externaldrive")
             }
+            .tag(AppTab.content)
             
             HistoryView().tabItem {
                 Label("History", image: "document.fill.badge.clock")
             }
+            .tag(AppTab.history)
             
             SettingsView().tabItem {
                 Label("Settings", systemImage: "gear")
             }
+            .tag(AppTab.settings)
         }
+        .environmentObject(navigation)
         .preferredColorScheme(settingsManager.preferences.colorScheme())
         .onAppear(perform: setTabBarAppearance)
         .onChange(of: settingsManager.preferences.preferredColorScheme) { _, newValue in

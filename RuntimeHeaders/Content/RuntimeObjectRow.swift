@@ -14,7 +14,7 @@ struct RuntimeObjectRow: View {
             Text(type.name)
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button("Copy", systemImage: "document.on.document.fill", action: copyName)
+            Button("Copy", systemImage: "square.on.square.dashed", action: copyName)
         }
     }
     

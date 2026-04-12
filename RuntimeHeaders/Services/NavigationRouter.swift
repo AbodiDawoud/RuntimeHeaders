@@ -8,6 +8,7 @@ import SwiftUI
 
 @MainActor
 final class AppNavigation: ObservableObject {
+    @Published var selectedTab: AppTab = .content
     @Published var selectedObject: RuntimeObjectType?
     @Published var sourcePath: [NamedNode] = []
 
@@ -31,4 +32,10 @@ final class AppNavigation: ObservableObject {
 
         sourcePath = [node]
     }
+}
+
+enum AppTab: Hashable {
+    case content
+    case history
+    case settings
 }

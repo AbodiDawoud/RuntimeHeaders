@@ -8,7 +8,7 @@ import ClassDumpRuntime
 
 
 struct ContentView: View { 
-    @StateObject private var navigation = AppNavigation()
+    @EnvironmentObject private var navigation: AppNavigation
     @EnvironmentObject private var historyManager: HistoryManager
     
     
@@ -28,7 +28,6 @@ struct ContentView: View {
             }
         }
         .navigationSplitViewStyle(.balanced)
-        .environmentObject(navigation)
         .onChange(of: navigation.selectedObject) { _, newValue in
             if PreferenceController.shared.preferences.historyEnabled {
                 historyManager.addObject(newValue)
@@ -43,13 +42,12 @@ struct _ContentView: View {
     @StateObject private var viewModel = RuntimeObjectsViewModel()
     
     @State private var showBookmarkView: Bool = false
-    @State private var navigationPath: [NamedNode] = []
     @Namespace private var animation
     @Environment(\.colorScheme) private var colorScheme
     @EnvironmentObject private var navigation: AppNavigation
     
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack(path: $navigation.sourcePath) {
             Form {
                 FFContainerView()
                 
