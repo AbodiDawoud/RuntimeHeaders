@@ -33,6 +33,19 @@ struct SettingsView: View {
                     .buttonStyle(.plain)
                 }
                 .padding(.vertical, 1.5)
+
+                Section {
+                    Toggle(
+                        "Open Last Framework on Launch",
+                        systemImage: "arrow.trianglehead.clockwise.rotate.90",
+                        isOn: $manager.preferences.restoreLastFrameworkOnLaunch.animation()
+                    )
+                    .labelStyle(IconicLabelStyle(.blue))
+                    .tint(.blue)
+                } footer: {
+                    Text("When enabled, the app navigates directly to the last framework or image list you viewed.")
+                }
+                .padding(.vertical, 1.5)
                 
                 Section("History") {
                     Toggle(

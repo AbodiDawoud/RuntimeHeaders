@@ -44,11 +44,19 @@ struct _ContentView: View {
     @StateObject private var viewModel = RuntimeObjectsViewModel()
     
     @State private var showBookmarkView: Bool = false
+    @State private var navigationPath: [NamedNode] = []
     @Namespace private var animation
     @Environment(\.colorScheme) private var colorScheme
+
+    init(selectedObject: Binding<RuntimeObjectType?>) {
+        _selectedObject = selectedObject
+        
+        if !PreferenceController.shared.preferences.restoreLastFrameworkOnLaunch { return }
+        _navigationPath = State(initialValue: LastNodeTracker.namedNode.map { [$0] } ?? [])
+    }
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             Form {
                 FFContainerView()
                 
@@ -144,12 +152,32 @@ struct _ContentView: View {
     }
     
     func assignNodePath(_ path: String) {
-        if LastImagePathTracker.path == path { return }
-        LastImagePathTracker.path = path
+        LastNodeTracker.path = path
     }
 }
 
 /// keeps track of the last opened bundle or framework.
-enum LastImagePathTracker {
-    static var path: String?
+enum LastNodeTracker {
+    private static let pathKey = "lastNamedNodePath"
+
+    static var path: String? {
+        get {
+            UserDefaults.standard.string(forKey: pathKey)
+        }
+        set {
+            
+            UserDefaults.standard.set(newValue, forKey: pathKey)
+        }
+    }
+    
+    static var namedNode: NamedNode? {
+        get {
+            guard let path else { return nil }
+            return _ContentView.dscRootNode.node(at: path)
+        }
+        set {
+            path = newValue?.path
+        }
+    }
 }
+

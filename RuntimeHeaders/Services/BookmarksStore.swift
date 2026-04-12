@@ -20,7 +20,7 @@ class BookmarksStore: ObservableObject {
     }
     
     func toggleBookmark(for imageName: String) {
-        guard let parent = LastImagePathTracker.path else { return }
+        guard let parent = LastNodeTracker.path else { return }
         let b = Bookmark(name: imageName, parentPath: parent, date: Date.now)
         
         if let index = bookmarks.firstIndex(of: b) {
@@ -58,7 +58,7 @@ class BookmarksStore: ObservableObject {
     }
     
     func isBookmarked(_ imageName: String) -> Bool {
-        guard let path = LastImagePathTracker.path else { return false }
+        guard let path = LastNodeTracker.path else { return false }
         return bookmarks.contains { $0.name == imageName && $0.parentPath == path }
     }
     

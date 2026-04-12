@@ -43,6 +43,7 @@ class PreferenceController: ObservableObject {
             historyEnabled: true,
             historyBadgeEnabled: true,
             historyLimit: 0, // unlimited
+            restoreLastFrameworkOnLaunch: true,
             preferredColorScheme: "nil" // defaults to system
         )
         
@@ -111,6 +112,7 @@ struct Preferences: Codable {
     var historyEnabled: Bool
     var historyBadgeEnabled: Bool
     var historyLimit: Int
+    var restoreLastFrameworkOnLaunch: Bool
     
     var preferredColorScheme: String
     

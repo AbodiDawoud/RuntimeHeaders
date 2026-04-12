@@ -17,9 +17,11 @@ struct RuntimeObjectDetail: View {
     @SceneStorage("addSymbolImageComments") private var addSymbolImageComments: Bool = false
     
     @State private var showCodeAppearanceCover: Bool = false
+    let parentPath: String?
     
     init(type: RuntimeObjectType, parentPath: String? = nil) {
         self.type = type
+        self.parentPath = parentPath
         
         guard let parentPath, !parentPath.isEmpty else { return }
         let isLoaded = RuntimeListings.shared.isImageLoaded(path: parentPath)
@@ -53,7 +55,7 @@ struct RuntimeObjectDetail: View {
                 if let cls = NSClassFromString(name) {
                     let semanticString: CDSemanticString = CDClassModel(with: cls).semanticLines(with: generationOptions)
                     
-                    SemanticStringView(semanticString, fileName: name, runtimeType: type)
+                    SemanticStringView(semanticString, fileName: name, runtimeType: type, nodePath: parentPath)
                 } else {
                     ImageNotFoundView(imageName: name)
                 }
@@ -62,7 +64,7 @@ struct RuntimeObjectDetail: View {
                 if let prtcl = NSProtocolFromString(name) {
                     let semanticString: CDSemanticString = CDProtocolModel(with: prtcl).semanticLines(with: generationOptions)
                     
-                    SemanticStringView(semanticString, fileName: name, runtimeType: type)
+                    SemanticStringView(semanticString, fileName: name, runtimeType: type, nodePath: parentPath)
                 } else {
                     ImageNotFoundView(imageName: name)
                 }

@@ -15,6 +15,7 @@ struct SemanticStringView: View {
     let fileName: String
     let runtimeType: RuntimeObjectType?
     
+    var frameworkPath: String? = nil
     @State private var fileExportCoordinator: FileExportCoordinator?
     @State private var resolvedInstance: ResolvedRuntimeInstance?
     @State private var showRuntimeInspector: Bool = false
@@ -25,10 +26,11 @@ struct SemanticStringView: View {
     private let longestLineIndex: Int?
     private let lineNumberColumnWidth: CGFloat
     
-    init(_ semanticString: CDSemanticString, fileName: String, runtimeType: RuntimeObjectType? = nil) {
+    init(_ semanticString: CDSemanticString, fileName: String, runtimeType: RuntimeObjectType? = nil, nodePath: String? = nil) {
         self.semanticString = semanticString
         self.fileName = fileName
         self.runtimeType = runtimeType
+        self.frameworkPath = nodePath
         
         let (lines, longestLineIndex) = semanticLinesFromString(semanticString)
         self.lines = lines
@@ -92,6 +94,14 @@ struct SemanticStringView: View {
             }
             
             Divider()
+            
+            if let frameworkPath {
+                NavigationLink(value: _ContentView.dscRootNode.node(at: frameworkPath)) {
+                    Label("Go to Parent", systemImage: "arrow.right.circle.dotted")
+                }
+            }
+            
+            Divider()
             Button(
                 bookmarked ? "Un-Bookmark" : "Bookmark",
                 systemImage: bookmarked ? "bookmark.slash" : "bookmark",
@@ -118,8 +128,6 @@ struct SemanticStringView: View {
             Text(runtimeInspectorError ?? "No live object could be resolved.")
         }
     }
-
-    
     
     func copyFileName() {
         UIPasteboard.general.string = fileName

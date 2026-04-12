@@ -21,7 +21,7 @@ struct FFContainerView: View {
             .listRowInsets(.init())
             .listRowSeparator(.hidden)
         } header: {
-            Text("Featured Frameworks")
+            Text("Recommended Frameworks")
         } footer: {
             Text("Get started by exploring these system frameworks..")
         }
@@ -29,7 +29,7 @@ struct FFContainerView: View {
     
     private var featuredFrameworkNodes: [FeaturedFrameworkNode] {
         FeaturedFramework.frameworks.compactMap { framework in
-            guard let node = framework.node(in: _ContentView.dscRootNode) else { return nil }
+            guard let node = framework.node() else { return nil }
             return FeaturedFrameworkNode(framework: framework, node: node)
         }
     }

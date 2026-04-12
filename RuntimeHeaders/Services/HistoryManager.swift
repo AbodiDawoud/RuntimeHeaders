@@ -26,7 +26,7 @@ final class HistoryManager: ObservableObject {
         guard let newObject, !isAlreadyInHistory else { return }
         
         
-        let newItem = HistoryItem(object: newObject, parentPath: LastImagePathTracker.path, seenAt: .now)
+        let newItem = HistoryItem(object: newObject, parentPath: LastNodeTracker.path, seenAt: .now)
         
 
         let limit = PreferenceController.shared.preferences.historyLimit

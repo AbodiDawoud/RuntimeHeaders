@@ -12,8 +12,8 @@ struct FeaturedFramework: Identifiable {
 
     var id: String { title }
 
-    func node(in rootNode: NamedNode) -> NamedNode? {
-        rootNode.node(at: pathCandidates)
+    func node() -> NamedNode? {
+        _ContentView.dscRootNode.node(at: pathCandidates)
     }
 }
 
@@ -24,7 +24,7 @@ struct FeaturedFrameworkNode: Identifiable {
     var id: String { framework.id }
 }
 
-private extension NamedNode {
+extension NamedNode {
     func node(at path: String) -> NamedNode? {
         let components = path.split(separator: "/").map(String.init)
         guard !components.isEmpty else { return self }
