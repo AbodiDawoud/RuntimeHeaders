@@ -86,7 +86,7 @@ struct _ContentView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .navigationTitle("Header Viewer")
+            .navigationTitle("Runtime Headers")
             .toolbarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .navigationDestination(for: NamedNode.self) { namedNode in

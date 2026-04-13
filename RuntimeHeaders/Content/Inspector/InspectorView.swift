@@ -88,8 +88,8 @@ struct RuntimeObjectInspectorView: View {
                 }
             }
             .sheet(item: $selectedArgumentMethod) { method in
-                MethodInvocationArgumentsView(method: method) { arguments in
-                    viewModel.invoke(method, arguments: arguments)
+                MethodInvocationArgumentsView(method: method) {
+                    viewModel.invoke(method, arguments: $0)
                 }
             }
             .toolbar {
@@ -291,18 +291,20 @@ struct RuntimeObjectInspectorView: View {
                     .font(.system(.footnote, design: .monospaced))
                     .textSelection(.enabled)
             } else {
-                Text(lastInvocation.valueDescription)
-                    .font(.system(.footnote, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .lineLimit(4)
-                    .textSelection(.enabled)
+                ScrollView(.vertical, showsIndicators: false) {
+                    Text(lastInvocation.valueDescription)
+                        .font(.system(.footnote, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .lineLimit(4)
+                        .textSelection(.enabled)
+                }
+                .frame(maxHeight: 130)
             }
         }
         .padding(12)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(.separator.opacity(0.4), lineWidth: 0.5)
-                //.stroke(Color(white: 0.25), lineWidth: 1)
+                .stroke(Color(white: 0.25), lineWidth: 1)
                 .fill(Color(white: 0.15))
         }
         .padding(.horizontal, 16)
