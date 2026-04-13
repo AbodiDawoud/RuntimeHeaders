@@ -27,3 +27,7 @@ extension View {
             .navigationBarTitleDisplayMode(.large)
     }
 }
+
+extension String: @retroactive Identifiable {
+    public var id: String { self }
+}

@@ -20,6 +20,7 @@ struct SemanticStringView: View {
     var frameworkPath: String? = nil
     @State private var fileExportCoordinator: FileExportCoordinator?
     @State private var resolvedInstance: ResolvedRuntimeInstance?
+    @State private var cachedLiveRuntimeInstance: ResolvedRuntimeInstance?
     @State private var showRuntimeInspector: Bool = false
     @State private var selectorChooser: RuntimeSelectorChooserState?
     @State private var runtimeInspectorError: String?
@@ -158,7 +159,6 @@ struct SemanticStringView: View {
         let fileUrl = manager.temporaryDirectory.appendingPathComponent("\(fileName).h")
         
         if manager.fileExists(atPath: fileUrl.path) {
-            print(">> File already exists at:", fileUrl.path)
             return fileUrl
         }
         
@@ -225,9 +225,16 @@ struct SemanticStringView: View {
 
     func openRuntimeInspector() {
         guard let runtimeType else { return }
+
+        if let cachedLiveRuntimeInstance {
+            resolvedInstance = cachedLiveRuntimeInstance
+            return
+        }
+
         let options = RuntimeInstanceResolver.resolutionOptions(type: runtimeType)
 
         if let resolvedInstance = options.autoResolvedInstance {
+            cachedLiveRuntimeInstance = resolvedInstance
             self.resolvedInstance = resolvedInstance
             return
         }
@@ -263,25 +270,8 @@ struct SemanticStringView: View {
             return
         }
 
+        cachedLiveRuntimeInstance = resolvedInstance
         self.resolvedInstance = resolvedInstance
-    }
-    
-    
-    private class FileExportCoordinator: NSObject, UIDocumentPickerDelegate {
-        var exportWindow: UIWindow?
-
-        func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-            print(#function)
-            controller.dismiss(animated: true)
-            exportWindow!.rootViewController = nil
-            exportWindow = nil
-        }
-        
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            print(#function, urls)
-            controller.dismiss(animated: true)
-            exportWindow = nil
-        }
     }
 }
 

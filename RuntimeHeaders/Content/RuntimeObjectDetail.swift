@@ -27,11 +27,7 @@ struct RuntimeObjectDetail: View {
         let isLoaded = RuntimeListings.shared.isImageLoaded(path: parentPath)
         
         if !isLoaded {
-            do {
-                try CDUtilities.loadImage(at: parentPath)
-            } catch {
-                print(error.localizedDescription)
-            }
+            try? CDUtilities.loadImage(at: parentPath)
         }
     }
     

@@ -26,10 +26,19 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     public func refresh() {
         let collectedProperties = collectProperties()
         let propertyNames = Set(collectedProperties.filter { $0.isDirectIvar == false }.map(\.getterName))
-        properties = collectedProperties
+
+        var loadedProperties: [InspectableProperty] = []
+        loadedProperties.reserveCapacity(collectedProperties.count)
+        for property in collectedProperties {
+            let property = readAutomaticallyIfSafe(property)
+            loadedProperties.append(property)
+        }
+
+        properties = loadedProperties
         methods = collectMethods(excluding: propertyNames)
     }
 
+    
     public func invoke(_ method: InspectableMethod, arguments: [RuntimeInvocationArgument] = []) {
         do {
             guard arguments.count == method.argumentCount else {
@@ -78,22 +87,19 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         }
     }
 
+    
     public func read(_ property: InspectableProperty) {
         guard let index = properties.firstIndex(where: { $0.id == property.id }) else { return }
 
-        let updatedProperty: InspectableProperty
-        if property.isDirectIvar {
-            updatedProperty = readDirectIvar(property)
-        } else {
-            updatedProperty = readGetter(property)
-        }
-
-        properties[index] = updatedProperty
+        properties[index] = property.isDirectIvar ? readDirectIvar(property) : readGetter(property)
     }
 
+    
     private func collectProperties() -> [InspectableProperty] {
         var results: [InspectableProperty] = []
         var seen = Set<String>()
+        var propertyNames = Set<String>()
+        var backingIvarNames = Set<String>()
         var currentClass: AnyClass? = propertyTraversalRootClass
 
         while let cls = currentClass {
@@ -107,6 +113,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                     let property = properties[index]
                     let name = String(cString: property_getName(property))
                     guard seen.insert(name).inserted else { continue }
+                    propertyNames.insert(name)
 
                     let getterName: String
                     if let getter = property_copyAttributeValue(property, "G") {
@@ -117,6 +124,14 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                     }
 
                     let attributes = property_getAttributes(property).map { String(cString: $0) } ?? ""
+                    if let backingIvar = property_copyAttributeValue(property, "V") {
+                        let backingIvarName = String(cString: backingIvar)
+                        backingIvarNames.insert(backingIvarName)
+                        free(backingIvar)
+                    } else {
+                        backingIvarNames.insert("_\(name)")
+                    }
+
                     let getterSelector = NSSelectorFromString(getterName)
 
                     guard let method = class_getInstanceMethod(cls, getterSelector) else {
@@ -178,9 +193,17 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                         let ivar = ivars[index]
                         guard let ivarName = ivar_getName(ivar) else { continue }
                         let name = String(cString: ivarName)
-                        guard seen.insert(name).inserted else { continue }
-
                         let typeEncoding = ivar_getTypeEncoding(ivar).map { String(cString: $0) } ?? ""
+                        guard shouldIncludeDirectIvar(
+                            named: name,
+                            propertyNames: propertyNames,
+                            backingIvarNames: backingIvarNames
+                        ) else { continue }
+                        
+                        guard seen.insert(name).inserted else {
+                            continue
+                        }
+
                         results.append(
                             makeProperty(
                                 name: name,
@@ -203,6 +226,22 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         return results.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 
+    
+    private func shouldIncludeDirectIvar(
+        named name: String,
+        propertyNames: Set<String>,
+        backingIvarNames: Set<String>
+    ) -> Bool {
+        if name == "isa" { return false }
+        if name.hasPrefix("_"),
+           backingIvarNames.contains(name),
+           propertyNames.contains(String(name.dropFirst()))
+        { return false }
+
+        return true
+    }
+
+    
     private func collectMethods(excluding propertyGetterNames: Set<String>) -> [InspectableMethod] {
         var results: [InspectableMethod] = []
         var seen = Set<String>()
@@ -272,6 +311,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         }
     }
 
+    
     private var propertyTraversalRootClass: AnyClass? {
         switch resolvedInstance.subjectKind {
         case .instance:
@@ -281,6 +321,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             return object_getClass(resolvedInstance.targetClass)
         }
     }
+    
 
     private func invoke(selector: Selector, returnTypeEncoding: String) throws -> String {
         switch resolvedInstance.subjectKind {
@@ -302,6 +343,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         }
     }
 
+    
     private func makeProperty(
         name: String,
         getterName: String,
@@ -328,6 +370,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         )
     }
 
+    
     private func readGetter(_ property: InspectableProperty) -> InspectableProperty {
         do {
             let value = try invoke(
@@ -340,19 +383,53 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             return property.withValue("", errorMessage: error.localizedDescription)
         }
     }
+    
 
     private func readDirectIvar(_ property: InspectableProperty) -> InspectableProperty {
         guard let object = resolvedInstance.object else {
             return property.withValue("", errorMessage: RuntimeInvocationError.nilObjectReturn(property.name).localizedDescription)
         }
+        
         guard let declaringClass = NSClassFromString(property.declaringClassName),
               let ivar = class_getInstanceVariable(declaringClass, property.name)
-        else {
-            return property.withValue("", errorMessage: "Ivar unavailable")
-        }
+        else { return property.withValue("", errorMessage: "Ivar unavailable") }
 
         let valueResult = describeIvarValue(object: object, ivar: ivar, typeEncoding: property.attributes)
         return property.withValue(valueResult.valueDescription, errorMessage: valueResult.errorMessage)
+    }
+
+    
+    private func readAutomaticallyIfSafe(_ property: InspectableProperty) -> InspectableProperty {
+        if property.isValueLoaded { return property }
+        if !property.isInherited  { return readGetter(property) }
+        
+        if property.isDirectIvar {
+            return readDirectIvar(property)
+        }
+        if let backingIvarName = backingIvarName(fromPropertyAttributes: property.attributes) {
+            return readBackingIvar(named: backingIvarName, for: property)
+        }
+        
+        return property.withValue("", errorMessage: "No backing ivar available")
+    }
+
+    
+    private func readBackingIvar(named ivarName: String, for property: InspectableProperty) -> InspectableProperty {
+        guard let object = resolvedInstance.object else {
+            return property.withValue("", errorMessage: RuntimeInvocationError.nilObjectReturn(property.name).localizedDescription)
+        }
+
+        var currentClass: AnyClass? = propertyTraversalRootClass
+        while let cls = currentClass {
+            if let ivar = class_getInstanceVariable(cls, ivarName) {
+                let typeEncoding = ivar_getTypeEncoding(ivar).map { String(cString: $0) } ?? property.attributes
+                let valueResult = describeIvarValue(object: object, ivar: ivar, typeEncoding: typeEncoding)
+                return property.withValue(valueResult.valueDescription, errorMessage: valueResult.errorMessage)
+            }
+            currentClass = class_getSuperclass(cls)
+        }
+
+        return property.withValue("", errorMessage: "Backing ivar unavailable")
     }
 
     private func propertyReturnType(for property: InspectableProperty) throws -> String {
@@ -438,13 +515,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     private func isAccessibilityRelated(name: String, alternateName: String? = nil) -> Bool {
         let candidates = [name, alternateName].compactMap { $0?.lowercased() }
         return candidates.contains { candidate in
-            candidate.contains("accessibility") ||
-            candidate.contains("isaccessibility") ||
-            candidate.contains("accessibilityelement") ||
-            candidate.contains("accessibilityidentifier") ||
-            candidate.contains("accessibilitylabel") ||
-            candidate.contains("accessibilityhint") ||
-            candidate.contains("accessibilityvalue")
+            candidate.contains("accessibility")
         }
     }
 
@@ -453,16 +524,82 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         ivar: Ivar,
         typeEncoding: String
     ) -> (valueDescription: String, errorMessage: String?) {
-        guard let first = typeEncoding.first else {
+        let normalizedEncoding = normalizedIvarTypeEncoding(typeEncoding)
+        guard let first = normalizedEncoding.first else {
             return ("", "Unknown ivar type")
         }
-        guard first == "@" else {
-            return ("", "Direct ivar reading currently supports object ivars only")
+        if first == "@" {
+            guard let value = object_getIvar(object, ivar) else {
+                return ("nil", nil)
+            }
+            let description = RuntimeInvocationEngine.describe(value: value)
+            return (description, nil)
         }
-        guard let value = object_getIvar(object, ivar) else {
-            return ("nil", nil)
+
+        let rawPointer = Unmanaged.passUnretained(object).toOpaque().advanced(by: ivar_getOffset(ivar))
+        switch first {
+        case "B":
+            return (rawPointer.loadUnaligned(as: Bool.self) ? "true" : "false", nil)
+        case "c":
+            return (String(rawPointer.loadUnaligned(as: CChar.self)), nil)
+        case "C":
+            return (String(rawPointer.loadUnaligned(as: CUnsignedChar.self)), nil)
+        case "s":
+            return (String(rawPointer.loadUnaligned(as: Int16.self)), nil)
+        case "S":
+            return (String(rawPointer.loadUnaligned(as: UInt16.self)), nil)
+        case "i":
+            return (String(rawPointer.loadUnaligned(as: Int32.self)), nil)
+        case "I":
+            return (String(rawPointer.loadUnaligned(as: UInt32.self)), nil)
+        case "l":
+            return (String(rawPointer.loadUnaligned(as: CLong.self)), nil)
+        case "L":
+            return (String(rawPointer.loadUnaligned(as: CUnsignedLong.self)), nil)
+        case "q":
+            return (String(rawPointer.loadUnaligned(as: Int64.self)), nil)
+        case "Q":
+            return (String(rawPointer.loadUnaligned(as: UInt64.self)), nil)
+        case "f":
+            return (String(rawPointer.loadUnaligned(as: Float.self)), nil)
+        case "d":
+            return (String(rawPointer.loadUnaligned(as: Double.self)), nil)
+        case "#":
+            guard let valuePointer = rawPointer.loadUnaligned(as: UnsafeRawPointer?.self) else {
+                return ("nil", nil)
+            }
+            
+            let value = unsafeBitCast(valuePointer, to: AnyClass.self)
+            return (NSStringFromClass(value), nil)
+        case ":":
+            guard let valuePointer = rawPointer.loadUnaligned(as: UnsafeRawPointer?.self) else {
+                return ("nil", nil)
+            }
+            
+            let value = unsafeBitCast(valuePointer, to: Selector.self)
+            return (NSStringFromSelector(value), nil)
+        default:
+            return ("", "Direct ivar reading does not support ivar type '\(normalizedEncoding)'")
         }
-        return (RuntimeInvocationEngine.describe(value: value), nil)
+    }
+
+    private func backingIvarName(fromPropertyAttributes attributes: String) -> String? {
+        attributes.split(separator: ",").first { attribute in
+            attribute.first == "V"
+        }.map { String($0.dropFirst()) }
+    }
+
+    private func normalizedIvarTypeEncoding(_ encoding: String) -> String {
+        let qualifiers = Set("rnNoORV")
+        var result = encoding
+        while let first = result.first, qualifiers.contains(first) {
+            result.removeFirst()
+        }
+        return result
+    }
+    
+    public func clearLastInvocationResult() {
+        lastInvocation = nil
     }
 }
 

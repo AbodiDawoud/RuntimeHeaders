@@ -84,6 +84,7 @@ struct SettingsView: View {
 fileprivate struct RestoreFrameworkSection: View {
     @ObservedObject private var manager: PreferenceController = .shared
     @Environment(\.colorScheme) private var scheme
+    @State private var refreshUUID: String = UUID().uuidString
     
     var body: some View {
         Section {
@@ -104,7 +105,10 @@ fileprivate struct RestoreFrameworkSection: View {
                             .font(.subheadline.weight(.medium))
                             .textCase(.uppercase)
                         Spacer()
-                        Button(action: LastNodeTracker.reset) {
+                        Button {
+                            LastNodeTracker.reset()
+                            refreshUUID = UUID().uuidString
+                        } label: {
                             Text("Clear")
                                 .font(.system(.caption2, design: .default, weight: .medium))
                                 .foregroundStyle(.pink.gradient)
@@ -113,6 +117,7 @@ fileprivate struct RestoreFrameworkSection: View {
                                 .background(
                                     .pink.quinary.opacity(scheme == .light ? 0.4 : 0.95), in: .capsule
                                 )
+                                .id(refreshUUID)
                         }
                         .buttonStyle(.plain)
                     }

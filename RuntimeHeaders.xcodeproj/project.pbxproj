@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BD57338F2F8C4EC2005EF862 /* TODO.md in Resources */ = {isa = PBXBuildFile; fileRef = BD57338E2F8C4EC2005EF862 /* TODO.md */; };
 		BD58379D2F87F29700473B0A /* FeaturedFramework.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379C2F87F29700473B0A /* FeaturedFramework.swift */; };
 		BD58379F2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */; };
 		BD77F8F02EA7306D009E7839 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77F8EF2EA7306D009E7839 /* ActivityController.swift */; };
@@ -52,6 +53,7 @@
 		BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */; };
 		BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */; };
 		BE0000012F90000100000008 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000018 /* InspectorView.swift */; };
+		BE0000022F90000100000006 /* NamedNodeExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000022F90000100000016 /* NamedNodeExporter.swift */; };
 		BE1000012F90000100000001 /* RuntimeInspectorKit in Frameworks */ = {isa = PBXBuildFile; productRef = BE1000012F90000100000003 /* RuntimeInspectorKit */; };
 		C04090CA2D2759260013D8F7 /* ClassDumpRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = C04090C92D2759260013D8F7 /* ClassDumpRuntime */; };
 /* End PBXBuildFile section */
@@ -70,6 +72,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BD57338E2F8C4EC2005EF862 /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		BD58379C2F87F29700473B0A /* FeaturedFramework.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFramework.swift; sourceTree = "<group>"; };
 		BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFrameworkContainerView.swift; sourceTree = "<group>"; };
 		BD77F8EF2EA7306D009E7839 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
@@ -115,6 +118,7 @@
 		BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInspection.swift; sourceTree = "<group>"; };
 		BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInstanceResolver.swift; sourceTree = "<group>"; };
 		BE0000012F90000100000018 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
+		BE0000022F90000100000016 /* NamedNodeExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NamedNodeExporter.swift; sourceTree = "<group>"; };
 		FAD661F42B81D1210000D2A6 /* RuntimeHeaders.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RuntimeHeaders.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -218,6 +222,7 @@
 				BD8A38D52E9ADA3B00F1B486 /* PreferencesController.swift */,
 				BD77F8EF2EA7306D009E7839 /* ActivityController.swift */,
 				BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */,
+				BE0000022F90000100000016 /* NamedNodeExporter.swift */,
 				BD995F902F8AE47C00E203AE /* CodePreferences.swift */,
 				BD995F962F8B3FF700E203AE /* NavigationRouter.swift */,
 			);
@@ -234,6 +239,7 @@
 				BD8A38B82E9ADA3B00F1B486 /* Content */,
 				BD8A38D72E9ADA3B00F1B486 /* App.swift */,
 				BD8A38D82E9ADA3B00F1B486 /* ContentView.swift */,
+				BD57338E2F8C4EC2005EF862 /* TODO.md */,
 			);
 			path = RuntimeHeaders;
 			sourceTree = "<group>";
@@ -344,6 +350,7 @@
 			files = (
 				BD8A38DA2E9ADA3B00F1B486 /* FiraCode-Regular.ttf in Resources */,
 				BD8A38DB2E9ADA3B00F1B486 /* Colors.xcassets in Resources */,
+				BD57338F2F8C4EC2005EF862 /* TODO.md in Resources */,
 				BD8A38DC2E9ADA3B00F1B486 /* ConsolaVD3-Regular.ttf in Resources */,
 				BD8A38DD2E9ADA3B00F1B486 /* JetBrainsMono-Regular.ttf in Resources */,
 				BD8A38DE2E9ADA3B00F1B486 /* Lilex-Regular.ttf in Resources */,
@@ -377,6 +384,7 @@
 				BD8A38ED2E9ADA3B00F1B486 /* SettingsView.swift in Sources */,
 				BD8A38EE2E9ADA3B00F1B486 /* RuntimeListings.swift in Sources */,
 				BE0000012F90000100000006 /* RuntimeInstanceResolver.swift in Sources */,
+				BE0000022F90000100000006 /* NamedNodeExporter.swift in Sources */,
 				BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */,
 				BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */,
 				BD995F852F8AA2D900E203AE /* MethodInvocationArgumentsView.swift in Sources */,

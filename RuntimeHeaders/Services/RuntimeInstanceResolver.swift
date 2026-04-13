@@ -24,6 +24,10 @@ enum RuntimeInstanceResolver {
         return RuntimeInspector.resolve(classNamed: className, selectorName: selectorName)
     }
 
+    static func customClassGetterValidationError(className: String, selectorName: String) -> String? {
+        RuntimeInspector.customClassGetterValidationError(classNamed: className, selectorName: selectorName)
+    }
+
     static func resolveClassObject(type: RuntimeObjectType) -> ResolvedRuntimeInstance? {
         guard case .class(let className) = type else { return nil }
         return RuntimeInspector.resolveClassObject(classNamed: className)

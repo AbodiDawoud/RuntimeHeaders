@@ -11,6 +11,9 @@ struct NamedNodeRow: View {
     @EnvironmentObject private var listings: RuntimeListings
     @Environment(\.openURL) private var openUrl
     @State private var searchText: String = ""
+    @State private var isExporting: Bool = false
+    @State private var exportErrorMessage: String?
+    @State private var fileExportCoordinator: FileExportCoordinator?
     let node: NamedNode
     
     
@@ -28,10 +31,11 @@ struct NamedNodeRow: View {
                 }
                 .accessibilityLabel(child.name)
                 .contextMenu {
-                    Button("Copy Name", systemImage: "document.on.document") { copy(child.name) }
-                    Button("Copy Path", systemImage: "document.on.document") { copy(child.path) }
+                    Button("Copy Name", systemImage: "square.on.square.dashed") { copy(child.name) }
+                    Button("Copy Path", systemImage: "square.on.square.dashed") { copy(child.path) }
                     Divider()
                     Button("Search Web", systemImage: "safari") { searchWeb(child.name) }
+                    Button("Export Node", systemImage: "square.and.arrow.up") { exportNode(child) }
                     Divider()
                     if canLoad {
                         Button {
@@ -51,6 +55,16 @@ struct NamedNodeRow: View {
             placement: .navigationBarDrawer(displayMode: .always)
         )
         .navigationBarTitleDisplayMode(.large)
+        .overlay {
+            if isExporting {
+                ProgressView("Exporting Headers")
+                    .padding(16)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+            }
+        }
+        .alert(item: $exportErrorMessage) {
+            Alert(title: Text("Export Failed"), message: Text($0), dismissButton: .default(Text("OK")))
+        }
     }
     
     private var children: [NamedNode] {
@@ -66,8 +80,44 @@ struct NamedNodeRow: View {
         UIPasteboard.general.string = string
     }
     
-    func searchWeb(_ string: String) {
-        let url = URL(string: "https://google.com/search?q=\(node.name)")!
+    func searchWeb(_ query: String) {
+        let url = URL(string: "https://google.com/search?q=\(query)")!
         openUrl(url)
+    }
+    
+    func exportNode(_ selectedNode: NamedNode? = nil) {
+        if isExporting { return }
+        
+        isExporting = true
+        let exportTarget = selectedNode ?? node
+        let exporter = NamedNodeExporter(listings: listings)
+        
+        Task {
+            do {
+                let exportURL = try exporter.exportHeaders(for: exportTarget)
+                presentDocumentPicker(for: exportURL)
+            } catch {
+                exportErrorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+            }
+            
+            isExporting = false
+        }
+    }
+    
+    private func presentDocumentPicker(for location: URL) {
+        let scene = UIApplication.shared.connectedScenes.first as! UIWindowScene
+        
+        fileExportCoordinator = FileExportCoordinator()
+        
+        let documentPicker = UIDocumentPickerViewController(forExporting: [location])
+        documentPicker.delegate = fileExportCoordinator
+        
+        let exportWindow = UIWindow(windowScene: scene)
+        exportWindow.windowLevel = .alert + 1
+        exportWindow.rootViewController = UIViewController()
+        
+        fileExportCoordinator?.exportWindow = exportWindow
+        exportWindow.isHidden = false
+        exportWindow.rootViewController?.present(documentPicker, animated: true)
     }
 }

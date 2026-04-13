@@ -72,11 +72,6 @@ class BookmarksStore: ObservableObject {
         bookmarks = try! JSONDecoder().decode([Bookmark].self, from: data)
     }
     
-    private func debugBookmarks() {
-        print("Bookmarks:")
-        bookmarks.forEach { print($0) }
-    }
-    
     var isBookmarkEmpty: Bool {
         return bookmarks.isEmpty
     }

@@ -8,12 +8,13 @@ import SwiftUI
 struct RuntimeObjectInspectorView: View {
     @StateObject private var viewModel: RuntimeObjectInspectorViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var scheme
     
     @State private var includeInheritedMembers: Bool = false
     @State private var includeNSObjectMembers: Bool = false
     @State private var includeAccessibilityMembers: Bool = false
+    @State private var includeArgumentMethods: Bool = false
     @State private var includePrivateMethods: Bool = true
-    @State private var includeArgumentMethods: Bool = true
     @State private var allowSafetyFilteredMethods: Bool = true
     @State private var selectedArgumentMethod: InspectableMethod?
 
@@ -25,7 +26,7 @@ struct RuntimeObjectInspectorView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section(viewModel.resolvedInstance.subjectDescription) {
+                Section {
                     inspectorRow("Resolved Class", value: viewModel.resolvedInstance.className)
                     inspectorRow(viewModel.isInspectingClass ? "Runtime Class" : "Live Type", value: viewModel.resolvedInstance.displayName)
                     inspectorRow("Acquired Via", value: viewModel.resolvedInstance.acquisitionDescription)
@@ -40,12 +41,7 @@ struct RuntimeObjectInspectorView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredProperties) { property in
-                            Button {
-                                viewModel.read(property)
-                            } label: {
-                                propertyRow(property)
-                            }
-                            .buttonStyle(.plain)
+                            propertyRow(property)
                         }
                     }
                 }
@@ -56,21 +52,21 @@ struct RuntimeObjectInspectorView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredMethods) { method in
-                            Group {
-                                if canInvoke(method) {
-                                    Button {
-                                        if method.argumentCount > 0 {
-                                            selectedArgumentMethod = method
-                                        } else {
+                            if canInvoke(method) {
+                                Button {
+                                    if method.argumentCount > 0 {
+                                        selectedArgumentMethod = method
+                                    } else {
+                                        withAnimation(.smooth(duration: 0.08)) {
                                             viewModel.invoke(method)
                                         }
-                                    } label: {
-                                        methodRow(method)
                                     }
-                                    .buttonStyle(.plain)
-                                } else {
+                                } label: {
                                     methodRow(method)
                                 }
+                                .buttonStyle(.plain)
+                            } else {
+                                methodRow(method)
                             }
                         }
                     }
@@ -84,23 +80,13 @@ struct RuntimeObjectInspectorView: View {
                         }
                     }
                 }
-                
-                if let lastInvocation = viewModel.lastInvocation {
-                    Section("Last Result") {
-                        inspectorRow("Selector", value: lastInvocation.selectorName)
-                        if let errorMessage = lastInvocation.errorMessage {
-                            Text(errorMessage)
-                                .foregroundStyle(.red)
-                                .font(.system(.footnote, design: .monospaced))
-                        } else {
-                            Text(lastInvocation.valueDescription)
-                                .font(.system(.footnote, design: .monospaced))
-                                .textSelection(.enabled)
-                        }
-                    }
-                }
             }
             .inlinedNavigationTitle(viewModel.resolvedInstance.inspectorTitle)
+            .safeAreaInset(edge: .bottom) {
+                if let lastInvocation = viewModel.lastInvocation {
+                    lastResultView(lastInvocation)
+                }
+            }
             .sheet(item: $selectedArgumentMethod) { method in
                 MethodInvocationArgumentsView(method: method) { arguments in
                     viewModel.invoke(method, arguments: arguments)
@@ -130,8 +116,8 @@ struct RuntimeObjectInspectorView: View {
                         Toggle("Include Methods With Arguments", isOn: $includeArgumentMethods)
                         Toggle("Allow Safety-Filtered Methods", isOn: $allowSafetyFilteredMethods)
                     } label: {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .foregroundStyle(.secondary)
+                        Image(systemName: "line.3.horizontal.decrease")
+                            .foregroundStyle(.gray)
                     }
                     .buttonStyle(.plain)
                 }
@@ -228,6 +214,7 @@ struct RuntimeObjectInspectorView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(property.name)
                         .font(.headline)
+
                     if property.isInherited {
                         Text(property.declaringClassName)
                             .font(.system(.caption, design: .monospaced))
@@ -242,11 +229,7 @@ struct RuntimeObjectInspectorView: View {
                     .foregroundStyle(.secondary)
             }
 
-            if property.isValueLoaded == false {
-                Text("Tap to read")
-                    .font(.system(.footnote, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            } else if let errorMessage = property.errorMessage {
+            if let errorMessage = property.errorMessage {
                 Text(errorMessage)
                     .font(.system(.footnote, design: .monospaced))
                     .foregroundStyle(.red)
@@ -258,6 +241,73 @@ struct RuntimeObjectInspectorView: View {
             }
         }
         .padding(.vertical, 3)
+    }
+
+    private func lastResultView(_ lastInvocation: InvocationResult) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Spacer()
+                Button {
+                    UIPasteboard.general.string = lastInvocation.valueDescription
+                } label: {
+                    Text("Copy")
+                        .font(.system(.caption2, design: .default, weight: .medium))
+                        .foregroundStyle(.blue.gradient)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(.blue.quinary.opacity(0.8), in: .capsule)
+                }
+                
+                Button {
+                    viewModel.clearLastInvocationResult()
+                } label: {
+                    Text("Clear")
+                        .font(.system(.caption2, design: .default, weight: .medium))
+                        .foregroundStyle(.pink.gradient)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(.pink.quinary.opacity(0.8), in: .capsule)
+                }
+            }
+            .buttonStyle(.plain)
+            
+            HStack {
+                Text("Last Result")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.white)
+                
+                Spacer(minLength: 12)
+
+                Text(lastInvocation.selectorName)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.gray)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            if let errorMessage = lastInvocation.errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(.red)
+                    .font(.system(.footnote, design: .monospaced))
+                    .textSelection(.enabled)
+            } else {
+                Text(lastInvocation.valueDescription)
+                    .font(.system(.footnote, design: .monospaced))
+                    .foregroundStyle(.white)
+                    .lineLimit(4)
+                    .textSelection(.enabled)
+            }
+        }
+        .padding(12)
+        .background {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(.separator.opacity(0.4), lineWidth: 0.5)
+                //.stroke(Color(white: 0.25), lineWidth: 1)
+                .fill(Color(white: 0.15))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 5)
+        .transition(.move(edge: .bottom))
     }
 
     private func methodRow(_ method: InspectableMethod) -> some View {

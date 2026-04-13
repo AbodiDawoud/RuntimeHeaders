@@ -111,7 +111,37 @@ public enum RuntimeInspector {
         }
     }
 
+    public static func customClassGetterValidationError(classNamed className: String, selectorName: String) -> String? {
+        guard let cls = NSClassFromString(className) else {
+            return "Class '\(className)' was not found."
+        }
+
+        guard shouldOfferManualSelector(named: selectorName) else {
+            return "'\(selectorName)' is not a safe live-object getter."
+        }
+
+        let selector = NSSelectorFromString(selectorName)
+        guard let method = class_getClassMethod(cls, selector) else {
+            return "Selector '\(selectorName)' was not found on \(className)."
+        }
+
+        let argumentCount = max(Int(method_getNumberOfArguments(method)) - 2, 0)
+        guard argumentCount == 0 else {
+            return "'\(selectorName)' requires \(argumentCount) argument\(argumentCount == 1 ? "" : "s")."
+        }
+
+        let returnType = RuntimeInvocationEngine.methodReturnType(method)
+        guard RuntimeInvocationEngine.returnKind(for: returnType) == .object else {
+            return "'\(selectorName)' returns \(returnType), not an object."
+        }
+
+        return nil
+    }
+
     public static func resolve(classNamed className: String, selectorName: String) -> ResolvedRuntimeInstance? {
+        guard customClassGetterValidationError(classNamed: className, selectorName: selectorName) == nil else {
+            return nil
+        }
         guard let cls = NSClassFromString(className) else { return nil }
 
         let selector = NSSelectorFromString(selectorName)
