@@ -4,6 +4,7 @@
 
 import SwiftUI
 import ClassDumpRuntime
+import ObjectiveC
 import SyntaxHighlighting
 
 
@@ -18,10 +19,10 @@ struct SemanticStringView: View {
     let runtimeType: RuntimeObjectType?
     
     var frameworkPath: String? = nil
-    @State private var fileExportCoordinator: FileExportCoordinator?
     @State private var resolvedInstance: ResolvedRuntimeInstance?
     @State private var cachedLiveRuntimeInstance: ResolvedRuntimeInstance?
     @State private var showRuntimeInspector: Bool = false
+    @State private var showObjectInfo: Bool = false
     @State private var selectorChooser: RuntimeSelectorChooserState?
     @State private var runtimeInspectorError: String?
     
@@ -83,12 +84,14 @@ struct SemanticStringView: View {
             .animation(.snappy, value: geomProxy.size)
         }
         .toolbarTitleMenu {
-            Button("File Name", systemImage: "square.on.square.dashed", action: copyFileName)
-            Button("File Content", systemImage: "square.on.square.dashed", action: copyFileContent)
-            
+            Button("File Name", systemImage: "square.on.square.dashed") { copy(fileName) }
+            Button("File Content", systemImage: "square.on.square.dashed") { copy(getFileContent(lines)) }
+            Button("Framework Path", systemImage: "square.on.square.dashed") { copy(LastNodeTracker.path ?? "") }
+
             Divider()
             
             Button("Search Web", systemImage: "magnifyingglass.circle", action: searchOnSafari)
+            Button("Information", systemImage: "info.circle") { showObjectInfo = true }
 
             if runtimeType?.isClass == true {
                 Divider()
@@ -125,27 +128,28 @@ struct SemanticStringView: View {
                 onSelect: resolveRuntimeInspector
             )
         }
-        .alert("Live Object Unavailable", isPresented: runtimeInspectorAlertBinding) {
-            Button("OK", role: .cancel) {
-                runtimeInspectorError = nil
-            }
-        } message: {
-            Text(runtimeInspectorError ?? "No live object could be resolved.")
+        .sheet(isPresented: $showObjectInfo) {
+            ObjectInformationView(
+                RuntimeObjectInfo(
+                    type: runtimeType,
+                    fileName: fileName,
+                    frameworkPath: frameworkPath,
+                    lineCount: lines.count
+                )
+            )
+        }
+        .alert(item: $runtimeInspectorError) {
+            Alert(title: Text("Error"), message: Text($0), dismissButton: .default(Text("OK")))
         }
     }
     
-    func copyFileName() {
-        UIPasteboard.general.string = fileName
-    }
-    
-    func copyFileContent() {
-        let content = getFileContent(lines)
+    func copy(_ content: String) {
         UIPasteboard.general.string = content
     }
     
     func saveFileContent() {
         let tempUrl = createTempUrl(for: lines)
-        presentDocumentPicker(for: tempUrl)
+        FileExportCoordinator.shared.export(to: tempUrl)
     }
     
     func searchOnSafari() {
@@ -181,23 +185,6 @@ struct SemanticStringView: View {
         return stringContent.joined(separator: "\n")
     }
     
-    private func presentDocumentPicker(for location: URL) {
-        fileExportCoordinator = FileExportCoordinator()
-        let documentPicker = UIDocumentPickerViewController(forExporting: [location])
-        documentPicker.delegate = fileExportCoordinator
-        
-        let scene = UIApplication.shared.connectedScenes.first as! UIWindowScene
-        let newWindow = UIWindow(windowScene: scene)
-        newWindow.windowLevel = .alert + 1
-        
-        
-        newWindow.rootViewController = UIViewController()
-        
-        fileExportCoordinator!.exportWindow = newWindow
-        fileExportCoordinator!.exportWindow!.isHidden = false
-        fileExportCoordinator!.exportWindow!.rootViewController!.present(documentPicker, animated: true)
-    }
-    
     private func presentActivityViewController() {
         let tempUrl = createTempUrl(for: lines)
         ActivityControllerPresenter.present(with: [tempUrl])
@@ -211,17 +198,6 @@ struct SemanticStringView: View {
         return bookmarkManager.isBookmarked(fileName)
     }
 
-    
-    private var runtimeInspectorAlertBinding: Binding<Bool> {
-        Binding(
-            get: { runtimeInspectorError != nil },
-            set: { isPresented in
-                if isPresented == false {
-                    runtimeInspectorError = nil
-                }
-            }
-        )
-    }
 
     func openRuntimeInspector() {
         guard let runtimeType else { return }
@@ -240,7 +216,7 @@ struct SemanticStringView: View {
         }
 
         if options.manualCandidates.isEmpty {
-            runtimeInspectorError = "No shared or singleton-style live object was detected for \(fileName)."
+            runtimeInspectorError = "No shared object was detected for \(fileName)."
             return
         }
 

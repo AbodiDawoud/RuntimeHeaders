@@ -75,14 +75,14 @@ struct RuntimeObjectInspectorView: View {
                 if disabledMethods.isEmpty == false {
                     Section("Unavailable Methods") {
                         ForEach(disabledMethods) {
-                            methodRow($0)
-                                .opacity(0.75)
+                            methodRow($0).opacity(0.8)
                         }
                     }
                 }
             }
+            .padding(.bottom) // to prevent the overlay from overlaping with the list rows
             .inlinedNavigationTitle(viewModel.resolvedInstance.inspectorTitle)
-            .safeAreaInset(edge: .bottom) {
+            .overlay(alignment: .bottom) {
                 if let lastInvocation = viewModel.lastInvocation {
                     lastResultView(lastInvocation)
                 }
@@ -103,8 +103,11 @@ struct RuntimeObjectInspectorView: View {
                 }
 
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Refresh", systemImage: "arrow.clockwise", action: viewModel.refresh)
-                        .buttonStyle(.plain)
+                    Button("Refresh", systemImage: "arrow.clockwise") {
+                        hapticFeedback(.rigid)
+                        viewModel.refresh()
+                    }
+                    .buttonStyle(.plain)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -246,44 +249,42 @@ struct RuntimeObjectInspectorView: View {
     private func lastResultView(_ lastInvocation: InvocationResult) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                Text("Last Result")
+                    .foregroundStyle(.white)
+                
                 Spacer()
+                
                 Button {
+                    hapticFeedback(.soft)
                     UIPasteboard.general.string = lastInvocation.valueDescription
                 } label: {
-                    Text("Copy")
-                        .font(.system(.caption2, design: .default, weight: .medium))
-                        .foregroundStyle(.blue.gradient)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(.blue.quinary.opacity(0.8), in: .capsule)
+                    Image(systemName: "square.on.square")
+                        .foregroundStyle(.lime.gradient)
+                        .padding(4)
+                        .background(.gray.quinary.opacity(0.6), in: .capsule)
                 }
                 
                 Button {
+                    hapticFeedback(.soft)
                     viewModel.clearLastInvocationResult()
                 } label: {
-                    Text("Clear")
+                    Text("Close")
                         .font(.system(.caption2, design: .default, weight: .medium))
                         .foregroundStyle(.pink.gradient)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
-                        .background(.pink.quinary.opacity(0.8), in: .capsule)
+                        .background(.pink.quinary.opacity(0.6), in: .capsule)
                 }
             }
+            .font(.footnote.weight(.semibold))
             .buttonStyle(.plain)
             
-            HStack {
-                Text("Last Result")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.white)
-                
-                Spacer(minLength: 12)
 
-                Text(lastInvocation.selectorName)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.gray)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
+            Text(lastInvocation.selectorName)
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.gray)
+                .lineLimit(1)
+                .truncationMode(.middle)
 
             if let errorMessage = lastInvocation.errorMessage {
                 Text(errorMessage)
@@ -295,17 +296,16 @@ struct RuntimeObjectInspectorView: View {
                     Text(lastInvocation.valueDescription)
                         .font(.system(.footnote, design: .monospaced))
                         .foregroundStyle(.white)
-                        .lineLimit(4)
                         .textSelection(.enabled)
                 }
-                .frame(maxHeight: 130)
+                .frame(maxHeight: 140)
             }
         }
         .padding(12)
         .background {
             RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .stroke(Color(white: 0.25), lineWidth: 1)
-                .fill(Color(white: 0.15))
+                .fill(Color(white: 0.12))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 5)
@@ -314,6 +314,7 @@ struct RuntimeObjectInspectorView: View {
 
     private func methodRow(_ method: InspectableMethod) -> some View {
         HStack {
+            let canInvoke = canInvoke(method)
             VStack(alignment: .leading, spacing: 5) {
                 Text(method.selectorName)
                     .font(.headline)
@@ -326,13 +327,13 @@ struct RuntimeObjectInspectorView: View {
 
                 Text(methodSubtitle(for: method))
                     .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(canInvoke(method) ? .secondary : .orange)
+                    .foregroundColor(canInvoke ? .secondary : .orange)
             }
 
             Spacer(minLength: 12)
 
-            Image(systemName: canInvoke(method) ? "play.circle.fill" : "lock.circle")
-                .foregroundStyle(canInvoke(method) ? .blue : .secondary)
+            Image(systemName: canInvoke ? "play.fill" : "lock.fill")
+                .foregroundStyle(canInvoke ? .blue : .secondary)
         }
         .padding(.vertical, 2)
     }

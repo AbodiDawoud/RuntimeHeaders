@@ -13,7 +13,7 @@ struct NamedNodeRow: View {
     @State private var searchText: String = ""
     @State private var isExporting: Bool = false
     @State private var exportErrorMessage: String?
-    @State private var fileExportCoordinator: FileExportCoordinator?
+    
     let node: NamedNode
     
     
@@ -31,8 +31,8 @@ struct NamedNodeRow: View {
                 }
                 .accessibilityLabel(child.name)
                 .contextMenu {
-                    Button("Copy Name", systemImage: "square.on.square.dashed") { copy(child.name) }
-                    Button("Copy Path", systemImage: "square.on.square.dashed") { copy(child.path) }
+                    Button("Node Name", systemImage: "square.on.square.dashed") { copy(child.name) }
+                    Button("Node Path", systemImage: "square.on.square.dashed") { copy(child.path) }
                     Divider()
                     Button("Search Web", systemImage: "safari") { searchWeb(child.name) }
                     Button("Export Node", systemImage: "square.and.arrow.up") { exportNode(child) }
@@ -78,6 +78,7 @@ struct NamedNodeRow: View {
     
     func copy(_ string: String) {
         UIPasteboard.general.string = string
+        hapticFeedback(.soft)
     }
     
     func searchWeb(_ query: String) {
@@ -95,29 +96,12 @@ struct NamedNodeRow: View {
         Task {
             do {
                 let exportURL = try exporter.exportHeaders(for: exportTarget)
-                presentDocumentPicker(for: exportURL)
+                FileExportCoordinator.shared.export(to: exportURL)
             } catch {
-                exportErrorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                exportErrorMessage = error.localizedDescription
             }
             
             isExporting = false
         }
-    }
-    
-    private func presentDocumentPicker(for location: URL) {
-        let scene = UIApplication.shared.connectedScenes.first as! UIWindowScene
-        
-        fileExportCoordinator = FileExportCoordinator()
-        
-        let documentPicker = UIDocumentPickerViewController(forExporting: [location])
-        documentPicker.delegate = fileExportCoordinator
-        
-        let exportWindow = UIWindow(windowScene: scene)
-        exportWindow.windowLevel = .alert + 1
-        exportWindow.rootViewController = UIViewController()
-        
-        fileExportCoordinator?.exportWindow = exportWindow
-        exportWindow.isHidden = false
-        exportWindow.rootViewController?.present(documentPicker, animated: true)
     }
 }

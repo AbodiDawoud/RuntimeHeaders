@@ -32,3 +32,30 @@ class ActivityControllerPresenter {
         tempViewController.present(activityViewController, animated: true)
     }
 }
+
+
+class FileExportCoordinator: NSObject, UIDocumentPickerDelegate {
+    private var exportWindow: UIWindow?
+    static let shared = FileExportCoordinator()
+    
+    func export(to url: URL) {
+        let scene = UIApplication.shared.connectedScenes.first as! UIWindowScene
+        exportWindow = UIWindow(windowScene: scene)
+        exportWindow!.windowLevel = .alert + 1
+        
+        let documentPicker = UIDocumentPickerViewController(forExporting: [url])
+        documentPicker.delegate = self
+    }
+    
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        controller.dismiss(animated: true)
+        exportWindow?.rootViewController = nil
+        exportWindow = nil
+    }
+    
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        controller.dismiss(animated: true)
+        exportWindow?.rootViewController = nil
+        exportWindow = nil
+    }
+}

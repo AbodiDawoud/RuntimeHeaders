@@ -26,6 +26,10 @@ extension View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.large)
     }
+    
+    func hapticFeedback(_ type: UIImpactFeedbackGenerator.FeedbackStyle) {
+        UIImpactFeedbackGenerator(style: type).impactOccurred()
+    }
 }
 
 extension String: @retroactive Identifiable {

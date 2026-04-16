@@ -199,20 +199,3 @@ extension NamedNodeExporter {
         }
     }
 }
-
-
-class FileExportCoordinator: NSObject, UIDocumentPickerDelegate {
-    var exportWindow: UIWindow?
-    
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-        controller.dismiss(animated: true)
-        exportWindow?.rootViewController = nil
-        exportWindow = nil
-    }
-    
-    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
-        controller.dismiss(animated: true)
-        exportWindow?.rootViewController = nil
-        exportWindow = nil
-    }
-}

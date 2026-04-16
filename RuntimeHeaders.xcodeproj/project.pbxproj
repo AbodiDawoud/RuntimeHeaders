@@ -7,10 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BD41BE8A2F90610C00375EC5 /* ObjectInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD41BE892F90610C00375EC5 /* ObjectInfoView.swift */; };
+		BD41BE8C2F90613300375EC5 /* RuntimeObjectInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD41BE8B2F90613300375EC5 /* RuntimeObjectInfo.swift */; };
 		BD57338F2F8C4EC2005EF862 /* TODO.md in Resources */ = {isa = PBXBuildFile; fileRef = BD57338E2F8C4EC2005EF862 /* TODO.md */; };
 		BD58379D2F87F29700473B0A /* FeaturedFramework.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379C2F87F29700473B0A /* FeaturedFramework.swift */; };
 		BD58379F2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */; };
-		BD77F8F02EA7306D009E7839 /* ActivityController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77F8EF2EA7306D009E7839 /* ActivityController.swift */; };
+		BD77F8F02EA7306D009E7839 /* Controllers.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD77F8EF2EA7306D009E7839 /* Controllers.swift */; };
 		BD8A38DA2E9ADA3B00F1B486 /* FiraCode-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38C72E9ADA3B00F1B486 /* FiraCode-Regular.ttf */; };
 		BD8A38DB2E9ADA3B00F1B486 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38CC2E9ADA3B00F1B486 /* Colors.xcassets */; };
 		BD8A38DC2E9ADA3B00F1B486 /* ConsolaVD3-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = BD8A38C62E9ADA3B00F1B486 /* ConsolaVD3-Regular.ttf */; };
@@ -72,10 +74,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BD41BE892F90610C00375EC5 /* ObjectInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectInfoView.swift; sourceTree = "<group>"; };
+		BD41BE8B2F90613300375EC5 /* RuntimeObjectInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectInfo.swift; sourceTree = "<group>"; };
 		BD57338E2F8C4EC2005EF862 /* TODO.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TODO.md; sourceTree = "<group>"; };
 		BD58379C2F87F29700473B0A /* FeaturedFramework.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFramework.swift; sourceTree = "<group>"; };
 		BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturedFrameworkContainerView.swift; sourceTree = "<group>"; };
-		BD77F8EF2EA7306D009E7839 /* ActivityController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityController.swift; sourceTree = "<group>"; };
+		BD77F8EF2EA7306D009E7839 /* Controllers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controllers.swift; sourceTree = "<group>"; };
 		BD8A38AC2E9ADA3B00F1B486 /* AppearancePopover.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearancePopover.swift; sourceTree = "<group>"; };
 		BD8A38AD2E9ADA3B00F1B486 /* CodeAppearanceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeAppearanceView.swift; sourceTree = "<group>"; };
 		BD8A38AE2E9ADA3B00F1B486 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -159,6 +163,7 @@
 				BD8A38B52E9ADA3B00F1B486 /* RuntimeObjectRow.swift */,
 				BD8A38B62E9ADA3B00F1B486 /* RuntimeObjectsList.swift */,
 				BD8A38B72E9ADA3B00F1B486 /* SemanticStringView.swift */,
+				BD41BE892F90610C00375EC5 /* ObjectInfoView.swift */,
 				BD58379E2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift */,
 			);
 			path = Content;
@@ -185,6 +190,7 @@
 				BD58379C2F87F29700473B0A /* FeaturedFramework.swift */,
 				BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */,
 				BD995F922F8AE4DA00E203AE /* RuntimeObjectType.swift */,
+				BD41BE8B2F90613300375EC5 /* RuntimeObjectInfo.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -220,7 +226,7 @@
 				BD8A38D32E9ADA3B00F1B486 /* RuntimeListings.swift */,
 				BD8A38D42E9ADA3B00F1B486 /* RuntimeObjectsViewModel.swift */,
 				BD8A38D52E9ADA3B00F1B486 /* PreferencesController.swift */,
-				BD77F8EF2EA7306D009E7839 /* ActivityController.swift */,
+				BD77F8EF2EA7306D009E7839 /* Controllers.swift */,
 				BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */,
 				BE0000022F90000100000016 /* NamedNodeExporter.swift */,
 				BD995F902F8AE47C00E203AE /* CodePreferences.swift */,
@@ -369,7 +375,7 @@
 				BD8A38E22E9ADA3B00F1B486 /* RuntimeObjectsList.swift in Sources */,
 				BD8A38E32E9ADA3B00F1B486 /* HistoryManager.swift in Sources */,
 				BD8A38E42E9ADA3B00F1B486 /* View+.swift in Sources */,
-				BD77F8F02EA7306D009E7839 /* ActivityController.swift in Sources */,
+				BD77F8F02EA7306D009E7839 /* Controllers.swift in Sources */,
 				BD8A38E52E9ADA3B00F1B486 /* ImageRuntimeObjectsView.swift in Sources */,
 				BD8A38E62E9ADA3B00F1B486 /* NamedNodeRow.swift in Sources */,
 				BD8A38E72E9ADA3B00F1B486 /* LabelStyles.swift in Sources */,
@@ -378,7 +384,9 @@
 				BE0000012F90000100000008 /* InspectorView.swift in Sources */,
 				BD995F872F8AC9A700E203AE /* History.swift in Sources */,
 				BD8A38EA2E9ADA3B00F1B486 /* RuntimeObjectRow.swift in Sources */,
+				BD41BE8A2F90610C00375EC5 /* ObjectInfoView.swift in Sources */,
 				BD58379D2F87F29700473B0A /* FeaturedFramework.swift in Sources */,
+				BD41BE8C2F90613300375EC5 /* RuntimeObjectInfo.swift in Sources */,
 				BD8A38EB2E9ADA3B00F1B486 /* ImageRuntimeObjectsViewModel.swift in Sources */,
 				BD8A38EC2E9ADA3B00F1B486 /* PreferencesController.swift in Sources */,
 				BD8A38ED2E9ADA3B00F1B486 /* SettingsView.swift in Sources */,
@@ -543,6 +551,7 @@
 				INFOPLIST_FILE = RuntimeHeaders/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Headers.h;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This is requried for PhotoLibrary Inspection. The app will crash otherwise.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -587,6 +596,7 @@
 				INFOPLIST_FILE = RuntimeHeaders/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Headers.h;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This is requried for PhotoLibrary Inspection. The app will crash otherwise.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

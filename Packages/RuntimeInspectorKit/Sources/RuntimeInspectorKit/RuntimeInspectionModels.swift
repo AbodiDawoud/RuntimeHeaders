@@ -53,19 +53,15 @@ public struct ResolvedRuntimeInstance: Identifiable {
 
     public var inspectorTitle: String {
         switch subjectKind {
-        case .instance:
-            "Live Object"
-        case .classObject:
-            "Class Members"
+        case .instance: "Object Inspector"
+        case .classObject: "Class Members"
         }
     }
 
     public var subjectDescription: String {
         switch subjectKind {
-        case .instance:
-            "Instance"
-        case .classObject:
-            "Class"
+        case .instance: "Instance"
+        case .classObject: "Class"
         }
     }
 
