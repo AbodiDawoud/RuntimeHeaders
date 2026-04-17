@@ -4,6 +4,7 @@
     
 
 import SwiftUI
+import Toasts
 
 
 extension View {
@@ -34,4 +35,13 @@ extension View {
 
 extension String: @retroactive Identifiable {
     public var id: String { self }
+}
+
+extension ToastValue {
+    static func appToast(icon systemName: String, message: String, color: Color = .primary) -> ToastValue {
+        ToastValue(
+            icon: Image(systemName: systemName).foregroundStyle(color),
+            message: message
+        )
+    }
 }

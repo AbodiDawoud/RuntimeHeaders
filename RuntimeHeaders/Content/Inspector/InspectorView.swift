@@ -4,11 +4,13 @@
 //
 
 import SwiftUI
+import Toasts
 
 struct RuntimeObjectInspectorView: View {
     @StateObject private var viewModel: RuntimeObjectInspectorViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.presentToast) private var presentToast
     
     @State private var includeInheritedMembers: Bool = false
     @State private var includeNSObjectMembers: Bool = false
@@ -16,6 +18,7 @@ struct RuntimeObjectInspectorView: View {
     @State private var includeArgumentMethods: Bool = false
     @State private var includePrivateMethods: Bool = true
     @State private var allowSafetyFilteredMethods: Bool = true
+    @State private var searchText: String = ""
     @State private var selectedArgumentMethod: InspectableMethod?
 
     init(resolvedInstance: ResolvedRuntimeInstance) {
@@ -36,12 +39,13 @@ struct RuntimeObjectInspectorView: View {
                 }
 
                 Section(viewModel.isInspectingClass ? "Static Values" : "Properties") {
-                    if filteredProperties.isEmpty {
+                    let properties = filteredProperties
+                    if properties.isEmpty {
                         Text("No properties match the current filters.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(filteredProperties) { property in
-                            propertyRow(property)
+                        ForEach(properties) {
+                            propertyRow($0)
                         }
                     }
                 }
@@ -82,6 +86,7 @@ struct RuntimeObjectInspectorView: View {
             }
             .padding(.bottom) // to prevent the overlay from overlaping with the list rows
             .inlinedNavigationTitle(viewModel.resolvedInstance.inspectorTitle)
+            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search members")
             .overlay(alignment: .bottom) {
                 if let lastInvocation = viewModel.lastInvocation {
                     lastResultView(lastInvocation)
@@ -131,6 +136,7 @@ struct RuntimeObjectInspectorView: View {
     private var filteredMethods: [InspectableMethod] {
         viewModel.methods.filter { method in
             canInvoke(method) &&
+            methodMatchesSearch(method) &&
             shouldIncludeMember(
                 isInherited: method.isInherited,
                 isNSObjectMember: method.isNSObjectMember,
@@ -148,6 +154,7 @@ struct RuntimeObjectInspectorView: View {
     private var disabledMethods: [InspectableMethod] {
         viewModel.methods.filter { method in
             canInvoke(method) == false &&
+            methodMatchesSearch(method) &&
             shouldIncludeMember(
                 isInherited: method.isInherited,
                 isNSObjectMember: method.isNSObjectMember,
@@ -189,12 +196,37 @@ struct RuntimeObjectInspectorView: View {
 
     private var filteredProperties: [InspectableProperty] {
         viewModel.properties.filter { property in
+            propertyMatchesSearch(property) &&
             shouldIncludeMember(
                 isInherited: property.isInherited,
                 isNSObjectMember: property.isNSObjectMember,
                 isAccessibilityRelated: property.isAccessibilityRelated
             )
         }
+    }
+
+
+    private func propertyMatchesSearch(_ property: InspectableProperty) -> Bool {
+        let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedSearchText.isEmpty { return true }
+        return [
+            property.name,
+            property.getterName,
+            property.attributes,
+            property.valueDescription,
+            property.declaringClassName
+        ].contains { $0.localizedCaseInsensitiveContains(trimmedSearchText) }
+    }
+
+    private func methodMatchesSearch(_ method: InspectableMethod) -> Bool {
+        let trimmedSearchText = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmedSearchText.isEmpty { return true }
+        return [
+            method.selectorName,
+            method.returnTypeEncoding,
+            method.declaringClassName,
+            method.invocationBlockedReason ?? ""
+        ].contains { $0.localizedCaseInsensitiveContains(trimmedSearchText) }
     }
 
     private func inspectorRow(_ title: String, value: String) -> some View {
@@ -257,6 +289,7 @@ struct RuntimeObjectInspectorView: View {
                 Button {
                     hapticFeedback(.soft)
                     UIPasteboard.general.string = lastInvocation.valueDescription
+                    presentToast(.appToast(icon: "doc.on.doc", message: "Copied result"))
                 } label: {
                     Image(systemName: "square.on.square")
                         .foregroundStyle(.lime.gradient)

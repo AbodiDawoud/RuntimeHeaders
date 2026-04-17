@@ -102,41 +102,43 @@ enum RuntimeInvocationEngine {
         selector: Selector,
         returnTypeEncoding: String
     ) throws -> String {
+        try invokeClassMethod(
+            on: cls,
+            selector: selector,
+            returnTypeEncoding: returnTypeEncoding,
+            arguments: []
+        )
+    }
+
+    static func invokeClassMethod(
+        on cls: AnyClass,
+        selector: Selector,
+        returnTypeEncoding: String,
+        arguments: [RuntimeInvocationArgument]
+    ) throws -> String {
+        let receiver = cls as AnyObject
+        let preparedArguments = try prepare(arguments)
         let methodName = NSStringFromSelector(selector)
         switch returnKind(for: returnTypeEncoding) {
         case .void:
-            typealias Function = @convention(c) (AnyClass, Selector) -> Void
-            let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-            function(cls, selector)
+            try invokeVoid(on: receiver, selector: selector, arguments: preparedArguments)
             return "Completed"
         case .object:
-            typealias Function = @convention(c) (AnyClass, Selector) -> Unmanaged<AnyObject>?
-            let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-            guard let result = function(cls, selector)?.takeUnretainedValue() else {
+            guard let result = try invokeObject(on: receiver, selector: selector, arguments: preparedArguments) else {
                 throw RuntimeInvocationError.nilObjectReturn(methodName)
             }
             return describe(value: result)
         case .bool:
-            typealias Function = @convention(c) (AnyClass, Selector) -> Bool
-            let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-            return function(cls, selector) ? "true" : "false"
+            return try invokeBool(on: receiver, selector: selector, arguments: preparedArguments) ? "true" : "false"
         case .integer:
-            typealias Function = @convention(c) (AnyClass, Selector) -> Int
-            let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-            return String(function(cls, selector))
+            return String(try invokeInt(on: receiver, selector: selector, arguments: preparedArguments))
         case .unsignedInteger:
-            typealias Function = @convention(c) (AnyClass, Selector) -> UInt
-            let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-            return String(function(cls, selector))
+            return String(try invokeUInt(on: receiver, selector: selector, arguments: preparedArguments))
         case .floatingPoint:
             if returnTypeEncoding == "f" {
-                typealias Function = @convention(c) (AnyClass, Selector) -> Float
-                let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-                return String(function(cls, selector))
+                return String(try invokeFloat(on: receiver, selector: selector, arguments: preparedArguments))
             } else {
-                typealias Function = @convention(c) (AnyClass, Selector) -> Double
-                let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-                return String(function(cls, selector))
+                return String(try invokeDouble(on: receiver, selector: selector, arguments: preparedArguments))
             }
         case .unsupported:
             throw RuntimeInvocationError.unsupportedReturnType(returnTypeEncoding)
@@ -590,4 +592,5 @@ private extension RuntimeInvocationEngine {
             throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
         }
     }
+
 }

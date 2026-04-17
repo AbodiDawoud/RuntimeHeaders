@@ -4,14 +4,17 @@
 
 
 import SwiftUI
+import Toasts
 
 // Clear button with confirmation
 struct ClearButton: ToolbarContent {
     @State private var showConfirmation: Bool = false
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.presentToast) private var presentToast
     
     var tint: Color = .secondary
     var placement: ToolbarItemPlacement = .primaryAction
+    var toastMessage: String = "Cleared"
     let action: () -> Void
     
     var body: some ToolbarContent {
@@ -30,7 +33,10 @@ struct ClearButton: ToolbarContent {
             }
             .buttonStyle(.plain)
             .confirmationDialog("", isPresented: $showConfirmation) {
-                Button("Clear", role: .destructive, action: action)
+                Button("Clear", role: .destructive) {
+                    action()
+                    presentToast(.appToast(icon: "trash", message: toastMessage))
+                }
             }
         }
     }

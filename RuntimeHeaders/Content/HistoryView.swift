@@ -3,11 +3,13 @@
 //  HeaderViewer
 
 import SwiftUI
+import Toasts
 
  
 struct HistoryView: View {
     @EnvironmentObject private var manager: HistoryManager
     @EnvironmentObject private var navigation: AppNavigation
+    @Environment(\.presentToast) private var presentToast
     @ObservedObject private var settingsManager = PreferenceController.shared
     
     
@@ -30,13 +32,13 @@ struct HistoryView: View {
                         RuntimeObjectRow(type: item.object)
                     }
                 }
-                .onDelete(perform: manager.removeObject)
+                .onDelete(perform: removeHistoryItems)
             }
             .onAppear(perform: manager.refreshHistory)
             .inlinedNavigationTitle("History")
             .toolbar {
                 if !manager.isHistoryEmpty {
-                    ClearButton(action: manager.clearHistory)
+                    ClearButton(toastMessage: "Cleared history", action: manager.clearHistory)
                 }
             }
             .if(!manager.isHistoryEmpty) {
@@ -75,6 +77,17 @@ struct HistoryView: View {
             return Array(manager.historyItems.dropFirst(3))
         }
         return manager.historyItems
+    }
+    
+    private func removeHistoryItems(at offsets: IndexSet) {
+        let deletedItems = offsets.compactMap { index in
+            _h_items.indices.contains(index) ? _h_items[index] : nil
+        }
+        
+        deletedItems.forEach(manager.removeObject)
+        if offsets.isEmpty == false {
+            presentToast(.appToast(icon: "trash", message: "Deleted history item"))
+        }
     }
 }
 

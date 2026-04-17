@@ -4,10 +4,12 @@
     
 
 import SwiftUI
+import Toasts
 
 struct BookmarkListingView: View {
     @ObservedObject var manager = BookmarksStore.shared
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentToast) private var presentToast
     @State private var folderName: String = ""
     @State private var showingCreateFolder: Bool = false
     @State private var folderToRename: BookmarkFolder?
@@ -51,6 +53,7 @@ struct BookmarkListingView: View {
                                 
                                 Button("Delete Folder", systemImage: "trash", role: .destructive) {
                                     manager.deleteFolder(folder)
+                                    presentToast(.appToast(icon: "trash", message: "Deleted \(folder.name)"))
                                 }
                             }
                         }
@@ -132,19 +135,28 @@ struct BookmarkListingView: View {
             ForEach(manager.folders.filter { $0.id != source.id }) { destination in
                 Button(destination.name, systemImage: "folder") {
                     manager.mergeFolder(source, into: destination)
+                    presentToast(.appToast(icon: "arrow.triangle.merge", message: "Merged into \(destination.name)"))
                 }
             }
         }
     }
     
     private func createFolder() {
-        manager.createFolder(named: folderName)
+        let trimmedName = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
+        manager.createFolder(named: trimmedName)
+        if trimmedName.isEmpty == false {
+            presentToast(.appToast(icon: "folder.badge.plus", message: "Created \(trimmedName)"))
+        }
         folderName = ""
     }
     
     private func renameFolder() {
         guard let folderToRename else { return }
-        manager.renameFolder(folderToRename, to: renameFolderName)
+        let trimmedName = renameFolderName.trimmingCharacters(in: .whitespacesAndNewlines)
+        manager.renameFolder(folderToRename, to: trimmedName)
+        if trimmedName.isEmpty == false {
+            presentToast(.appToast(icon: "pencil", message: "Renamed folder"))
+        }
         self.folderToRename = nil
         renameFolderName = ""
     }
@@ -174,6 +186,7 @@ private struct BookmarkFolderTile: View {
 
 private struct BookmarkFolderDetailView: View {
     @ObservedObject var manager = BookmarksStore.shared
+    @Environment(\.presentToast) private var presentToast
     let folderID: UUID
     @State private var exportErrorMessage: String?
     
@@ -253,6 +266,7 @@ private struct BookmarkFolderDetailView: View {
                 Divider()
                 Button("Un-Bookmark", systemImage: "bookmark.slash") {
                     manager.removeBookmark(for: bookmark)
+                    presentToast(.appToast(icon: "bookmark.slash", message: "Removed bookmark"))
                 }
             }
         }
@@ -263,6 +277,7 @@ private struct BookmarkFolderDetailView: View {
             ForEach(manager.folders) { folder in
                 Button {
                     manager.moveBookmark(bookmark, to: folder)
+                    presentToast(.appToast(icon: "folder", message: "Moved to \(folder.name)"))
                 } label: {
                     Label(folder.name, systemImage: folder.id == folderID ? "checkmark" : "folder")
                 }
@@ -274,10 +289,15 @@ private struct BookmarkFolderDetailView: View {
         for index in offsets where folder.bookmarks.indices.contains(index) {
             manager.removeBookmark(for: folder.bookmarks[index])
         }
+        
+        if offsets.isEmpty == false {
+            presentToast(.appToast(icon: "bookmark.slash", message: "Removed bookmark"))
+        }
     }
     
     private func copy(_ str: String) {
         UIPasteboard.general.string = str
+        presentToast(.appToast(icon: "doc.on.doc", message: "Copied"))
     }
     
     private func searchOnSafari(_ fileName: String) {
@@ -291,6 +311,7 @@ private struct BookmarkFolderDetailView: View {
         do {
             let exportURL = try BookmarkFolderHeaderExporter().exportHeaders(for: folder)
             FileExportCoordinator.shared.export(to: exportURL)
+            presentToast(.appToast(icon: "square.and.arrow.up", message: "Export ready"))
         } catch {
             exportErrorMessage = error.localizedDescription
         }

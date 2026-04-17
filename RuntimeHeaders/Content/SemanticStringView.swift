@@ -6,6 +6,7 @@ import SwiftUI
 import ClassDumpRuntime
 import ObjectiveC
 import SyntaxHighlighting
+import Toasts
 
 
 struct SemanticStringView: View {
@@ -13,6 +14,7 @@ struct SemanticStringView: View {
     @ObservedObject var bookmarkManager = BookmarksStore.shared
     @EnvironmentObject private var navigation: AppNavigation
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.presentToast) private var presentToast
     
     let semanticString: CDSemanticString
     let fileName: String
@@ -146,6 +148,7 @@ struct SemanticStringView: View {
     
     func copy(_ content: String) {
         UIPasteboard.general.string = content
+        presentToast(.init(message: "Copied"))
     }
     
     func saveFileContent() {
@@ -221,12 +224,26 @@ struct SemanticStringView: View {
     }
     
     func toggleBookmark() {
+        let wasBookmarked = bookmarked
         bookmarkManager.toggleBookmark(for: fileName)
+        presentToast(
+            .appToast(
+                icon: wasBookmarked ? "bookmark.slash" : "bookmark.fill",
+                message: wasBookmarked ? "Removed bookmark" : "Bookmarked \(fileName)"
+            )
+        )
     }
     
     func addBookmark(to folder: BookmarkFolder) {
         guard let parent = frameworkPath ?? LastNodeTracker.path else { return }
+        let wasBookmarked = bookmarked
         bookmarkManager.addBookmark(imageName: fileName, parent: parent, to: folder)
+        presentToast(
+            .appToast(
+                icon: wasBookmarked ? "folder" : "bookmark.fill",
+                message: wasBookmarked ? "Moved to \(folder.name)" : "Bookmarked in \(folder.name)"
+            )
+        )
     }
     
     var bookmarked: Bool {

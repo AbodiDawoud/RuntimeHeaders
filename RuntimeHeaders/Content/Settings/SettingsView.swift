@@ -4,6 +4,7 @@
     
 
 import SwiftUI
+import Toasts
 
 
 struct SettingsView: View {
@@ -84,6 +85,7 @@ struct SettingsView: View {
 fileprivate struct RestoreFrameworkSection: View {
     @ObservedObject private var manager: PreferenceController = .shared
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.presentToast) private var presentToast
     @State private var refreshUUID: String = UUID().uuidString
     
     var body: some View {
@@ -108,6 +110,7 @@ fileprivate struct RestoreFrameworkSection: View {
                         Button {
                             LastNodeTracker.reset()
                             refreshUUID = UUID().uuidString
+                            presentToast(.init(message: "Cleared path"))
                         } label: {
                             Text("Clear")
                                 .font(.system(.caption2, design: .default, weight: .medium))
@@ -137,6 +140,7 @@ fileprivate struct RestoreFrameworkSection: View {
 
 fileprivate struct CacheSection: View {
     @ObservedObject private var manager: PreferenceController = .shared
+    @Environment(\.presentToast) private var presentToast
     @State private var showCacheClearConfirmation: Bool = false
     
     var body: some View {
@@ -155,7 +159,10 @@ fileprivate struct CacheSection: View {
         .padding(.vertical, 1)
         .onAppear(perform: manager.calculateCacheSize)
         .confirmationDialog("", isPresented: $showCacheClearConfirmation) {
-            Button("Clear", role: .destructive, action: manager.clearCache)
+            Button("Clear", role: .destructive) {
+                manager.clearCache()
+                presentToast(.init(message: "Cleared cache"))
+            }
         }
     }
 }

@@ -63,13 +63,11 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                     arguments: arguments
                 )
             case .classObject:
-                guard arguments.isEmpty else {
-                    throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
-                }
                 value = try RuntimeInvocationEngine.invokeClassMethod(
                     on: resolvedInstance.targetClass,
                     selector: selector,
-                    returnTypeEncoding: method.returnTypeEncoding
+                    returnTypeEncoding: method.returnTypeEncoding,
+                    arguments: arguments
                 )
             }
 
@@ -472,9 +470,6 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         arguments: [InspectableMethodArgument],
         returnKind: InspectableMethodReturnKind
     ) -> String? {
-        if isInspectingClass && argumentCount > 0 {
-            return "Class methods with arguments are not supported yet"
-        }
         if argumentCount > 3 {
             return "Requires \(argumentCount) arguments"
         }

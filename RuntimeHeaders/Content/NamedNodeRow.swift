@@ -5,11 +5,13 @@
 
 import SwiftUI
 import ClassDumpRuntime
+import Toasts
 
 
 struct NamedNodeRow: View {
     @EnvironmentObject private var listings: RuntimeListings
     @Environment(\.openURL) private var openUrl
+    @Environment(\.presentToast) private var presentToast
     @State private var searchText: String = ""
     @State private var isExporting: Bool = false
     @State private var exportErrorMessage: String?
@@ -79,6 +81,7 @@ struct NamedNodeRow: View {
     func copy(_ string: String) {
         UIPasteboard.general.string = string
         hapticFeedback(.soft)
+        presentToast(.init(message: "Copied"))
     }
     
     func searchWeb(_ query: String) {

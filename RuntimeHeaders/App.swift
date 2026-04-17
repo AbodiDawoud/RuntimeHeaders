@@ -4,6 +4,7 @@
 
 
 import SwiftUI
+import Toasts
 
 @main
 struct HeaderViewerApp: App {
@@ -11,7 +12,9 @@ struct HeaderViewerApp: App {
     
     var body: some Scene {
         WindowGroup {
-            _HomeView().environmentObject(hm)
+            _HomeView()
+                .environmentObject(hm)
+                .installToast(position: .bottom)
         }
     }
 }

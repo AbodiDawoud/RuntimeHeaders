@@ -3,9 +3,11 @@
 //  HeaderViewer
 
 import SwiftUI
+import Toasts
 
 struct RuntimeObjectRow: View {
     let type: RuntimeObjectType
+    @Environment(\.presentToast) private var presentToast
     
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
@@ -20,5 +22,6 @@ struct RuntimeObjectRow: View {
     
     func copyName() {
         UIPasteboard.general.string = type.name
+        presentToast(ToastValue(message: "Copied \(type.name)"))
     }
 }
