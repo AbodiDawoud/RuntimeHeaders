@@ -84,9 +84,14 @@ struct SemanticStringView: View {
             .animation(.snappy, value: geomProxy.size)
         }
         .toolbarTitleMenu {
-            Button("File Name", systemImage: "square.on.square.dashed") { copy(fileName) }
-            Button("File Content", systemImage: "square.on.square.dashed") { copy(getFileContent(lines)) }
-            Button("Framework Path", systemImage: "square.on.square.dashed") { copy(LastNodeTracker.path ?? "") }
+            Menu("Copy") {
+                Button("File Name", systemImage: "square.on.square.dashed") { copy(fileName) }
+                Button("File Content", systemImage: "square.on.square.dashed") { copy(getFileContent(lines)) }
+                Button("Framework Path", systemImage: "square.on.square.dashed") {
+                    let path = frameworkPath ?? LastNodeTracker.path ?? ""
+                    copy(path)
+                }
+            }
 
             Divider()
             
@@ -110,11 +115,7 @@ struct SemanticStringView: View {
             }
             
             Divider()
-            Button(
-                bookmarked ? "Un-Bookmark" : "Bookmark",
-                systemImage: bookmarked ? "bookmark.slash" : "bookmark",
-                action: toggleBookmark
-            )
+            bookmarkMenu
             Button("Save", systemImage: "arrow.down.document", action: saveFileContent)
             Button("Share", systemImage: "square.and.arrow.up", action: presentActivityViewController)
         }
@@ -190,8 +191,42 @@ struct SemanticStringView: View {
         ActivityControllerPresenter.present(with: [tempUrl])
     }
     
+    @ViewBuilder
+    private var bookmarkMenu: some View {
+        if bookmarked {
+            Button("Un-Bookmark", systemImage: "bookmark.slash", action: toggleBookmark)
+            
+            if bookmarkManager.folders.count > 1 {
+                Menu("Move Bookmark", systemImage: "folder") {
+                    ForEach(bookmarkManager.folders) { folder in
+                        Button {
+                            addBookmark(to: folder)
+                        } label: {
+                            Label(folder.name, systemImage: "folder")
+                        }
+                    }
+                }
+            }
+        } else if bookmarkManager.folders.isEmpty {
+            Button("Bookmark", systemImage: "bookmark", action: toggleBookmark)
+        } else {
+            Menu("Bookmark", systemImage: "bookmark") {
+                ForEach(bookmarkManager.folders) { folder in
+                    Button(folder.name, systemImage: "folder") {
+                        addBookmark(to: folder)
+                    }
+                }
+            }
+        }
+    }
+    
     func toggleBookmark() {
         bookmarkManager.toggleBookmark(for: fileName)
+    }
+    
+    func addBookmark(to folder: BookmarkFolder) {
+        guard let parent = frameworkPath ?? LastNodeTracker.path else { return }
+        bookmarkManager.addBookmark(imageName: fileName, parent: parent, to: folder)
     }
     
     var bookmarked: Bool {

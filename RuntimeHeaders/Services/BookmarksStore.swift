@@ -8,11 +8,15 @@ import Foundation
 class BookmarksStore: ObservableObject {
     static let shared = BookmarksStore()
     
-    @Published var bookmarks: [Bookmark] = []
+    @Published var folders: [BookmarkFolder] = []
     
     private let userDefaults: UserDefaults
     private let userDefaultsKey = "bookmarks"
-
+    private let foldersUserDefaultsKey = "bookmarkFolders"
+    
+    var bookmarks: [Bookmark] {
+        folders.flatMap(\.bookmarks)
+    }
     
     private init() {
         self.userDefaults = UserDefaults(suiteName: "BookmarkManager")!
@@ -21,58 +25,167 @@ class BookmarksStore: ObservableObject {
     
     func toggleBookmark(for imageName: String) {
         guard let parent = LastNodeTracker.path else { return }
-        let b = Bookmark(name: imageName, parentPath: parent, date: Date.now)
+        let bookmark = Bookmark(name: imageName, parentPath: parent, date: Date.now)
         
-        if let index = bookmarks.firstIndex(of: b) {
-            bookmarks.remove(at: index)
+        if isBookmarked(bookmark) {
+            removeBookmark(for: bookmark)
         } else {
-            bookmarks.append(b)
+            addBookmark(bookmark, to: defaultFolderID())
         }
-        
-        syncBookmarks()
     }
     
     @discardableResult
     func addBookmark(imageName: String, parent: String) -> Int {
-        let newBookmark = Bookmark(name: imageName, parentPath: parent, date: Date.now)
-        bookmarks.insert(newBookmark, at: 0)
-        syncBookmarks()
+        let bookmark = Bookmark(name: imageName, parentPath: parent, date: Date.now)
+        addBookmark(bookmark, to: defaultFolderID())
         return bookmarks.count - 1
     }
     
+    func addBookmark(imageName: String, parent: String, to folder: BookmarkFolder) {
+        let bookmark = Bookmark(name: imageName, parentPath: parent, date: Date.now)
+        addBookmark(bookmark, to: folder.id)
+    }
+    
+    func addBookmark(_ bookmark: Bookmark, to folderID: UUID) {
+        removeBookmark(for: bookmark, shouldSync: false)
+        
+        guard let index = folders.firstIndex(where: { $0.id == folderID }) else { return }
+        folders[index].bookmarks.insert(bookmark, at: 0)
+        syncFolders()
+    }
+    
     func removeBookmark(at index: IndexSet) {
-        for i in index {
-            bookmarks.remove(at: i)
+        let allBookmarks = bookmarks
+        
+        for i in index where allBookmarks.indices.contains(i) {
+            removeBookmark(for: allBookmarks[i], shouldSync: false)
         }
-        syncBookmarks()
+        
+        syncFolders()
     }
     
     func removeBookmark(for bookmark: Bookmark) {
-        bookmarks.removeAll { $0.name == bookmark.name && $0.parentPath == bookmark.parentPath }
-        syncBookmarks()
+        removeBookmark(for: bookmark, shouldSync: true)
     }
     
-    func clearBookmarks() {
-        bookmarks.removeAll()
-        syncBookmarks()
+    func createFolder(named name: String) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+        
+        folders.insert(BookmarkFolder(name: trimmedName), at: 0)
+        syncFolders()
+    }
+    
+    func renameFolder(_ folder: BookmarkFolder, to name: String) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty,
+              let index = folders.firstIndex(where: { $0.id == folder.id }) else {
+            return
+        }
+        
+        folders[index].name = trimmedName
+        syncFolders()
+    }
+    
+    func deleteFolder(_ folder: BookmarkFolder) {
+        folders.removeAll { $0.id == folder.id }
+        syncFolders()
+    }
+    
+    func mergeFolder(_ source: BookmarkFolder, into destination: BookmarkFolder) {
+        guard source.id != destination.id,
+              let sourceIndex = folders.firstIndex(where: { $0.id == source.id }),
+              let destinationIndex = folders.firstIndex(where: { $0.id == destination.id }) else {
+            return
+        }
+        
+        let bookmarksToMove = folders[sourceIndex].bookmarks.filter { bookmark in
+            folders[destinationIndex].bookmarks.contains(bookmark) == false
+        }
+        
+        folders[destinationIndex].bookmarks.insert(contentsOf: bookmarksToMove, at: 0)
+        folders.remove(at: sourceIndex)
+        syncFolders()
+    }
+    
+    func moveBookmark(_ bookmark: Bookmark, to folder: BookmarkFolder) {
+        addBookmark(bookmark, to: folder.id)
     }
     
     func isBookmarked(_ imageName: String) -> Bool {
         guard let path = LastNodeTracker.path else { return false }
-        return bookmarks.contains { $0.name == imageName && $0.parentPath == path }
+        return isBookmarked(Bookmark(name: imageName, parentPath: path, date: .now))
     }
     
-    private func syncBookmarks() {
-        let data = try? JSONEncoder().encode(bookmarks)
-        userDefaults.set(data, forKey: userDefaultsKey)
+    func folderContaining(_ bookmark: Bookmark) -> BookmarkFolder? {
+        folders.first { folder in
+            folder.bookmarks.contains(bookmark)
+        }
+    }
+    
+    func clearBookmarks() {
+        folders.removeAll()
+        syncFolders()
+    }
+    
+    func refresh() {
+        loadBookmarks()
+    }
+    
+    private func defaultFolderID() -> UUID {
+        if let firstFolder = folders.first {
+            return firstFolder.id
+        }
+        
+        let folder = BookmarkFolder(name: "Bookmarks")
+        folders.append(folder)
+        syncFolders()
+        return folder.id
+    }
+    
+    private func isBookmarked(_ bookmark: Bookmark) -> Bool {
+        bookmarks.contains(bookmark)
+    }
+    
+    private func removeBookmark(for bookmark: Bookmark, shouldSync: Bool) {
+        for index in folders.indices {
+            folders[index].bookmarks.removeAll { $0 == bookmark }
+        }
+        
+        if shouldSync {
+            syncFolders()
+        }
+    }
+    
+    private func syncFolders() {
+        let data = try? JSONEncoder().encode(folders)
+        userDefaults.set(data, forKey: foldersUserDefaultsKey)
     }
     
     private func loadBookmarks() {
-        guard let data = userDefaults.data(forKey: userDefaultsKey) else { return }
-        bookmarks = try! JSONDecoder().decode([Bookmark].self, from: data)
+        let legacyBookmarks = loadLegacyBookmarks()
+        
+        if let foldersData = userDefaults.data(forKey: foldersUserDefaultsKey),
+           let decodedFolders = try? JSONDecoder().decode([BookmarkFolder].self, from: foldersData) {
+            folders = decodedFolders
+        }
+        
+        if folders.isEmpty, !legacyBookmarks.isEmpty {
+            folders = [BookmarkFolder(name: "Bookmarks", bookmarks: legacyBookmarks)]
+            syncFolders()
+        }
+    }
+    
+    private func loadLegacyBookmarks() -> [Bookmark] {
+        guard let data = userDefaults.data(forKey: userDefaultsKey),
+              let decodedBookmarks = try? JSONDecoder().decode([Bookmark].self, from: data) else {
+            return []
+        }
+        
+        return decodedBookmarks
     }
     
     var isBookmarkEmpty: Bool {
-        return bookmarks.isEmpty
+        bookmarks.isEmpty
     }
 }

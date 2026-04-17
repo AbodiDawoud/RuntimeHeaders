@@ -199,3 +199,126 @@ extension NamedNodeExporter {
         }
     }
 }
+
+final class BookmarkFolderHeaderExporter {
+    private let listings: RuntimeListings
+    private let fileManager = FileManager.default
+    
+    init(listings: RuntimeListings = .shared) {
+        self.listings = listings
+    }
+    
+    func exportHeaders(for folder: BookmarkFolder) throws -> URL {
+        guard folder.bookmarks.isEmpty == false else {
+            throw ExportError.noBookmarks(folder.name)
+        }
+        
+        let folderName = "\(safeFileName(folder.name, fallback: "Bookmarks"))-Headers-\(UUID().uuidString)"
+        let folderURL = fileManager.temporaryDirectory.appendingPathComponent(folderName, isDirectory: true)
+        try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
+        
+        var usedFileNames: Set<String> = []
+        var exportedHeaderCount = 0
+        
+        for bookmark in folder.bookmarks {
+            if listings.isImageLoaded(path: bookmark.parentPath) == false {
+                try? CDUtilities.loadImage(at: bookmark.parentPath)
+            }
+            
+            guard let content = headerContent(for: bookmark) else { continue }
+            
+            let fileURL = uniqueHeaderURL(for: bookmark, in: folderURL, usedFileNames: &usedFileNames)
+            try content.write(to: fileURL, atomically: true, encoding: .utf8)
+            exportedHeaderCount += 1
+        }
+        
+        guard exportedHeaderCount > 0 else {
+            throw ExportError.noHeaders(folder.name)
+        }
+        
+        return folderURL
+    }
+    
+    private func headerContent(for bookmark: Bookmark) -> String? {
+        if let cls = NSClassFromString(bookmark.name) {
+            guard let semanticString = CDClassModel(with: cls).semanticLines(with: defaultGenerationOptions) else {
+                return nil
+            }
+            return plainText(from: semanticString)
+        }
+        
+        if let prtcl = NSProtocolFromString(bookmark.name) {
+            guard let semanticString = CDProtocolModel(with: prtcl).semanticLines(with: defaultGenerationOptions) else {
+                return nil
+            }
+            return plainText(from: semanticString)
+        }
+        
+        return nil
+    }
+    
+    private var defaultGenerationOptions: CDGenerationOptions {
+        let options: CDGenerationOptions = .init()
+        options.stripProtocolConformance = false
+        options.stripOverrides = false
+        options.stripDuplicates = true
+        options.stripSynthesized = true
+        options.stripCtorMethod = true
+        options.stripDtorMethod = true
+        options.addSymbolImageComments = false
+        return options
+    }
+    
+    private func plainText(from semanticString: CDSemanticString) -> String {
+        semanticLinesFromString(semanticString).lines
+            .map {
+                $0.content.map(\.string).joined()
+            }
+            .joined(separator: "\n")
+    }
+    
+    private func uniqueHeaderURL(
+        for bookmark: Bookmark,
+        in folder: URL,
+        usedFileNames: inout Set<String>
+    ) -> URL {
+        let baseName = safeFileName(bookmark.name, fallback: "Header")
+        var candidateName = "\(baseName).h"
+        var duplicateIndex = 2
+        
+        while usedFileNames.contains(candidateName) {
+            candidateName = "\(baseName)-\(duplicateIndex).h"
+            duplicateIndex += 1
+        }
+        
+        usedFileNames.insert(candidateName)
+        return folder.appendingPathComponent(candidateName)
+    }
+    
+    private func safeFileName(_ rawName: String, fallback: String) -> String {
+        let invalidCharacters = CharacterSet(charactersIn: "/:")
+            .union(.newlines)
+            .union(.controlCharacters)
+        let pieces = rawName.components(separatedBy: invalidCharacters)
+        let fileName = pieces.joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        return fileName.isEmpty ? fallback : fileName
+    }
+}
+
+extension BookmarkFolderHeaderExporter {
+    enum ExportError: LocalizedError {
+        case noBookmarks(String)
+        case noHeaders(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .noBookmarks(let name):
+                return "\(name) does not have any bookmarks to export."
+            case .noHeaders(let name):
+                return "No headers could be generated for \(name)."
+            }
+        }
+    }
+}

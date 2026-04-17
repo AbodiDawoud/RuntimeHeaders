@@ -45,6 +45,12 @@ class FileExportCoordinator: NSObject, UIDocumentPickerDelegate {
         
         let documentPicker = UIDocumentPickerViewController(forExporting: [url])
         documentPicker.delegate = self
+        
+        let viewController = UIViewController()
+        viewController.view.backgroundColor = .clear
+        exportWindow!.rootViewController = viewController
+        exportWindow!.makeKeyAndVisible()
+        viewController.present(documentPicker, animated: true)
     }
     
     func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
