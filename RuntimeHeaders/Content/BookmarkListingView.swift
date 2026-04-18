@@ -10,6 +10,8 @@ struct BookmarkListingView: View {
     @ObservedObject var manager = BookmarksStore.shared
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentToast) private var presentToast
+    @Environment(\.colorScheme) private var scheme
+    
     @State private var folderName: String = ""
     @State private var showingCreateFolder: Bool = false
     @State private var folderToRename: BookmarkFolder?
@@ -26,7 +28,7 @@ struct BookmarkListingView: View {
             ScrollView {
                 if manager.folders.isEmpty {
                     Label("No Folders Yet", systemImage: "folder")
-                        .labelStyle(EmptyStatusLabelStyle(.blue, info: "Create a folder to start saving bookmarks."))
+                        .labelStyle(EmptyStatusLabelStyle(.blue, secondary: .blue, info: "Create a folder to start saving bookmarks."))
                         .padding(.top, 80)
                 } else {
                     LazyVGrid(columns: columns, alignment: .leading, spacing: 30) {
@@ -45,15 +47,12 @@ struct BookmarkListingView: View {
                                     mergeMenu(for: folder)
                                 }
                                 
-                                Button("Refresh", systemImage: "arrow.clockwise") {
-                                    manager.refresh()
-                                }
+                                Button("Refresh", systemImage: "arrow.clockwise", action: manager.refresh)
                                 
                                 Divider()
                                 
                                 Button("Delete Folder", systemImage: "trash", role: .destructive) {
                                     manager.deleteFolder(folder)
-                                    presentToast(.appToast(icon: "trash", message: "Deleted \(folder.name)"))
                                 }
                             }
                         }
@@ -97,6 +96,7 @@ struct BookmarkListingView: View {
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        hapticFeedback(.light)
                         manager.refresh()
                     } label: {
                         Image(systemName: "arrow.clockwise")
@@ -108,11 +108,19 @@ struct BookmarkListingView: View {
                 
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        hapticFeedback(.soft)
                         showingCreateFolder = true
                     } label: {
-                        Image(systemName: "folder.badge.plus")
-                            .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
+                        Text("New Folder")
+                            .font(.system(.subheadline, design: .default, weight: .medium))
+                            .foregroundStyle(.blue.gradient)
+                            .padding(.horizontal, 11)
+                            .padding(.vertical, 5)
+                            .background(
+                                Capsule()
+                                    .stroke(Color.blue.opacity(0.08), lineWidth: 0.9)
+                                    .fill(.blue.quinary.opacity(scheme == .light ? 0.4 : 0.95))
+                            )
                     }
                     .buttonStyle(.plain)
                 }
@@ -135,7 +143,6 @@ struct BookmarkListingView: View {
             ForEach(manager.folders.filter { $0.id != source.id }) { destination in
                 Button(destination.name, systemImage: "folder") {
                     manager.mergeFolder(source, into: destination)
-                    presentToast(.appToast(icon: "arrow.triangle.merge", message: "Merged into \(destination.name)"))
                 }
             }
         }
@@ -144,9 +151,7 @@ struct BookmarkListingView: View {
     private func createFolder() {
         let trimmedName = folderName.trimmingCharacters(in: .whitespacesAndNewlines)
         manager.createFolder(named: trimmedName)
-        if trimmedName.isEmpty == false {
-            presentToast(.appToast(icon: "folder.badge.plus", message: "Created \(trimmedName)"))
-        }
+
         folderName = ""
     }
     
@@ -154,9 +159,7 @@ struct BookmarkListingView: View {
         guard let folderToRename else { return }
         let trimmedName = renameFolderName.trimmingCharacters(in: .whitespacesAndNewlines)
         manager.renameFolder(folderToRename, to: trimmedName)
-        if trimmedName.isEmpty == false {
-            presentToast(.appToast(icon: "pencil", message: "Renamed folder"))
-        }
+
         self.folderToRename = nil
         renameFolderName = ""
     }

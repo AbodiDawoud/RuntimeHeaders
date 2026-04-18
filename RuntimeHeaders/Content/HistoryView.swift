@@ -80,14 +80,11 @@ struct HistoryView: View {
     }
     
     private func removeHistoryItems(at offsets: IndexSet) {
-        let deletedItems = offsets.compactMap { index in
+        let itemsToDelete = offsets.compactMap { index in
             _h_items.indices.contains(index) ? _h_items[index] : nil
         }
         
-        deletedItems.forEach(manager.removeObject)
-        if offsets.isEmpty == false {
-            presentToast(.appToast(icon: "trash", message: "Deleted history item"))
-        }
+        itemsToDelete.forEach(manager.removeObject)
     }
 }
 
