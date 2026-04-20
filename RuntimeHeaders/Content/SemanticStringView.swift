@@ -103,7 +103,14 @@ struct SemanticStringView: View {
             if runtimeType?.isClass == true {
                 Divider()
                 Button("Inspect Live Object", systemImage: "shippingbox", action: openRuntimeInspector)
-                Button("Inspect Class Members", systemImage: "shippingbox.and.arrow.backward", action: openClassInspector)
+                Button(action: openClassInspector) {
+                    HStack {
+                        Text("Class Members")
+                        Image(.customShippingboxBadgeMagnifyingglass)
+                            .renderingMode(.template)
+                            .foregroundStyle(Color.primary)
+                    }
+                }
             }
             
             Divider()

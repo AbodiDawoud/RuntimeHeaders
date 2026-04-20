@@ -29,7 +29,7 @@ struct RuntimeObjectInspectorView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section {
+                Section("Object Information") {
                     inspectorRow("Resolved Class", value: viewModel.resolvedInstance.className)
                     inspectorRow(viewModel.isInspectingClass ? "Runtime Class" : "Live Type", value: viewModel.resolvedInstance.displayName)
                     inspectorRow("Acquired Via", value: viewModel.resolvedInstance.acquisitionDescription)
@@ -84,10 +84,9 @@ struct RuntimeObjectInspectorView: View {
                     }
                 }
             }
-            .padding(.bottom) // to prevent the overlay from overlaping with the list rows
             .inlinedNavigationTitle(viewModel.resolvedInstance.inspectorTitle)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search members")
-            .overlay(alignment: .bottom) {
+            .safeAreaInset(edge: .bottom) {
                 if let lastInvocation = viewModel.lastInvocation {
                     lastResultView(lastInvocation)
                 }
@@ -108,7 +107,7 @@ struct RuntimeObjectInspectorView: View {
                 }
 
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Refresh", systemImage: "arrow.clockwise") {
+                    Button("", systemImage: "arrow.clockwise") {
                         hapticFeedback(.rigid)
                         viewModel.refresh()
                     }
@@ -117,11 +116,11 @@ struct RuntimeObjectInspectorView: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Toggle("Include Superclass Members", isOn: $includeInheritedMembers)
-                        Toggle("Include NSObject Members", isOn: $includeNSObjectMembers)
-                        Toggle("Include Accessibility Members", isOn: $includeAccessibilityMembers)
-                        Toggle("Include Private Methods", isOn: $includePrivateMethods)
-                        Toggle("Include Methods With Arguments", isOn: $includeArgumentMethods)
+                        Toggle("Superclass Members", isOn: $includeInheritedMembers)
+                        Toggle("NSObject Members", isOn: $includeNSObjectMembers)
+                        Toggle("Accessibility Members", isOn: $includeAccessibilityMembers)
+                        Toggle("Private Methods", isOn: $includePrivateMethods)
+                        Toggle("Methods With Arguments", isOn: $includeArgumentMethods)
                         Toggle("Allow Safety-Filtered Methods", isOn: $allowSafetyFilteredMethods)
                     } label: {
                         Image(systemName: "line.3.horizontal.decrease")
@@ -133,6 +132,129 @@ struct RuntimeObjectInspectorView: View {
         }
     }
 
+
+    private func inspectorRow(_ title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .foregroundStyle(.secondary)
+                .textScale(.secondary)
+                .font(.footnote.weight(.medium))
+                .textCase(.uppercase)
+
+            Text(value)
+                .font(.system(.subheadline, design: .monospaced))
+                .textSelection(.enabled)
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func propertyRow(_ property: InspectableProperty) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(property.name)
+                        .font(.headline)
+
+                    if property.isInherited {
+                        Text(property.declaringClassName)
+                            .font(.system(.caption, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                Spacer(minLength: 12)
+
+                Text(property.isDirectIvar ? "Direct ivar" : "")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+
+            if let errorMessage = property.errorMessage {
+                Text(errorMessage)
+                    .font(.system(.footnote, design: .monospaced))
+                    .foregroundStyle(.red)
+            } else {
+                Text(property.valueDescription)
+                    .font(.system(.footnote, design: .monospaced))
+                    .foregroundStyle(.primary)
+                    .textSelection(.enabled)
+            }
+        }
+        .padding(.vertical, 3)
+    }
+
+    private func lastResultView(_ lastInvocation: InvocationResult) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Last Result")
+                    .foregroundStyle(.white)
+                
+                Spacer()
+                
+                Button {
+                    hapticFeedback(.soft)
+                    UIPasteboard.general.string = lastInvocation.valueDescription
+                    presentToast(.init(message: "Copied result"))
+                } label: {
+                    Image(systemName: "square.on.square.dashed")
+                        .foregroundStyle(.indigo.gradient)
+                        .font(.callout.weight(.semibold))
+                }
+                
+                Button("Close") {
+                    hapticFeedback(.soft)
+                    viewModel.clearLastInvocationResult()
+                }
+                .tint(.gray)
+                .fontWeight(.medium)
+                .controlSize(.small)
+                .buttonBorderShape(.capsule)
+                .buttonStyle(.bordered)
+            }
+            .font(.footnote.weight(.semibold))
+            .buttonStyle(.plain)
+            
+
+            Text(lastInvocation.selectorName)
+                .font(.system(.caption, design: .monospaced))
+                .foregroundStyle(.gray)
+                .lineLimit(1)
+                .truncationMode(.middle)
+
+            if let errorMessage = lastInvocation.errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(.red)
+                    .font(.system(.footnote, design: .monospaced))
+                    .textSelection(.enabled)
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    Text(lastInvocation.valueDescription)
+                        .font(.system(.footnote, design: .monospaced))
+                        .foregroundStyle(.white)
+                        .textSelection(.enabled)
+                }
+                .frame(maxHeight: 140)
+            }
+        }
+        .padding(12)
+        .background {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(Color(white: 0.25), lineWidth: 1)
+                .fill(Color(white: 0.12))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 5)
+        .transition(
+            .asymmetric(
+                insertion: .move(edge: .bottom),
+                removal: .opacity
+            )
+        )
+    }
+
+    
+    // MARK: -  Computed Variables
+    
     private var filteredMethods: [InspectableMethod] {
         viewModel.methods.filter { method in
             canInvoke(method) &&
@@ -165,8 +287,38 @@ struct RuntimeObjectInspectorView: View {
         }
     }
 
+    
+    // MARK: -  Methods
+    
     private func canInvoke(_ method: InspectableMethod) -> Bool {
         method.isSafeToInvoke || (allowSafetyFilteredMethods && method.isBlockedBySafetyFilter)
+    }
+    
+    
+    private func methodRow(_ method: InspectableMethod) -> some View {
+        HStack {
+            let canInvoke = canInvoke(method)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(method.selectorName)
+                    .font(.headline)
+
+                if method.isInherited {
+                    Text(method.declaringClassName)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                }
+
+                Text(methodSubtitle(for: method))
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundColor(canInvoke ? .secondary : .orange)
+            }
+
+            Spacer(minLength: 12)
+
+            Image(systemName: canInvoke ? "play.fill" : "lock.fill")
+                .foregroundStyle(canInvoke ? .blue : .secondary)
+        }
+        .padding(.vertical, 2)
     }
 
     private func shouldIncludeMember(
@@ -228,149 +380,7 @@ struct RuntimeObjectInspectorView: View {
             method.invocationBlockedReason ?? ""
         ].contains { $0.localizedCaseInsensitiveContains(trimmedSearchText) }
     }
-
-    private func inspectorRow(_ title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.footnote.weight(.medium))
-                .foregroundStyle(.secondary)
-
-            Text(value)
-                .font(.system(.footnote, design: .monospaced))
-                .foregroundStyle(.primary)
-                .textSelection(.enabled)
-        }
-        .padding(.vertical, 2)
-    }
-
-    private func propertyRow(_ property: InspectableProperty) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(property.name)
-                        .font(.headline)
-
-                    if property.isInherited {
-                        Text(property.declaringClassName)
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Spacer(minLength: 12)
-
-                Text(property.isDirectIvar ? "Direct ivar" : "")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            }
-
-            if let errorMessage = property.errorMessage {
-                Text(errorMessage)
-                    .font(.system(.footnote, design: .monospaced))
-                    .foregroundStyle(.red)
-            } else {
-                Text(property.valueDescription)
-                    .font(.system(.footnote, design: .monospaced))
-                    .foregroundStyle(.primary)
-                    .textSelection(.enabled)
-            }
-        }
-        .padding(.vertical, 3)
-    }
-
-    private func lastResultView(_ lastInvocation: InvocationResult) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Last Result")
-                    .foregroundStyle(.white)
-                
-                Spacer()
-                
-                Button {
-                    hapticFeedback(.soft)
-                    UIPasteboard.general.string = lastInvocation.valueDescription
-                    presentToast(.appToast(icon: "doc.on.doc", message: "Copied result"))
-                } label: {
-                    Image(systemName: "square.on.square")
-                        .foregroundStyle(.lime.gradient)
-                        .padding(4)
-                        .background(.gray.quinary.opacity(0.6), in: .capsule)
-                }
-                
-                Button {
-                    hapticFeedback(.soft)
-                    viewModel.clearLastInvocationResult()
-                } label: {
-                    Text("Close")
-                        .font(.system(.caption2, design: .default, weight: .medium))
-                        .foregroundStyle(.pink.gradient)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
-                        .background(.pink.quinary.opacity(0.6), in: .capsule)
-                }
-            }
-            .font(.footnote.weight(.semibold))
-            .buttonStyle(.plain)
-            
-
-            Text(lastInvocation.selectorName)
-                .font(.system(.caption, design: .monospaced))
-                .foregroundStyle(.gray)
-                .lineLimit(1)
-                .truncationMode(.middle)
-
-            if let errorMessage = lastInvocation.errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .font(.system(.footnote, design: .monospaced))
-                    .textSelection(.enabled)
-            } else {
-                ScrollView(.vertical, showsIndicators: false) {
-                    Text(lastInvocation.valueDescription)
-                        .font(.system(.footnote, design: .monospaced))
-                        .foregroundStyle(.white)
-                        .textSelection(.enabled)
-                }
-                .frame(maxHeight: 140)
-            }
-        }
-        .padding(12)
-        .background {
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color(white: 0.25), lineWidth: 1)
-                .fill(Color(white: 0.12))
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 5)
-        .transition(.move(edge: .bottom))
-    }
-
-    private func methodRow(_ method: InspectableMethod) -> some View {
-        HStack {
-            let canInvoke = canInvoke(method)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(method.selectorName)
-                    .font(.headline)
-
-                if method.isInherited {
-                    Text(method.declaringClassName)
-                        .font(.system(.caption, design: .monospaced))
-                        .foregroundStyle(.secondary)
-                }
-
-                Text(methodSubtitle(for: method))
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(canInvoke ? .secondary : .orange)
-            }
-
-            Spacer(minLength: 12)
-
-            Image(systemName: canInvoke ? "play.fill" : "lock.fill")
-                .foregroundStyle(canInvoke ? .blue : .secondary)
-        }
-        .padding(.vertical, 2)
-    }
-
+    
     private func methodSubtitle(for method: InspectableMethod) -> String {
         if allowSafetyFilteredMethods && method.isBlockedBySafetyFilter {
             return "Safety filter disabled"

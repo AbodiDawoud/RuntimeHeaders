@@ -19,49 +19,60 @@ struct RuntimeSelectorChooserView: View {
         NavigationStack {
             List {
                 Section("Detected Class Getters") {
-                    if filteredCandidates.isEmpty {
-                        Text("No matching selectors")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(filteredCandidates) { candidate in
-                            Button {
-                                submit(candidate)
-                            } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(candidate.displayName)
-                                        .font(.headline)
-                                    Text(candidate.subtitle)
-                                        .font(.footnote)
-                                        .foregroundStyle(.secondary)
-                                }
+                    ForEach(filteredCandidates) { candidate in
+                        Button {
+                            submit(candidate)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(candidate.displayName)
+                                    .font(.headline)
+                                Text(candidate.subtitle)
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
                             }
-                            .buttonStyle(.plain)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
 
-                Section {
-                    TextField("sharedSession", text: $customSelectorName)
+                Section("Custom Selector") {
+                    TextField("sharedInstance", text: $customSelectorName)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
 
-                    Button("Try Selector", systemImage: "play.circle.fill") {
-                        submitCustomSelector()
+                    Button("Try Selector", systemImage: "play.fill", action: submitCustomSelector)
+                        .buttonStyle(.plain)
+                        .imageScale(.small)
+                        .disabled(trimmedCustomSelector.isEmpty)
+                }
+                
+                if let customSelectorError {
+                    Section {
+                        HStack(alignment: .top) {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .foregroundColor(.pink)
+                                .imageScale(.large)
+                                .symbolRenderingMode(.hierarchical)
+                            
+                            Text(customSelectorError)
+                        }
+                    } header: {
+                        HStack {
+                            Text("Error")
+                            Spacer()
+                            Image(systemName: "xmark.circle.fill")
+                                .imageScale(.large)
+                                .symbolVariant(.circle.fill)
+                                .symbolRenderingMode(.hierarchical)
+                                .onTapGesture {
+                                    hapticFeedback(.light)
+                                    self.customSelectorError = nil
+                                }
+                        }
                     }
-                    .disabled(trimmedCustomSelector.isEmpty)
-
-                    if let customSelectorError {
-                        Text(customSelectorError)
-                            .font(.footnote)
-                            .foregroundStyle(.red)
-                    }
-                } header: {
-                    Text("Custom Selector")
-                } footer: {
-                    Text("Choose a detected live-object entry point or enter another zero-argument class selector for \(className).")
                 }
             }
-            .navigationTitle("Choose Live Object Getter")
+            .navigationTitle("Live Object Getter")
             .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always))
             .toolbar {

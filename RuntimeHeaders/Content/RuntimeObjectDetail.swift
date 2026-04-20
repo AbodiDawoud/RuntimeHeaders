@@ -83,8 +83,8 @@ struct RuntimeObjectDetail: View {
                     Divider()
                     Button("Code Appearance") { showCodeAppearanceCover.toggle() }
                 } label: {
-                    Image(systemName: "gearshape.arrow.trianglehead.2.clockwise.rotate.90")
-                        .font(.subheadline)
+                    Image(systemName: "ellipsis.curlybraces")
+                        .font(.footnote)
                         .foregroundColor(.primary)
                         .symbolRenderingMode(.hierarchical)
                 }
