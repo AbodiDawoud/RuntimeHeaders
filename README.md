@@ -36,7 +36,7 @@ If you looking for macOS version, take a look at [RuntimeViewer](https://github.
 
 <img height="300" alt="Home" src="https://github.com/user-attachments/assets/f848d4fb-47eb-422a-b1f8-f5c571c8aee6" />
 <img height="300" alt="History" src="https://github.com/user-attachments/assets/58437d59-842c-41d2-80b2-c7a305968ecd" />
-<img height="300" alt="Settings" src="https://github.com/user-attachments/assets/1850903a-5cc6-400d-8735-04634737ed6c" />
-<img height="300" alt="Bookmarks" src="https://github.com/user-attachments/assets/6ca33a0a-c938-474b-8929-1538fb5cf7e7" />
+<img height="300" alt="Settings" src="https://github.com/user-attachments/assets/89adc9d3-aba3-43b2-bd14-89662a5eab58" />
+<img height="300" alt="Bookmarks" src="https://github.com/user-attachments/assets/e1e4ee89-44d9-46c5-8f35-306590ab4d7b" />
 <img height="300" alt="CodeAppearanceView" src="https://github.com/user-attachments/assets/e2ed8c22-0612-4d70-b284-ddac7bd0474b" />
-<img height="300" alt="Inspector" src="https://github.com/user-attachments/assets/8e108c94-98c4-4f30-836c-35d7ed75ce8e" />
+<img height="300" alt="LiveInspector" src="https://github.com/user-attachments/assets/8dc2f6e7-2612-4593-a0d0-bf7cc882c027" />
