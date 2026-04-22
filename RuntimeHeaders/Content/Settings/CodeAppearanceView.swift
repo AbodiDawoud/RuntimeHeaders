@@ -16,7 +16,6 @@ struct CodeAppearanceView: View {
         NavigationStack {
             Form {
                 CodePreview()
-                
                 FontCustomization()
                 
                 ThemesContainerView()
@@ -25,25 +24,22 @@ struct CodeAppearanceView: View {
                     colorPickerRow("Default", color: $preferences.colors.standard, icon: "circle.dashed", colorStyle: .gray)
                     colorPickerRow("Comment", color: $preferences.colors.comment, icon: "text.bubble", colorStyle: .indigo)
                     colorPickerRow("Keyword", color: $preferences.colors.keyword, icon: "key.fill", colorStyle: .pink)
+                    colorPickerRow("Number", color: $preferences.colors.number, icon: "number", colorStyle: .orange)
                 }
                 
-                Section("Identifiers") {
+                Section("Types & Identifiers") {
                     colorPickerRow("Variable", color: $preferences.colors.variable, icon: "v.square.fill", colorStyle: .teal)
                     colorPickerRow("Record", color: $preferences.colors.recordName, icon: "r.square.fill", colorStyle: .aqua)
-                }
-                .imageScale(.large)
-                
-                Section("Types") {
-                    colorPickerRow("Class", color: $preferences.colors.class, icon: "c.square.fill", colorStyle: .spring)
+                    colorPickerRow("Class", color: $preferences.colors.class, icon: "c.square.fill", colorStyle: swiftColor)
                     colorPickerRow("Protocol", color: $preferences.colors.protocol, icon: "p.square.fill", colorStyle: .plum)
                 }
                 .imageScale(.large)
                 
+                
                 Section {
-                    colorPickerRow("Number", color: $preferences.colors.number, icon: "number", colorStyle: .orange)
                     colorPickerRow("Fallback", color: $preferences.colors.defaultValue, icon: "circle.fill", colorStyle: .black)
                 } header: {
-                    Text("Literals")
+                    Text("")
                 } footer: {
                     Text("The fallback color is used in **very rare** cases where the word doesn't fit into any of the other categories.")
                 }
@@ -106,6 +102,10 @@ struct CodeAppearanceView: View {
         preferences.fontSize = 16
         preferences.fontName = "SFMono-Regular"
         preferences.hideLineNumbers = true
+    }
+    
+    var swiftColor: Color {
+        Color(UIColor.value(forKey: "_swiftColor") as! UIColor)
     }
 }
 
@@ -294,6 +294,7 @@ fileprivate struct ThemesContainerView: View {
     }
 }
 
+
 fileprivate struct ThemeOption: Identifiable {
     let title: String
     let systemImage: String
@@ -304,9 +305,9 @@ fileprivate struct ThemeOption: Identifiable {
 }
 
 
-
 fileprivate struct ThemeButtonStyle: ButtonStyle {
     let foreground: Color
+    @Environment(\.colorScheme) private var scheme
     
     init(_ foreground: Color) {
         self.foreground = foreground
@@ -317,11 +318,12 @@ fileprivate struct ThemeButtonStyle: ButtonStyle {
             .padding(.horizontal, 16)
             .padding(.vertical, 9)
             .foregroundStyle(foreground.gradient)
-            .background {
-                Capsule()
-                    .stroke(foreground.quaternary, style: .init(lineWidth: 1, lineCap: .round, lineJoin: .round, dash: [7, 7]))
-                    .fill(foreground.opacity(0.18))
-            }
+            .background(
+                Color(
+                    scheme == .dark ? UIColor.systemGray6 : UIColor.systemBackground
+                ),
+                in: .capsule
+            )
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }

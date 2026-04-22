@@ -15,6 +15,7 @@ struct SemanticStringView: View {
     @EnvironmentObject private var navigation: AppNavigation
     @Environment(\.dismiss) private var dismiss
     @Environment(\.presentToast) private var presentToast
+    @Environment(\.openURL) private var openURL
     
     let semanticString: CDSemanticString
     let fileName: String
@@ -94,12 +95,14 @@ struct SemanticStringView: View {
                     copy(path)
                 }
             }
-
-            Divider()
-            
-            Button("Search Web", systemImage: "magnifyingglass.circle", action: searchOnSafari)
             Button("Information", systemImage: "info.circle") { showObjectInfo = true }
 
+            
+            Divider()
+            Button("Search Web", systemImage: "magnifyingglass.circle", action: searchOnSafari)
+            Button("Search Github", image: .logoGithubCircleFill, action: searchOnGithub)
+
+            
             if runtimeType?.isClass == true {
                 Divider()
                 Button("Inspect Live Object", systemImage: "shippingbox", action: openRuntimeInspector)
@@ -165,7 +168,12 @@ struct SemanticStringView: View {
     
     func searchOnSafari() {
         let url = URL(string: "https://google.com/search?q=\(fileName)")!
-        UIApplication.shared.open(url)
+        openURL(url)
+    }
+    
+    func searchOnGithub() {
+        let url = URL(string: "https://github.com/search?q=\(fileName)&type=repositories")!
+        openURL(url)
     }
     
     private func createTempUrl(for lines: [SemanticLine]) -> URL {
