@@ -50,6 +50,7 @@ struct _ContentView: View {
         NavigationStack(path: $navigation.sourcePath) {
             Form {
                 FFContainerView()
+                LSContainerView()
                 
                 Section("Root") {
                     NavigationLink(value: Self.dscRootNode) {

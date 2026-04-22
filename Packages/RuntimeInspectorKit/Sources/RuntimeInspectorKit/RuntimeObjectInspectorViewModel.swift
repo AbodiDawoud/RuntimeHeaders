@@ -399,11 +399,10 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     
     private func readAutomaticallyIfSafe(_ property: InspectableProperty) -> InspectableProperty {
         if property.isValueLoaded { return property }
-        if !property.isInherited  { return readGetter(property) }
-        
         if property.isDirectIvar {
             return readDirectIvar(property)
         }
+        if !property.isInherited  { return readGetter(property) }
         if let backingIvarName = backingIvarName(fromPropertyAttributes: property.attributes) {
             return readBackingIvar(named: backingIvarName, for: property)
         }

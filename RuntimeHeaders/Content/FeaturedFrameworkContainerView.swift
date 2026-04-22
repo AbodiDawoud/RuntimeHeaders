@@ -5,9 +5,10 @@
 
 import SwiftUI
 
+/// Featured Framework Container View
 struct FFContainerView: View {
     var body: some View {
-        Section {
+        Section("Recommended Frameworks") {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
                     ForEach(featuredFrameworkNodes) { item in
@@ -20,10 +21,6 @@ struct FFContainerView: View {
             .listRowBackground(Color.clear)
             .listRowInsets(.init())
             .listRowSeparator(.hidden)
-        } header: {
-            Text("Recommended Frameworks")
-        } footer: {
-            Text("Get started by exploring these system frameworks..")
         }
     }
     
@@ -36,7 +33,8 @@ struct FFContainerView: View {
 }
 
 
-struct FFCardView: View {
+/// Featured Framework Card View
+private struct FFCardView: View {
     let framework: FeaturedFramework
     private let theme: [Color] = [.indigo, .blue, .cyan]
     

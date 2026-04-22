@@ -45,6 +45,7 @@ extension FeaturedFramework {
             title: "UIKitCore", imageName: "UIKit",
             pathCandidates: "/System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore",
         ),
+        
         .init(
             title: "SwiftUI", imageName: "swift-icon",
             pathCandidates: "/System/Library/Frameworks/SwiftUI.framework/SwiftUI",
