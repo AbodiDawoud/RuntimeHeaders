@@ -7,7 +7,7 @@ import Toasts
 
  
 struct HistoryView: View {
-    @EnvironmentObject private var manager: HistoryManager
+    @Environment(HistoryManager.self) private var manager
     @EnvironmentObject private var navigation: AppNavigation
     @Environment(\.presentToast) private var presentToast
     @ObservedObject private var settingsManager = PreferenceController.shared
@@ -90,7 +90,7 @@ struct HistoryView: View {
 
 
 struct LatestHistoryContainerView: View {
-    @EnvironmentObject private var manager: HistoryManager
+    @Environment(HistoryManager.self) private var manager
     @Environment(\.colorScheme) private var scheme
     
     var body: some View {

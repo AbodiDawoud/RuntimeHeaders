@@ -9,7 +9,7 @@ import Toasts
 
 struct SettingsView: View {
     @ObservedObject private var manager: PreferenceController = .shared
-    @EnvironmentObject private var historyManager: HistoryManager
+    @Environment(HistoryManager.self) private var historyManager
     
     @State private var showAppearancePopover: Bool = false
     @State private var showCodeAppearanceCover: Bool = false

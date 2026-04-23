@@ -9,7 +9,7 @@ import ClassDumpRuntime
 
 struct ContentView: View { 
     @EnvironmentObject private var navigation: AppNavigation
-    @EnvironmentObject private var historyManager: HistoryManager
+    @Environment(HistoryManager.self) private var historyManager
     
     
     var body: some View {

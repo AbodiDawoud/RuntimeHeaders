@@ -6,8 +6,9 @@
 import Foundation
 
 
-final class HistoryManager: ObservableObject {
-    @Published var historyItems: [HistoryItem] = []
+@Observable
+final class HistoryManager {
+    var historyItems: [HistoryItem] = []
     
     private let defaults = UserDefaults.standard
     private let key = "objectsHistory"

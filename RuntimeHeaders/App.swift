@@ -8,12 +8,12 @@ import Toasts
 
 @main
 struct HeaderViewerApp: App {
-    @ObservedObject var hm = HistoryManager()
+    @State var hm = HistoryManager()
     
     var body: some Scene {
         WindowGroup {
             _HomeView()
-                .environmentObject(hm)
+                .environment(hm)
                 .installToast(position: .bottom)
         }
     }
