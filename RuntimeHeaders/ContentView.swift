@@ -55,6 +55,7 @@ struct _ContentView: View {
                 Section("Root") {
                     NavigationLink(value: Self.dscRootNode) {
                         Label("System Images", systemImage: "folder.badge.gear")
+                            .font(.system(size: 16, weight: .medium))
                     }
                     
                     NavigationLink {
@@ -66,6 +67,7 @@ struct _ContentView: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 10) {
                             Label("Runtime Objects", image: "document.badge.gearshape.fill")
+                                .font(.system(size: 16, weight: .medium))
                             Text("This list is a bit buggy and slow to deal with on older devices, use with caution.")
                                 .font(.system(size: 14))
                                 .foregroundStyle(.gray)
@@ -85,6 +87,7 @@ struct _ContentView: View {
                             }
                     }
                     .buttonStyle(.plain)
+                    .padding(.vertical, 2)
                 }
             }
             .navigationTitle("Runtime Headers")
@@ -128,50 +131,25 @@ struct _ContentView: View {
         LabeledContent {
             HStack(spacing: 12) {
                 Text("\(BookmarksStore.shared.bookmarks.count)")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 20)
-                    .padding(.vertical, 4.6)
-                    .background(Color(white: colorScheme == .dark ? 0.145 : 0.965), in: .rect(cornerRadius: 8))
+                    .padding(.vertical, 5)
+                    .background {
+                        Capsule()
+                            .stroke(Color(white: 0.25), lineWidth: 0.8)
+                            .fill(Color(white: 0.15))
+                    }
                 
                 Image(systemName: "arrow.up.right")
                     .foregroundStyle(.gray.opacity(0.75))
             }
             .font(.footnote.weight(.medium))
         } label: {
-            Label("Bookmarks", systemImage: "bookmark")
+            Text("Bookmarks")
         }
     }
     
     func assignNodePath(_ path: String) {
         LastNodeTracker.path = path
-    }
-}
-
-/// keeps track of the last opened bundle or framework.
-enum LastNodeTracker {
-    private static let pathKey = "lastNamedNodePath"
-
-    static var path: String? {
-        get {
-            UserDefaults.standard.string(forKey: pathKey)
-        }
-        set {
-            
-            UserDefaults.standard.set(newValue, forKey: pathKey)
-        }
-    }
-    
-    static var namedNode: NamedNode? {
-        get {
-            guard let path else { return nil }
-            return _ContentView.dscRootNode.node(at: path)
-        }
-        set {
-            path = newValue?.path
-        }
-    }
-    
-    static func reset() {
-        self.path = nil
     }
 }

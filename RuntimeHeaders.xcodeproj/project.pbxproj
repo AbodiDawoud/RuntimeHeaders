@@ -52,6 +52,7 @@
 		BD995F932F8AE4DA00E203AE /* RuntimeObjectType.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F922F8AE4DA00E203AE /* RuntimeObjectType.swift */; };
 		BD995F952F8AFE8500E203AE /* Bookmark.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F942F8AFE8500E203AE /* Bookmark.swift */; };
 		BD995F972F8B3FF700E203AE /* NavigationRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD995F962F8B3FF700E203AE /* NavigationRouter.swift */; };
+		BDA23F492F9AE61900BF989D /* LastNodeTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDA23F482F9AE61900BF989D /* LastNodeTracker.swift */; };
 		BDDAE0142F92FC24008BD612 /* Toasts in Frameworks */ = {isa = PBXBuildFile; productRef = BDDAE0132F92FC24008BD612 /* Toasts */; };
 		BDE1A2902F9904DF00A94398 /* SystemLibraryShortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDE1A28F2F9904DF00A94398 /* SystemLibraryShortcut.swift */; };
 		BDE1A2922F990B7300A94398 /* LibraryShortcutContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDE1A2912F990B7300A94398 /* LibraryShortcutContainerView.swift */; };
@@ -122,6 +123,7 @@
 		BD995F922F8AE4DA00E203AE /* RuntimeObjectType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeObjectType.swift; sourceTree = "<group>"; };
 		BD995F942F8AFE8500E203AE /* Bookmark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Bookmark.swift; sourceTree = "<group>"; };
 		BD995F962F8B3FF700E203AE /* NavigationRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationRouter.swift; sourceTree = "<group>"; };
+		BDA23F482F9AE61900BF989D /* LastNodeTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastNodeTracker.swift; sourceTree = "<group>"; };
 		BDE1A28F2F9904DF00A94398 /* SystemLibraryShortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemLibraryShortcut.swift; sourceTree = "<group>"; };
 		BDE1A2912F990B7300A94398 /* LibraryShortcutContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryShortcutContainerView.swift; sourceTree = "<group>"; };
 		BDF188F82F88FDD500E3463F /* RuntimeInspection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInspection.swift; sourceTree = "<group>"; };
@@ -239,6 +241,7 @@
 				BE0000022F90000100000016 /* NamedNodeExporter.swift */,
 				BD995F902F8AE47C00E203AE /* CodePreferences.swift */,
 				BD995F962F8B3FF700E203AE /* NavigationRouter.swift */,
+				BDA23F482F9AE61900BF989D /* LastNodeTracker.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -407,6 +410,7 @@
 				BE0000022F90000100000006 /* NamedNodeExporter.swift in Sources */,
 				BDF188F92F88FDD500E3463F /* RuntimeInspection.swift in Sources */,
 				BD8A38F02E9ADA3B00F1B486 /* RuntimeObjectDetail.swift in Sources */,
+				BDA23F492F9AE61900BF989D /* LastNodeTracker.swift in Sources */,
 				BD995F852F8AA2D900E203AE /* MethodInvocationArgumentsView.swift in Sources */,
 				BD995F952F8AFE8500E203AE /* Bookmark.swift in Sources */,
 				BD8A38F22E9ADA3B00F1B486 /* BookmarksStore.swift in Sources */,

@@ -35,15 +35,17 @@ struct LSContainerView: View {
         HStack(alignment: .center, spacing: 10) {
             Image(.frameworkIcon)
                 .resizable()
+                .renderingMode(.template)
+                .foregroundStyle(.blue.gradient)
                 .scaledToFit()
-                .frame(width: 26, height: 26)
+                .frame(width: 27, height: 27)
                 .shadow(radius: 6, y: 2.8)
             
             Text(item.title)
                 .font(.system(size: 15, weight: .semibold))
                 .lineLimit(1)
         }
-        .padding(.vertical, 11.5)
+        .padding(.vertical, 11)
         .padding(.horizontal, 15)
         .background(
             Color(
