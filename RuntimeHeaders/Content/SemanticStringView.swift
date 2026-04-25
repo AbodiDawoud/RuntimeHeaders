@@ -99,21 +99,14 @@ struct SemanticStringView: View {
 
             
             Divider()
-            Button("Search Web", systemImage: "magnifyingglass.circle", action: searchOnSafari)
-            Button("Search Github", image: .logoGithubCircleFill, action: searchOnGithub)
+            Button("Search Web", systemImage: "safari", action: searchOnSafari)
+            Button("Search Github", image: .logoGithubCircle, action: searchOnGithub)
 
             
             if runtimeType?.isClass == true {
                 Divider()
                 Button("Inspect Live Object", systemImage: "shippingbox", action: openRuntimeInspector)
-                Button(action: openClassInspector) {
-                    HStack {
-                        Text("Class Members")
-                        Image(.customShippingboxBadgeMagnifyingglass)
-                            .renderingMode(.template)
-                            .foregroundStyle(Color.primary)
-                    }
-                }
+                Button("Class Members", systemImage: "text.magnifyingglass.rtl",  action: openClassInspector)
             }
             
             Divider()
@@ -172,7 +165,7 @@ struct SemanticStringView: View {
     }
     
     func searchOnGithub() {
-        let url = URL(string: "https://github.com/search?q=\(fileName)&type=repositories")!
+        let url = URL(string: "https://github.com/search?q=\(fileName)&type=code")!
         openURL(url)
     }
     
@@ -226,9 +219,9 @@ struct SemanticStringView: View {
                 }
             }
         } else if bookmarkManager.folders.isEmpty {
-            Button("Bookmark", systemImage: "bookmark", action: toggleBookmark)
+            Button("Create Bookmark", systemImage: "bookmark", action: createBookmark)
         } else {
-            Menu("Bookmark", systemImage: "bookmark") {
+            Menu("Create Bookmark", systemImage: "bookmark") {
                 ForEach(bookmarkManager.folders) { folder in
                     Button(folder.name, systemImage: "folder") {
                         addBookmark(to: folder)
@@ -240,13 +233,26 @@ struct SemanticStringView: View {
     
     func toggleBookmark() {
         let wasBookmarked = bookmarked
-        bookmarkManager.toggleBookmark(for: fileName)
+        
+        if let currentBookmark, wasBookmarked {
+            bookmarkManager.removeBookmark(for: currentBookmark)
+        } else {
+            createBookmark()
+            return
+        }
+        
         presentToast(
             .appToast(
                 icon: wasBookmarked ? "bookmark.slash" : "bookmark.fill",
                 message: wasBookmarked ? "Removed bookmark" : "Bookmarked \(fileName)"
             )
         )
+    }
+
+    func createBookmark() {
+        guard let parent = currentParentPath else { return }
+        bookmarkManager.addBookmark(imageName: fileName, parent: parent)
+        presentToast(.appToast(icon: "bookmark.fill", message: "Bookmarked \(fileName)"))
     }
     
     func addBookmark(to folder: BookmarkFolder) {
@@ -262,7 +268,17 @@ struct SemanticStringView: View {
     }
     
     var bookmarked: Bool {
-        return bookmarkManager.isBookmarked(fileName)
+        guard let currentParentPath else { return false }
+        return bookmarkManager.isBookmarked(imageName: fileName, parent: currentParentPath)
+    }
+
+    private var currentParentPath: String? {
+        frameworkPath ?? LastNodeTracker.path
+    }
+
+    private var currentBookmark: Bookmark? {
+        guard let currentParentPath else { return nil }
+        return Bookmark(name: fileName, parentPath: currentParentPath, date: .now)
     }
 
 

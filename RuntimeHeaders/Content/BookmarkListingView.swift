@@ -192,13 +192,24 @@ private struct BookmarkFolderDetailView: View {
     @Environment(\.presentToast) private var presentToast
     let folderID: UUID
     @State private var exportErrorMessage: String?
+    @State private var editMode: EditMode = .inactive
+    @State private var selectedBookmarkIDs = Set<Bookmark.ID>()
     
     private var folder: BookmarkFolder? {
         manager.folders.first { $0.id == folderID }
     }
+
+    private var isEditing: Bool {
+        editMode.isEditing
+    }
+
+    private var selectedBookmarks: [Bookmark] {
+        guard let folder else { return [] }
+        return folder.bookmarks.filter { selectedBookmarkIDs.contains($0.id) }
+    }
     
     var body: some View {
-        List {
+        List(selection: $selectedBookmarkIDs) {
             if let folder {
                 if folder.bookmarks.isEmpty {
                     Label("No Bookmarks Here", systemImage: "tray")
@@ -207,6 +218,7 @@ private struct BookmarkFolderDetailView: View {
                     Section("^[\(folder.bookmarks.count) Bookmark](inflect: true)") {
                         ForEach(folder.bookmarks) { bookmark in
                             bookmarkRow(bookmark)
+                                .tag(bookmark.id)
                         }
                         .onDelete { offsets in
                             removeBookmarks(at: offsets, in: folder)
@@ -219,15 +231,60 @@ private struct BookmarkFolderDetailView: View {
             }
         }
         .inlinedNavigationTitle(folder?.name ?? "Bookmarks")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Export", systemImage: "square.and.arrow.up", action: exportHeaders)
-                    .disabled(folder?.bookmarks.isEmpty ?? true)
+        .environment(\.editMode, $editMode)
+        .onChange(of: editMode) { _, newValue in
+            if newValue.isEditing == false {
+                selectedBookmarkIDs.removeAll()
             }
-            
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Refresh", systemImage: "arrow.clockwise") {
-                    manager.refresh()
+        }
+        .onChange(of: folder?.bookmarks) { _, bookmarks in
+            let availableIDs = Set(bookmarks?.map(\.id) ?? [])
+            selectedBookmarkIDs = selectedBookmarkIDs.intersection(availableIDs)
+        }
+        .toolbar {
+            if isEditing == false {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("", image: .multiSelect) {
+                        withAnimation { editMode = .active }
+                    }
+                    
+                    .buttonStyle(.plain)
+                    .disabled(folder?.bookmarks.isEmpty ?? true)
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Refresh", systemImage: "arrow.clockwise", action: manager.refresh)
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if isEditing {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        withAnimation { editMode = .inactive }
+                    } label: {
+                        Text("Done")
+                            .fontWeight(.semibold).font(.footnote)
+                            .foregroundStyle(.white)
+                            .frame(width: 65, height: 28)
+                            .background(.indigo, in: .capsule)
+                    }
+                }
+                
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button(selectionToggleTitle, systemImage: selectionToggleIcon, action: toggleSelection)
+                        .disabled(folder?.bookmarks.isEmpty ?? true)
+
+                    Spacer()
+
+                    HStack {
+                        Button("Share", systemImage: "square.and.arrow.up", action: shareSelectedBookmarks)
+                            .disabled(selectedBookmarkIDs.isEmpty)
+                            
+                        Button("Unmark", systemImage: "bookmark.slash", role: .destructive, action: unmarkSelectedBookmarks)
+                            .disabled(selectedBookmarkIDs.isEmpty)
+                    }
                 }
             }
         }
@@ -289,9 +346,10 @@ private struct BookmarkFolderDetailView: View {
     }
     
     private func removeBookmarks(at offsets: IndexSet, in folder: BookmarkFolder) {
-        for index in offsets where folder.bookmarks.indices.contains(index) {
-            manager.removeBookmark(for: folder.bookmarks[index])
+        let bookmarksToRemove = offsets.compactMap { index in
+            folder.bookmarks.indices.contains(index) ? folder.bookmarks[index] : nil
         }
+        manager.removeBookmarks(bookmarksToRemove)
         
         if offsets.isEmpty == false {
             presentToast(.appToast(icon: "bookmark.slash", message: "Removed bookmark"))
@@ -310,6 +368,23 @@ private struct BookmarkFolderDetailView: View {
     
     private func exportHeaders() {
         guard let folder else { return }
+        exportHeaders(for: folder)
+    }
+
+    private func shareSelectedBookmarks() {
+        guard let folder, selectedBookmarks.isEmpty == false else { return }
+        let folderName = selectedBookmarks.count == folder.bookmarks.count ? folder.name : "\(folder.name) Selection"
+        let selectedFolder = BookmarkFolder(
+            id: folder.id,
+            name: folderName,
+            date: folder.date,
+            bookmarks: selectedBookmarks
+        )
+        exportHeaders(for: selectedFolder)
+    }
+
+    private func exportHeaders(for folder: BookmarkFolder) {
+        guard folder.bookmarks.isEmpty == false else { return }
         
         do {
             let exportURL = try BookmarkFolderHeaderExporter().exportHeaders(for: folder)
@@ -318,6 +393,42 @@ private struct BookmarkFolderDetailView: View {
         } catch {
             exportErrorMessage = error.localizedDescription
         }
+    }
+
+    private func unmarkSelectedBookmarks() {
+        let bookmarksToRemove = selectedBookmarks
+        guard bookmarksToRemove.isEmpty == false else { return }
+
+        manager.removeBookmarks(bookmarksToRemove)
+        let removedCount = bookmarksToRemove.count
+        selectedBookmarkIDs.removeAll()
+
+        if folder?.bookmarks.isEmpty ?? true {
+            editMode = .inactive
+        }
+
+        presentToast(.appToast(icon: "bookmark.slash", message: "Removed \(removedCount) bookmark\(removedCount == 1 ? "" : "s")"))
+    }
+
+    private func toggleSelection() {
+        guard let folder else { return }
+        let allIDs = Set(folder.bookmarks.map(\.id))
+
+        if selectedBookmarkIDs == allIDs {
+            selectedBookmarkIDs.removeAll()
+        } else {
+            selectedBookmarkIDs = allIDs
+        }
+    }
+
+    private var selectionToggleTitle: String {
+        guard let folder else { return "Select All" }
+        return selectedBookmarkIDs.count == folder.bookmarks.count ? "Clear" : "Select All"
+    }
+
+    private var selectionToggleIcon: String {
+        guard let folder else { return "checkmark.circle" }
+        return selectedBookmarkIDs.count == folder.bookmarks.count ? "xmark.circle" : "checkmark.circle"
     }
 }
 

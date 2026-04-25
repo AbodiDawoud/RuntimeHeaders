@@ -67,6 +67,14 @@ class BookmarksStore: ObservableObject {
     func removeBookmark(for bookmark: Bookmark) {
         removeBookmark(for: bookmark, shouldSync: true)
     }
+
+    func removeBookmarks(_ bookmarks: [Bookmark]) {
+        for bookmark in bookmarks {
+            removeBookmark(for: bookmark, shouldSync: false)
+        }
+
+        syncFolders()
+    }
     
     func createFolder(named name: String) {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -115,6 +123,10 @@ class BookmarksStore: ObservableObject {
     func isBookmarked(_ imageName: String) -> Bool {
         guard let path = LastNodeTracker.path else { return false }
         return isBookmarked(Bookmark(name: imageName, parentPath: path, date: .now))
+    }
+
+    func isBookmarked(imageName: String, parent: String) -> Bool {
+        isBookmarked(Bookmark(name: imageName, parentPath: parent, date: .now))
     }
     
     func folderContaining(_ bookmark: Bookmark) -> BookmarkFolder? {
