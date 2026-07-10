@@ -10,6 +10,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     @Published public private(set) var methods: [InspectableMethod] = []
     @Published public private(set) var lastInvocation: InvocationResult?
 
+    private var activeCompletionHandlers: [UUID: RuntimeCompletionHandler] = [:]
+
     public init(resolvedInstance: ResolvedRuntimeInstance) {
         self.resolvedInstance = resolvedInstance
         refresh()
@@ -38,8 +40,22 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         methods = collectMethods(excluding: propertyNames)
     }
 
+    public func completionHandlerArgument(
+        for method: InspectableMethod,
+        signature: RuntimeCompletionHandlerSignature
+    ) -> RuntimeInvocationArgument {
+        let handler = RuntimeCompletionHandler(signature: signature) { [weak self] event in
+            Task { @MainActor in
+                self?.recordCompletionHandlerEvent(event, selectorName: method.selectorName)
+            }
+        }
+        activeCompletionHandlers[handler.id] = handler
+        return .completionHandler(handler)
+    }
     
     public func invoke(_ method: InspectableMethod, arguments: [RuntimeInvocationArgument] = []) {
+        let completionHandlerIDs = arguments.completionHandlerIDs
+
         do {
             guard arguments.count == method.argumentCount else {
                 throw RuntimeInvocationError.invalidArgumentList(
@@ -49,21 +65,21 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             }
 
             let selector = NSSelectorFromString(method.selectorName)
-            let value: String
+            let output: RuntimeInvocationOutput
 
             switch resolvedInstance.subjectKind {
             case .instance:
                 guard let object = resolvedInstance.object else {
                     throw RuntimeInvocationError.nilObjectReturn(method.selectorName)
                 }
-                value = try RuntimeInvocationEngine.invokeInstanceMethod(
+                output = try RuntimeInvocationEngine.invokeInstanceMethod(
                     on: object,
                     selector: selector,
                     returnTypeEncoding: method.returnTypeEncoding,
                     arguments: arguments
                 )
             case .classObject:
-                value = try RuntimeInvocationEngine.invokeClassMethod(
+                output = try RuntimeInvocationEngine.invokeClassMethod(
                     on: resolvedInstance.targetClass,
                     selector: selector,
                     returnTypeEncoding: method.returnTypeEncoding,
@@ -71,17 +87,73 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                 )
             }
 
-            lastInvocation = InvocationResult(
+            recordMethodReturn(
                 selectorName: method.selectorName,
-                valueDescription: value,
-                errorMessage: nil
+                output: output,
+                completionHandlerIDs: completionHandlerIDs
             )
         } catch {
+            releaseCompletionHandlers(completionHandlerIDs)
             lastInvocation = InvocationResult(
                 selectorName: method.selectorName,
                 valueDescription: "",
                 errorMessage: error.localizedDescription
             )
+        }
+    }
+
+    private func recordMethodReturn(
+        selectorName: String,
+        output: RuntimeInvocationOutput,
+        completionHandlerIDs: [UUID]
+    ) {
+        let objectReferences = objectReferences(for: output.object, acquisitionDescription: selectorName)
+
+        if completionHandlerIDs.isEmpty {
+            lastInvocation = InvocationResult(
+                selectorName: selectorName,
+                valueDescription: output.valueDescription,
+                errorMessage: nil,
+                objectReferences: objectReferences
+            )
+            return
+        }
+
+        lastInvocation = InvocationResult(
+            selectorName: selectorName,
+            valueDescription: "Waiting for completion handler...\nMethod returned: \(output.valueDescription)",
+            errorMessage: nil,
+            objectReferences: objectReferences
+        )
+    }
+
+    private func recordCompletionHandlerEvent(
+        _ event: RuntimeCompletionHandlerEvent,
+        selectorName: String
+    ) {
+        releaseCompletionHandlers([event.handlerID])
+
+        let valueDescription: String
+        if event.values.isEmpty {
+            valueDescription = "Completion handler fired: \(event.signature.displayName)"
+        } else {
+            let values = event.values
+                .map { "\($0.label): \($0.valueDescription)" }
+                .joined(separator: "\n")
+            valueDescription = "Completion handler fired: \(event.signature.displayName)\n\(values)"
+        }
+
+        lastInvocation = InvocationResult(
+            selectorName: selectorName,
+            valueDescription: valueDescription,
+            errorMessage: nil,
+            objectReferences: event.values.compactMap(\.objectReference)
+        )
+    }
+
+    private func releaseCompletionHandlers(_ handlerIDs: [UUID]) {
+        for handlerID in handlerIDs {
+            activeCompletionHandlers[handlerID] = nil
         }
     }
 
@@ -321,7 +393,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     }
     
 
-    private func invoke(selector: Selector, returnTypeEncoding: String) throws -> String {
+    private func invoke(selector: Selector, returnTypeEncoding: String) throws -> RuntimeInvocationOutput {
         switch resolvedInstance.subjectKind {
         case .instance:
             guard let object = resolvedInstance.object else {
@@ -350,7 +422,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         errorMessage: String?,
         declaringClassName: String,
         isDirectIvar: Bool,
-        isValueLoaded: Bool = true
+        isValueLoaded: Bool = true,
+        objectReference: InspectableObjectReference? = nil
     ) -> InspectableProperty {
         InspectableProperty(
             name: name,
@@ -364,19 +437,24 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             isAccessibilityRelated: isAccessibilityRelated(name: name, alternateName: getterName),
             isClassMember: isInspectingClass,
             isDirectIvar: isDirectIvar,
-            isValueLoaded: isValueLoaded
+            isValueLoaded: isValueLoaded,
+            objectReference: objectReference
         )
     }
 
     
     private func readGetter(_ property: InspectableProperty) -> InspectableProperty {
         do {
-            let value = try invoke(
+            let output = try invoke(
                 selector: NSSelectorFromString(property.getterName),
                 returnTypeEncoding: propertyReturnType(for: property)
             )
 
-            return property.withValue(value, errorMessage: nil)
+            return property.withValue(
+                output.valueDescription,
+                objectReference: objectReference(for: output.object, acquisitionDescription: property.getterName),
+                errorMessage: nil
+            )
         } catch {
             return property.withValue("", errorMessage: error.localizedDescription)
         }
@@ -392,8 +470,17 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
               let ivar = class_getInstanceVariable(declaringClass, property.name)
         else { return property.withValue("", errorMessage: "Ivar unavailable") }
 
-        let valueResult = describeIvarValue(object: object, ivar: ivar, typeEncoding: property.attributes)
-        return property.withValue(valueResult.valueDescription, errorMessage: valueResult.errorMessage)
+        let valueResult = describeIvarValue(
+            object: object,
+            ivar: ivar,
+            typeEncoding: property.attributes,
+            acquisitionDescription: property.name
+        )
+        return property.withValue(
+            valueResult.valueDescription,
+            objectReference: valueResult.objectReference,
+            errorMessage: valueResult.errorMessage
+        )
     }
 
     
@@ -420,8 +507,17 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         while let cls = currentClass {
             if let ivar = class_getInstanceVariable(cls, ivarName) {
                 let typeEncoding = ivar_getTypeEncoding(ivar).map { String(cString: $0) } ?? property.attributes
-                let valueResult = describeIvarValue(object: object, ivar: ivar, typeEncoding: typeEncoding)
-                return property.withValue(valueResult.valueDescription, errorMessage: valueResult.errorMessage)
+                let valueResult = describeIvarValue(
+                    object: object,
+                    ivar: ivar,
+                    typeEncoding: typeEncoding,
+                    acquisitionDescription: ivarName
+                )
+                return property.withValue(
+                    valueResult.valueDescription,
+                    objectReference: valueResult.objectReference,
+                    errorMessage: valueResult.errorMessage
+                )
             }
             currentClass = class_getSuperclass(cls)
         }
@@ -516,65 +612,82 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     private func describeIvarValue(
         object: AnyObject,
         ivar: Ivar,
-        typeEncoding: String
-    ) -> (valueDescription: String, errorMessage: String?) {
+        typeEncoding: String,
+        acquisitionDescription: String
+    ) -> (valueDescription: String, objectReference: InspectableObjectReference?, errorMessage: String?) {
         let normalizedEncoding = normalizedIvarTypeEncoding(typeEncoding)
         guard let first = normalizedEncoding.first else {
-            return ("", "Unknown ivar type")
+            return ("", nil, "Unknown ivar type")
         }
         if first == "@" {
             guard let value = object_getIvar(object, ivar) else {
-                return ("nil", nil)
+                return ("nil", nil, nil)
             }
             let description = RuntimeInvocationEngine.describe(value: value)
-            return (description, nil)
+            let reference = objectReference(for: value as AnyObject, acquisitionDescription: acquisitionDescription)
+            return (description, reference, nil)
         }
 
         let rawPointer = Unmanaged.passUnretained(object).toOpaque().advanced(by: ivar_getOffset(ivar))
         switch first {
         case "B":
-            return (rawPointer.loadUnaligned(as: Bool.self) ? "true" : "false", nil)
+            return (rawPointer.loadUnaligned(as: Bool.self) ? "true" : "false", nil, nil)
         case "c":
-            return (String(rawPointer.loadUnaligned(as: CChar.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: CChar.self)), nil, nil)
         case "C":
-            return (String(rawPointer.loadUnaligned(as: CUnsignedChar.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: CUnsignedChar.self)), nil, nil)
         case "s":
-            return (String(rawPointer.loadUnaligned(as: Int16.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: Int16.self)), nil, nil)
         case "S":
-            return (String(rawPointer.loadUnaligned(as: UInt16.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: UInt16.self)), nil, nil)
         case "i":
-            return (String(rawPointer.loadUnaligned(as: Int32.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: Int32.self)), nil, nil)
         case "I":
-            return (String(rawPointer.loadUnaligned(as: UInt32.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: UInt32.self)), nil, nil)
         case "l":
-            return (String(rawPointer.loadUnaligned(as: CLong.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: CLong.self)), nil, nil)
         case "L":
-            return (String(rawPointer.loadUnaligned(as: CUnsignedLong.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: CUnsignedLong.self)), nil, nil)
         case "q":
-            return (String(rawPointer.loadUnaligned(as: Int64.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: Int64.self)), nil, nil)
         case "Q":
-            return (String(rawPointer.loadUnaligned(as: UInt64.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: UInt64.self)), nil, nil)
         case "f":
-            return (String(rawPointer.loadUnaligned(as: Float.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: Float.self)), nil, nil)
         case "d":
-            return (String(rawPointer.loadUnaligned(as: Double.self)), nil)
+            return (String(rawPointer.loadUnaligned(as: Double.self)), nil, nil)
         case "#":
             guard let valuePointer = rawPointer.loadUnaligned(as: UnsafeRawPointer?.self) else {
-                return ("nil", nil)
+                return ("nil", nil, nil)
             }
             
-            let value = unsafeBitCast(valuePointer, to: AnyClass.self)
-            return (NSStringFromClass(value), nil)
+            let value: AnyClass = unsafeBitCast(valuePointer, to: AnyClass.self)
+            return (NSStringFromClass(value), nil, nil)
         case ":":
             guard let valuePointer = rawPointer.loadUnaligned(as: UnsafeRawPointer?.self) else {
-                return ("nil", nil)
+                return ("nil", nil, nil)
             }
             
             let value = unsafeBitCast(valuePointer, to: Selector.self)
-            return (NSStringFromSelector(value), nil)
+            return (NSStringFromSelector(value), nil, nil)
         default:
-            return ("", "Direct ivar reading does not support ivar type '\(normalizedEncoding)'")
+            return ("", nil, "Direct ivar reading does not support ivar type '\(normalizedEncoding)'")
         }
+    }
+
+    private func objectReference(
+        for object: AnyObject?,
+        acquisitionDescription: String
+    ) -> InspectableObjectReference? {
+        guard let object else { return nil }
+        return InspectableObjectReference(object: object, acquisitionDescription: acquisitionDescription)
+    }
+
+    private func objectReferences(
+        for object: AnyObject?,
+        acquisitionDescription: String
+    ) -> [InspectableObjectReference] {
+        objectReference(for: object, acquisitionDescription: acquisitionDescription).map { [$0] } ?? []
     }
 
     private func backingIvarName(fromPropertyAttributes attributes: String) -> String? {
@@ -598,7 +711,11 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
 }
 
 private extension InspectableProperty {
-    func withValue(_ valueDescription: String, errorMessage: String?) -> InspectableProperty {
+    func withValue(
+        _ valueDescription: String,
+        objectReference: InspectableObjectReference? = nil,
+        errorMessage: String?
+    ) -> InspectableProperty {
         InspectableProperty(
             name: name,
             getterName: getterName,
@@ -611,7 +728,21 @@ private extension InspectableProperty {
             isAccessibilityRelated: isAccessibilityRelated,
             isClassMember: isClassMember,
             isDirectIvar: isDirectIvar,
-            isValueLoaded: true
+            isValueLoaded: true,
+            objectReference: objectReference
         )
+    }
+}
+
+private extension Array where Element == RuntimeInvocationArgument {
+    var completionHandlerIDs: [UUID] {
+        compactMap(\.completionHandlerID)
+    }
+}
+
+private extension RuntimeInvocationArgument {
+    var completionHandlerID: UUID? {
+        guard case .completionHandler(let handler) = self else { return nil }
+        return handler.id
     }
 }

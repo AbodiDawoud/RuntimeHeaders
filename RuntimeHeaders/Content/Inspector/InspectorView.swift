@@ -19,7 +19,7 @@ struct RuntimeObjectInspectorView: View {
     @State private var includePrivateMethods: Bool = true
     @State private var allowSafetyFilteredMethods: Bool = true
     @State private var searchText: String = ""
-    @State private var selectedArgumentMethod: InspectableMethod?
+    @State private var presentedSheet: InspectorSheet?
 
     init(resolvedInstance: ResolvedRuntimeInstance) {
         _viewModel = StateObject(wrappedValue: RuntimeObjectInspectorViewModel(resolvedInstance: resolvedInstance))
@@ -44,8 +44,17 @@ struct RuntimeObjectInspectorView: View {
                         Text("No properties match the current filters.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(properties) {
-                            propertyRow($0)
+                        ForEach(properties) { property in
+                            if let objectReference = property.objectReference {
+                                Button {
+                                    presentedSheet = .object(objectReference)
+                                } label: {
+                                    propertyRow(property)
+                                }
+                                .buttonStyle(.plain)
+                            } else {
+                                propertyRow(property)
+                            }
                         }
                     }
                 }
@@ -59,7 +68,7 @@ struct RuntimeObjectInspectorView: View {
                             if canInvoke(method) {
                                 Button {
                                     if method.argumentCount > 0 {
-                                        selectedArgumentMethod = method
+                                        presentedSheet = .arguments(method)
                                     } else {
                                         withAnimation(.smooth(duration: 0.08)) {
                                             viewModel.invoke(method)
@@ -91,9 +100,16 @@ struct RuntimeObjectInspectorView: View {
                     lastResultView(lastInvocation)
                 }
             }
-            .sheet(item: $selectedArgumentMethod) { method in
-                MethodInvocationArgumentsView(method: method) {
-                    viewModel.invoke(method, arguments: $0)
+            .sheet(item: $presentedSheet) { sheet in
+                switch sheet {
+                case .arguments(let method):
+                    MethodInvocationArgumentsView(
+                        method: method,
+                        onInvoke: { viewModel.invoke(method, arguments: $0) },
+                        makeCompletionHandler: { viewModel.completionHandlerArgument(for: method, signature: $0) }
+                    )
+                case .object(let reference):
+                    RuntimeObjectInspectorView(resolvedInstance: reference.resolvedInstance)
                 }
             }
             .toolbar {
@@ -167,6 +183,12 @@ struct RuntimeObjectInspectorView: View {
                 Text(property.isDirectIvar ? "Direct ivar" : "")
                     .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
+
+                if property.objectReference != nil {
+                    Image(systemName: "chevron.forward.circle.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.blue)
+                }
             }
 
             if let errorMessage = property.errorMessage {
@@ -228,10 +250,24 @@ struct RuntimeObjectInspectorView: View {
                     .textSelection(.enabled)
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
-                    Text(lastInvocation.valueDescription)
-                        .font(.system(.footnote, design: .monospaced))
-                        .foregroundStyle(.white)
-                        .textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(lastInvocation.valueDescription)
+                            .font(.system(.footnote, design: .monospaced))
+                            .foregroundStyle(.white)
+                            .textSelection(.enabled)
+
+                        ForEach(lastInvocation.objectReferences) { reference in
+                            Button {
+                                hapticFeedback(.soft)
+                                presentedSheet = .object(reference)
+                            } label: {
+                                Label("Inspect \(reference.displayName)", systemImage: "arrow.up.forward.square")
+                                    .font(.footnote.weight(.semibold))
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
+                    }
                 }
                 .frame(maxHeight: 140)
             }
@@ -366,7 +402,9 @@ struct RuntimeObjectInspectorView: View {
             property.getterName,
             property.attributes,
             property.valueDescription,
-            property.declaringClassName
+            property.declaringClassName,
+            property.objectReference?.displayName ?? "",
+            property.objectReference?.pointerDescription ?? ""
         ].contains { $0.localizedCaseInsensitiveContains(trimmedSearchText) }
     }
 
@@ -401,5 +439,19 @@ struct RuntimeObjectInspectorView: View {
 private extension InspectableMethod {
     var isBlockedBySafetyFilter: Bool {
         invocationBlockedReason == "Blocked by safety filter"
+    }
+}
+
+private enum InspectorSheet: Identifiable {
+    case arguments(InspectableMethod)
+    case object(InspectableObjectReference)
+
+    var id: String {
+        switch self {
+        case .arguments(let method):
+            return "arguments:\(method.id)"
+        case .object(let reference):
+            return "object:\(reference.id)"
+        }
     }
 }

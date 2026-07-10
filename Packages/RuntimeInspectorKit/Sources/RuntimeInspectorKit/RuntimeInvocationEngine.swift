@@ -54,7 +54,7 @@ enum RuntimeInvocationEngine {
         on object: AnyObject,
         selector: Selector,
         returnTypeEncoding: String
-    ) throws -> String {
+    ) throws -> RuntimeInvocationOutput {
         try invokeInstanceMethod(
             on: object,
             selector: selector,
@@ -68,29 +68,29 @@ enum RuntimeInvocationEngine {
         selector: Selector,
         returnTypeEncoding: String,
         arguments: [RuntimeInvocationArgument]
-    ) throws -> String {
+    ) throws -> RuntimeInvocationOutput {
         let methodName = NSStringFromSelector(selector)
         let preparedArguments = try prepare(arguments)
         switch returnKind(for: returnTypeEncoding) {
         case .void:
             try invokeVoid(on: object, selector: selector, arguments: preparedArguments)
-            return "Completed"
+            return RuntimeInvocationOutput(valueDescription: "Completed")
         case .object:
             guard let result = try invokeObject(on: object, selector: selector, arguments: preparedArguments) else {
                 throw RuntimeInvocationError.nilObjectReturn(methodName)
             }
-            return describe(value: result)
+            return RuntimeInvocationOutput(valueDescription: describe(value: result), object: result)
         case .bool:
-            return try invokeBool(on: object, selector: selector, arguments: preparedArguments) ? "true" : "false"
+            return RuntimeInvocationOutput(valueDescription: try invokeBool(on: object, selector: selector, arguments: preparedArguments) ? "true" : "false")
         case .integer:
-            return String(try invokeInt(on: object, selector: selector, arguments: preparedArguments))
+            return RuntimeInvocationOutput(valueDescription: String(try invokeInt(on: object, selector: selector, arguments: preparedArguments)))
         case .unsignedInteger:
-            return String(try invokeUInt(on: object, selector: selector, arguments: preparedArguments))
+            return RuntimeInvocationOutput(valueDescription: String(try invokeUInt(on: object, selector: selector, arguments: preparedArguments)))
         case .floatingPoint:
             if returnTypeEncoding == "f" {
-                return String(try invokeFloat(on: object, selector: selector, arguments: preparedArguments))
+                return RuntimeInvocationOutput(valueDescription: String(try invokeFloat(on: object, selector: selector, arguments: preparedArguments)))
             } else {
-                return String(try invokeDouble(on: object, selector: selector, arguments: preparedArguments))
+                return RuntimeInvocationOutput(valueDescription: String(try invokeDouble(on: object, selector: selector, arguments: preparedArguments)))
             }
         case .unsupported:
             throw RuntimeInvocationError.unsupportedReturnType(returnTypeEncoding)
@@ -101,7 +101,7 @@ enum RuntimeInvocationEngine {
         on cls: AnyClass,
         selector: Selector,
         returnTypeEncoding: String
-    ) throws -> String {
+    ) throws -> RuntimeInvocationOutput {
         try invokeClassMethod(
             on: cls,
             selector: selector,
@@ -115,30 +115,30 @@ enum RuntimeInvocationEngine {
         selector: Selector,
         returnTypeEncoding: String,
         arguments: [RuntimeInvocationArgument]
-    ) throws -> String {
+    ) throws -> RuntimeInvocationOutput {
         let receiver = cls as AnyObject
         let preparedArguments = try prepare(arguments)
         let methodName = NSStringFromSelector(selector)
         switch returnKind(for: returnTypeEncoding) {
         case .void:
             try invokeVoid(on: receiver, selector: selector, arguments: preparedArguments)
-            return "Completed"
+            return RuntimeInvocationOutput(valueDescription: "Completed")
         case .object:
             guard let result = try invokeObject(on: receiver, selector: selector, arguments: preparedArguments) else {
                 throw RuntimeInvocationError.nilObjectReturn(methodName)
             }
-            return describe(value: result)
+            return RuntimeInvocationOutput(valueDescription: describe(value: result), object: result)
         case .bool:
-            return try invokeBool(on: receiver, selector: selector, arguments: preparedArguments) ? "true" : "false"
+            return RuntimeInvocationOutput(valueDescription: try invokeBool(on: receiver, selector: selector, arguments: preparedArguments) ? "true" : "false")
         case .integer:
-            return String(try invokeInt(on: receiver, selector: selector, arguments: preparedArguments))
+            return RuntimeInvocationOutput(valueDescription: String(try invokeInt(on: receiver, selector: selector, arguments: preparedArguments)))
         case .unsignedInteger:
-            return String(try invokeUInt(on: receiver, selector: selector, arguments: preparedArguments))
+            return RuntimeInvocationOutput(valueDescription: String(try invokeUInt(on: receiver, selector: selector, arguments: preparedArguments)))
         case .floatingPoint:
             if returnTypeEncoding == "f" {
-                return String(try invokeFloat(on: receiver, selector: selector, arguments: preparedArguments))
+                return RuntimeInvocationOutput(valueDescription: String(try invokeFloat(on: receiver, selector: selector, arguments: preparedArguments)))
             } else {
-                return String(try invokeDouble(on: receiver, selector: selector, arguments: preparedArguments))
+                return RuntimeInvocationOutput(valueDescription: String(try invokeDouble(on: receiver, selector: selector, arguments: preparedArguments)))
             }
         case .unsupported:
             throw RuntimeInvocationError.unsupportedReturnType(returnTypeEncoding)
@@ -169,6 +169,9 @@ enum RuntimeInvocationEngine {
         case "d":
             return .floatingPoint
         case "@":
+            if normalizedEncoding.hasPrefix("@?") {
+                return .completionHandler
+            }
             return isStringObjectEncoding(normalizedEncoding) ? .string : .unsupported
         default:
             return .unsupported
@@ -236,6 +239,16 @@ enum RuntimeInvocationError: LocalizedError {
     }
 }
 
+struct RuntimeInvocationOutput {
+    let valueDescription: String
+    let object: AnyObject?
+
+    init(valueDescription: String, object: AnyObject? = nil) {
+        self.valueDescription = valueDescription
+        self.object = object
+    }
+}
+
 private struct PreparedInvocationArgument {
     let kind: Kind
     let retainedObject: AnyObject?
@@ -291,6 +304,13 @@ private extension RuntimeInvocationEngine {
                 return PreparedInvocationArgument(kind: .double(value))
             case .string(let value):
                 let object = value as NSString
+                let pointer = Unmanaged.passUnretained(object).toOpaque()
+                return PreparedInvocationArgument(
+                    kind: .general(UInt64(UInt(bitPattern: pointer))),
+                    retainedObject: object
+                )
+            case .completionHandler(let handler):
+                let object = handler.blockObject
                 let pointer = Unmanaged.passUnretained(object).toOpaque()
                 return PreparedInvocationArgument(
                     kind: .general(UInt64(UInt(bitPattern: pointer))),

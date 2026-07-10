@@ -17,6 +17,8 @@ typealias InspectableMethodArgument = RuntimeInspectorKit.InspectableMethodArgum
 typealias InspectableMethodArgumentKind = RuntimeInspectorKit.InspectableMethodArgumentKind
 typealias InvocationResult = RuntimeInspectorKit.InvocationResult
 typealias RuntimeInvocationArgument = RuntimeInspectorKit.RuntimeInvocationArgument
+typealias RuntimeCompletionHandlerSignature = RuntimeInspectorKit.RuntimeCompletionHandlerSignature
+typealias InspectableObjectReference = RuntimeInspectorKit.InspectableObjectReference
 
 
 typealias RuntimeInspectionSubjectKind = RuntimeInspectorKit.RuntimeInspectionSubjectKind

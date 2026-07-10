@@ -5,6 +5,38 @@ public enum RuntimeInspectionSubjectKind {
     case classObject
 }
 
+public struct InspectableObjectReference: Identifiable {
+    public let className: String
+    public let displayName: String
+    public let acquisitionDescription: String
+    public let pointerDescription: String
+    public let resolvedInstance: ResolvedRuntimeInstance
+
+    public init(object: AnyObject, acquisitionDescription: String) {
+        let targetClass: AnyClass = type(of: object)
+        let pointerDescription = String(describing: Unmanaged.passUnretained(object).toOpaque())
+        let className = NSStringFromClass(targetClass)
+        let resolvedInstance = ResolvedRuntimeInstance(
+            className: className,
+            selectorName: acquisitionDescription,
+            acquisitionDescription: acquisitionDescription,
+            subjectKind: .instance,
+            targetClass: targetClass,
+            object: object
+        )
+
+        self.className = className
+        self.displayName = resolvedInstance.displayName
+        self.acquisitionDescription = acquisitionDescription
+        self.pointerDescription = pointerDescription
+        self.resolvedInstance = resolvedInstance
+    }
+
+    public var id: String {
+        "\(className):\(pointerDescription):\(acquisitionDescription)"
+    }
+}
+
 public struct ResolvedRuntimeInstance: Identifiable {
     public let className: String
     public let selectorName: String
@@ -86,6 +118,7 @@ public enum InspectableMethodArgumentKind: String {
     case unsignedInteger
     case floatingPoint
     case string
+    case completionHandler
     case unsupported
 }
 
@@ -115,6 +148,148 @@ public enum RuntimeInvocationArgument {
     case unsignedInteger(UInt)
     case double(Double)
     case string(String)
+    case completionHandler(RuntimeCompletionHandler)
+}
+
+public enum RuntimeCompletionHandlerSignature: String, CaseIterable, Identifiable {
+    case void
+    case object
+    case objectError
+
+    public var id: String {
+        rawValue
+    }
+
+    public var displayName: String {
+        switch self {
+        case .void:
+            return "() -> Void"
+        case .object:
+            return "(Any?) -> Void"
+        case .objectError:
+            return "(Any?, NSError?) -> Void"
+        }
+    }
+}
+
+public struct RuntimeCompletionHandlerValue: Identifiable {
+    public let label: String
+    public let valueDescription: String
+    public let objectReference: InspectableObjectReference?
+
+    public init(
+        label: String,
+        valueDescription: String,
+        objectReference: InspectableObjectReference? = nil
+    ) {
+        self.label = label
+        self.valueDescription = valueDescription
+        self.objectReference = objectReference
+    }
+
+    public var id: String {
+        label
+    }
+}
+
+public struct RuntimeCompletionHandlerEvent {
+    public let handlerID: UUID
+    public let signature: RuntimeCompletionHandlerSignature
+    public let values: [RuntimeCompletionHandlerValue]
+
+    public init(
+        handlerID: UUID,
+        signature: RuntimeCompletionHandlerSignature,
+        values: [RuntimeCompletionHandlerValue]
+    ) {
+        self.handlerID = handlerID
+        self.signature = signature
+        self.values = values
+    }
+}
+
+public final class RuntimeCompletionHandler: Identifiable {
+    public let id: UUID
+    public let signature: RuntimeCompletionHandlerSignature
+    let blockObject: AnyObject
+
+    public init(
+        signature: RuntimeCompletionHandlerSignature,
+        eventHandler: @escaping (RuntimeCompletionHandlerEvent) -> Void
+    ) {
+        let id = UUID()
+        self.id = id
+        self.signature = signature
+
+        switch signature {
+        case .void:
+            let block: @convention(block) () -> Void = {
+                eventHandler(
+                    RuntimeCompletionHandlerEvent(
+                        handlerID: id,
+                        signature: signature,
+                        values: []
+                    )
+                )
+            }
+            blockObject = block as AnyObject
+        case .object:
+            let block: @convention(block) (Any?) -> Void = { value in
+                eventHandler(
+                    RuntimeCompletionHandlerEvent(
+                        handlerID: id,
+                        signature: signature,
+                        values: [
+                            RuntimeCompletionHandlerValue(
+                                label: "value",
+                                valueDescription: Self.describe(optionalValue: value),
+                                objectReference: Self.objectReference(for: value, acquisitionDescription: "completion value")
+                            )
+                        ]
+                    )
+                )
+            }
+            blockObject = block as AnyObject
+        case .objectError:
+            let block: @convention(block) (Any?, NSError?) -> Void = { value, error in
+                eventHandler(
+                    RuntimeCompletionHandlerEvent(
+                        handlerID: id,
+                        signature: signature,
+                        values: [
+                            RuntimeCompletionHandlerValue(
+                                label: "value",
+                                valueDescription: Self.describe(optionalValue: value),
+                                objectReference: Self.objectReference(for: value, acquisitionDescription: "completion value")
+                            ),
+                            RuntimeCompletionHandlerValue(
+                                label: "error",
+                                valueDescription: Self.describe(optionalValue: error),
+                                objectReference: Self.objectReference(for: error, acquisitionDescription: "completion error")
+                            )
+                        ]
+                    )
+                )
+            }
+            blockObject = block as AnyObject
+        }
+    }
+
+    private static func describe(optionalValue value: Any?) -> String {
+        guard let value else { return "nil" }
+        if let error = value as? NSError {
+            return "\(error.domain)(\(error.code)): \(error.localizedDescription)"
+        }
+        return RuntimeInvocationEngine.describe(value: value)
+    }
+
+    private static func objectReference(
+        for value: Any?,
+        acquisitionDescription: String
+    ) -> InspectableObjectReference? {
+        guard let object = value as AnyObject? else { return nil }
+        return InspectableObjectReference(object: object, acquisitionDescription: acquisitionDescription)
+    }
 }
 
 public struct InspectableProperty: Identifiable {
@@ -130,6 +305,7 @@ public struct InspectableProperty: Identifiable {
     public let isClassMember: Bool
     public let isDirectIvar: Bool
     public let isValueLoaded: Bool
+    public let objectReference: InspectableObjectReference?
 
     public init(
         name: String,
@@ -143,7 +319,8 @@ public struct InspectableProperty: Identifiable {
         isAccessibilityRelated: Bool,
         isClassMember: Bool,
         isDirectIvar: Bool,
-        isValueLoaded: Bool = true
+        isValueLoaded: Bool = true,
+        objectReference: InspectableObjectReference? = nil
     ) {
         self.name = name
         self.getterName = getterName
@@ -157,6 +334,7 @@ public struct InspectableProperty: Identifiable {
         self.isClassMember = isClassMember
         self.isDirectIvar = isDirectIvar
         self.isValueLoaded = isValueLoaded
+        self.objectReference = objectReference
     }
 
     public var id: String {
@@ -222,11 +400,18 @@ public struct InvocationResult: Identifiable {
     public let selectorName: String
     public let valueDescription: String
     public let errorMessage: String?
+    public let objectReferences: [InspectableObjectReference]
 
-    public init(selectorName: String, valueDescription: String, errorMessage: String?) {
+    public init(
+        selectorName: String,
+        valueDescription: String,
+        errorMessage: String?,
+        objectReferences: [InspectableObjectReference] = []
+    ) {
         self.selectorName = selectorName
         self.valueDescription = valueDescription
         self.errorMessage = errorMessage
+        self.objectReferences = objectReferences
     }
 
     public var id: String {
