@@ -45,7 +45,14 @@ struct RuntimeObjectInspectorView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(properties) { property in
-                            if let objectReference = property.objectReference {
+                            if let collectionReference = property.collectionReference {
+                                Button {
+                                    presentedSheet = .collection(collectionReference)
+                                } label: {
+                                    propertyRow(property)
+                                }
+                                .buttonStyle(.plain)
+                            } else if let objectReference = property.objectReference {
                                 Button {
                                     presentedSheet = .object(objectReference)
                                 } label: {
@@ -110,6 +117,8 @@ struct RuntimeObjectInspectorView: View {
                     )
                 case .object(let reference):
                     RuntimeObjectInspectorView(resolvedInstance: reference.resolvedInstance)
+                case .collection(let collection):
+                    RuntimeCollectionInspectorView(collection: collection)
                 }
             }
             .toolbar {
@@ -184,7 +193,11 @@ struct RuntimeObjectInspectorView: View {
                     .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
 
-                if property.objectReference != nil {
+                if property.collectionReference != nil {
+                    Image(systemName: "list.bullet.rectangle")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.blue)
+                } else if property.objectReference != nil {
                     Image(systemName: "chevron.forward.circle.fill")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.blue)
@@ -255,6 +268,18 @@ struct RuntimeObjectInspectorView: View {
                             .font(.system(.footnote, design: .monospaced))
                             .foregroundStyle(.white)
                             .textSelection(.enabled)
+
+                        ForEach(lastInvocation.collectionReferences) { collection in
+                            Button {
+                                hapticFeedback(.soft)
+                                presentedSheet = .collection(collection)
+                            } label: {
+                                Label("Inspect \(collection.displayName)", systemImage: "list.bullet.rectangle")
+                                    .font(.footnote.weight(.semibold))
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
 
                         ForEach(lastInvocation.objectReferences) { reference in
                             Button {
@@ -404,7 +429,9 @@ struct RuntimeObjectInspectorView: View {
             property.valueDescription,
             property.declaringClassName,
             property.objectReference?.displayName ?? "",
-            property.objectReference?.pointerDescription ?? ""
+            property.objectReference?.pointerDescription ?? "",
+            property.collectionReference?.displayName ?? "",
+            property.collectionReference?.kind ?? ""
         ].contains { $0.localizedCaseInsensitiveContains(trimmedSearchText) }
     }
 
@@ -445,6 +472,7 @@ private extension InspectableMethod {
 private enum InspectorSheet: Identifiable {
     case arguments(InspectableMethod)
     case object(InspectableObjectReference)
+    case collection(InspectableCollectionReference)
 
     var id: String {
         switch self {
@@ -452,6 +480,8 @@ private enum InspectorSheet: Identifiable {
             return "arguments:\(method.id)"
         case .object(let reference):
             return "object:\(reference.id)"
+        case .collection(let collection):
+            return "collection:\(collection.id)"
         }
     }
 }

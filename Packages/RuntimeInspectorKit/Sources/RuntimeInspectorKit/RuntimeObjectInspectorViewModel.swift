@@ -107,14 +107,18 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         output: RuntimeInvocationOutput,
         completionHandlerIDs: [UUID]
     ) {
-        let objectReferences = objectReferences(for: output.object, acquisitionDescription: selectorName)
+        let collectionReferences = collectionReferences(for: output.object, acquisitionDescription: selectorName)
+        let objectReferences = collectionReferences.isEmpty
+            ? objectReferences(for: output.object, acquisitionDescription: selectorName)
+            : []
 
         if completionHandlerIDs.isEmpty {
             lastInvocation = InvocationResult(
                 selectorName: selectorName,
                 valueDescription: output.valueDescription,
                 errorMessage: nil,
-                objectReferences: objectReferences
+                objectReferences: objectReferences,
+                collectionReferences: collectionReferences
             )
             return
         }
@@ -123,7 +127,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             selectorName: selectorName,
             valueDescription: "Waiting for completion handler...\nMethod returned: \(output.valueDescription)",
             errorMessage: nil,
-            objectReferences: objectReferences
+            objectReferences: objectReferences,
+            collectionReferences: collectionReferences
         )
     }
 
@@ -147,7 +152,10 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             selectorName: selectorName,
             valueDescription: valueDescription,
             errorMessage: nil,
-            objectReferences: event.values.compactMap(\.objectReference)
+            objectReferences: event.values
+                .filter { $0.collectionReference == nil }
+                .compactMap(\.objectReference),
+            collectionReferences: event.values.compactMap(\.collectionReference)
         )
     }
 
@@ -423,7 +431,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         declaringClassName: String,
         isDirectIvar: Bool,
         isValueLoaded: Bool = true,
-        objectReference: InspectableObjectReference? = nil
+        objectReference: InspectableObjectReference? = nil,
+        collectionReference: InspectableCollectionReference? = nil
     ) -> InspectableProperty {
         InspectableProperty(
             name: name,
@@ -438,7 +447,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             isClassMember: isInspectingClass,
             isDirectIvar: isDirectIvar,
             isValueLoaded: isValueLoaded,
-            objectReference: objectReference
+            objectReference: objectReference,
+            collectionReference: collectionReference
         )
     }
 
@@ -452,7 +462,11 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
 
             return property.withValue(
                 output.valueDescription,
-                objectReference: objectReference(for: output.object, acquisitionDescription: property.getterName),
+                objectReference: objectReferenceIfNotCollection(
+                    for: output.object,
+                    acquisitionDescription: property.getterName
+                ),
+                collectionReference: collectionReference(for: output.object, acquisitionDescription: property.getterName),
                 errorMessage: nil
             )
         } catch {
@@ -478,7 +492,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         )
         return property.withValue(
             valueResult.valueDescription,
-            objectReference: valueResult.objectReference,
+            objectReference: valueResult.collectionReference == nil ? valueResult.objectReference : nil,
+            collectionReference: valueResult.collectionReference,
             errorMessage: valueResult.errorMessage
         )
     }
@@ -515,7 +530,8 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                 )
                 return property.withValue(
                     valueResult.valueDescription,
-                    objectReference: valueResult.objectReference,
+                    objectReference: valueResult.collectionReference == nil ? valueResult.objectReference : nil,
+                    collectionReference: valueResult.collectionReference,
                     errorMessage: valueResult.errorMessage
                 )
             }
@@ -614,64 +630,75 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         ivar: Ivar,
         typeEncoding: String,
         acquisitionDescription: String
-    ) -> (valueDescription: String, objectReference: InspectableObjectReference?, errorMessage: String?) {
+    ) -> (
+        valueDescription: String,
+        objectReference: InspectableObjectReference?,
+        collectionReference: InspectableCollectionReference?,
+        errorMessage: String?
+    ) {
         let normalizedEncoding = normalizedIvarTypeEncoding(typeEncoding)
         guard let first = normalizedEncoding.first else {
-            return ("", nil, "Unknown ivar type")
+            return ("", nil, nil, "Unknown ivar type")
         }
         if first == "@" {
             guard let value = object_getIvar(object, ivar) else {
-                return ("nil", nil, nil)
+                return ("nil", nil, nil, nil)
             }
             let description = RuntimeInvocationEngine.describe(value: value)
-            let reference = objectReference(for: value as AnyObject, acquisitionDescription: acquisitionDescription)
-            return (description, reference, nil)
+            let collectionReference = collectionReference(
+                for: value as AnyObject,
+                acquisitionDescription: acquisitionDescription
+            )
+            let reference = collectionReference == nil
+                ? objectReference(for: value as AnyObject, acquisitionDescription: acquisitionDescription)
+                : nil
+            return (description, reference, collectionReference, nil)
         }
 
         let rawPointer = Unmanaged.passUnretained(object).toOpaque().advanced(by: ivar_getOffset(ivar))
         switch first {
         case "B":
-            return (rawPointer.loadUnaligned(as: Bool.self) ? "true" : "false", nil, nil)
+            return (rawPointer.loadUnaligned(as: Bool.self) ? "true" : "false", nil, nil, nil)
         case "c":
-            return (String(rawPointer.loadUnaligned(as: CChar.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: CChar.self)), nil, nil, nil)
         case "C":
-            return (String(rawPointer.loadUnaligned(as: CUnsignedChar.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: CUnsignedChar.self)), nil, nil, nil)
         case "s":
-            return (String(rawPointer.loadUnaligned(as: Int16.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: Int16.self)), nil, nil, nil)
         case "S":
-            return (String(rawPointer.loadUnaligned(as: UInt16.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: UInt16.self)), nil, nil, nil)
         case "i":
-            return (String(rawPointer.loadUnaligned(as: Int32.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: Int32.self)), nil, nil, nil)
         case "I":
-            return (String(rawPointer.loadUnaligned(as: UInt32.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: UInt32.self)), nil, nil, nil)
         case "l":
-            return (String(rawPointer.loadUnaligned(as: CLong.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: CLong.self)), nil, nil, nil)
         case "L":
-            return (String(rawPointer.loadUnaligned(as: CUnsignedLong.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: CUnsignedLong.self)), nil, nil, nil)
         case "q":
-            return (String(rawPointer.loadUnaligned(as: Int64.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: Int64.self)), nil, nil, nil)
         case "Q":
-            return (String(rawPointer.loadUnaligned(as: UInt64.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: UInt64.self)), nil, nil, nil)
         case "f":
-            return (String(rawPointer.loadUnaligned(as: Float.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: Float.self)), nil, nil, nil)
         case "d":
-            return (String(rawPointer.loadUnaligned(as: Double.self)), nil, nil)
+            return (String(rawPointer.loadUnaligned(as: Double.self)), nil, nil, nil)
         case "#":
             guard let valuePointer = rawPointer.loadUnaligned(as: UnsafeRawPointer?.self) else {
-                return ("nil", nil, nil)
+                return ("nil", nil, nil, nil)
             }
             
             let value: AnyClass = unsafeBitCast(valuePointer, to: AnyClass.self)
-            return (NSStringFromClass(value), nil, nil)
+            return (NSStringFromClass(value), nil, nil, nil)
         case ":":
             guard let valuePointer = rawPointer.loadUnaligned(as: UnsafeRawPointer?.self) else {
-                return ("nil", nil, nil)
+                return ("nil", nil, nil, nil)
             }
             
             let value = unsafeBitCast(valuePointer, to: Selector.self)
-            return (NSStringFromSelector(value), nil, nil)
+            return (NSStringFromSelector(value), nil, nil, nil)
         default:
-            return ("", nil, "Direct ivar reading does not support ivar type '\(normalizedEncoding)'")
+            return ("", nil, nil, "Direct ivar reading does not support ivar type '\(normalizedEncoding)'")
         }
     }
 
@@ -683,11 +710,36 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         return InspectableObjectReference(object: object, acquisitionDescription: acquisitionDescription)
     }
 
+    private func objectReferenceIfNotCollection(
+        for object: AnyObject?,
+        acquisitionDescription: String
+    ) -> InspectableObjectReference? {
+        guard collectionReference(for: object, acquisitionDescription: acquisitionDescription) == nil else {
+            return nil
+        }
+        return objectReference(for: object, acquisitionDescription: acquisitionDescription)
+    }
+
     private func objectReferences(
         for object: AnyObject?,
         acquisitionDescription: String
     ) -> [InspectableObjectReference] {
         objectReference(for: object, acquisitionDescription: acquisitionDescription).map { [$0] } ?? []
+    }
+
+    private func collectionReference(
+        for object: AnyObject?,
+        acquisitionDescription: String
+    ) -> InspectableCollectionReference? {
+        guard let object else { return nil }
+        return InspectableCollectionReference(object: object, acquisitionDescription: acquisitionDescription)
+    }
+
+    private func collectionReferences(
+        for object: AnyObject?,
+        acquisitionDescription: String
+    ) -> [InspectableCollectionReference] {
+        collectionReference(for: object, acquisitionDescription: acquisitionDescription).map { [$0] } ?? []
     }
 
     private func backingIvarName(fromPropertyAttributes attributes: String) -> String? {
@@ -714,6 +766,7 @@ private extension InspectableProperty {
     func withValue(
         _ valueDescription: String,
         objectReference: InspectableObjectReference? = nil,
+        collectionReference: InspectableCollectionReference? = nil,
         errorMessage: String?
     ) -> InspectableProperty {
         InspectableProperty(
@@ -729,7 +782,8 @@ private extension InspectableProperty {
             isClassMember: isClassMember,
             isDirectIvar: isDirectIvar,
             isValueLoaded: true,
-            objectReference: objectReference
+            objectReference: objectReference,
+            collectionReference: collectionReference
         )
     }
 }

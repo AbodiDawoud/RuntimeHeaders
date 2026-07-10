@@ -61,6 +61,7 @@
 		BE0000012F90000100000008 /* InspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000012F90000100000018 /* InspectorView.swift */; };
 		BE0000022F90000100000006 /* NamedNodeExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE0000022F90000100000016 /* NamedNodeExporter.swift */; };
 		BE1000012F90000100000001 /* RuntimeInspectorKit in Frameworks */ = {isa = PBXBuildFile; productRef = BE1000012F90000100000003 /* RuntimeInspectorKit */; };
+		BE2000012FA0000100000001 /* RuntimeCollectionInspectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE2000012FA0000100000002 /* RuntimeCollectionInspectorView.swift */; };
 		C04090CA2D2759260013D8F7 /* ClassDumpRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = C04090C92D2759260013D8F7 /* ClassDumpRuntime */; };
 /* End PBXBuildFile section */
 
@@ -130,6 +131,7 @@
 		BE0000012F90000100000016 /* RuntimeInstanceResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeInstanceResolver.swift; sourceTree = "<group>"; };
 		BE0000012F90000100000018 /* InspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InspectorView.swift; sourceTree = "<group>"; };
 		BE0000022F90000100000016 /* NamedNodeExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NamedNodeExporter.swift; sourceTree = "<group>"; };
+		BE2000012FA0000100000002 /* RuntimeCollectionInspectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RuntimeCollectionInspectorView.swift; sourceTree = "<group>"; };
 		FAD661F42B81D1210000D2A6 /* RuntimeHeaders.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RuntimeHeaders.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -265,6 +267,7 @@
 			isa = PBXGroup;
 			children = (
 				BE0000012F90000100000018 /* InspectorView.swift */,
+				BE2000012FA0000100000002 /* RuntimeCollectionInspectorView.swift */,
 				BD995F842F8AA2D900E203AE /* MethodInvocationArgumentsView.swift */,
 				BD995F8E2F8AD90500E203AE /* RuntimeSelectorChooserView.swift */,
 			);
@@ -395,6 +398,7 @@
 				BD8A38E72E9ADA3B00F1B486 /* LabelStyles.swift in Sources */,
 				BDE1A2902F9904DF00A94398 /* SystemLibraryShortcut.swift in Sources */,
 				BD8A38E82E9ADA3B00F1B486 /* ClearButton.swift in Sources */,
+				BE2000012FA0000100000001 /* RuntimeCollectionInspectorView.swift in Sources */,
 				BD58379F2F87FB8C00473B0A /* FeaturedFrameworkContainerView.swift in Sources */,
 				BE0000012F90000100000008 /* InspectorView.swift in Sources */,
 				BD995F872F8AC9A700E203AE /* History.swift in Sources */,
@@ -567,7 +571,13 @@
 				INFOPLIST_FILE = RuntimeHeaders/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Headers.h;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This is requried for PhotoLibrary Inspection. The app will crash otherwise.";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSCameraUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSContactsUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "To avoid crashing when inspecting some objects";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -612,7 +622,13 @@
 				INFOPLIST_FILE = RuntimeHeaders/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Headers.h;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This is requried for PhotoLibrary Inspection. The app will crash otherwise.";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSCameraUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSContactsUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "To avoid crashing when inspecting some objects";
+				INFOPLIST_KEY_NSRemindersUsageDescription = "To avoid crashing when inspecting some objects";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;

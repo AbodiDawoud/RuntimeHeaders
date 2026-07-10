@@ -176,15 +176,18 @@ public struct RuntimeCompletionHandlerValue: Identifiable {
     public let label: String
     public let valueDescription: String
     public let objectReference: InspectableObjectReference?
+    public let collectionReference: InspectableCollectionReference?
 
     public init(
         label: String,
         valueDescription: String,
-        objectReference: InspectableObjectReference? = nil
+        objectReference: InspectableObjectReference? = nil,
+        collectionReference: InspectableCollectionReference? = nil
     ) {
         self.label = label
         self.valueDescription = valueDescription
         self.objectReference = objectReference
+        self.collectionReference = collectionReference
     }
 
     public var id: String {
@@ -243,7 +246,8 @@ public final class RuntimeCompletionHandler: Identifiable {
                             RuntimeCompletionHandlerValue(
                                 label: "value",
                                 valueDescription: Self.describe(optionalValue: value),
-                                objectReference: Self.objectReference(for: value, acquisitionDescription: "completion value")
+                                objectReference: Self.objectReference(for: value, acquisitionDescription: "completion value"),
+                                collectionReference: Self.collectionReference(for: value, acquisitionDescription: "completion value")
                             )
                         ]
                     )
@@ -260,12 +264,14 @@ public final class RuntimeCompletionHandler: Identifiable {
                             RuntimeCompletionHandlerValue(
                                 label: "value",
                                 valueDescription: Self.describe(optionalValue: value),
-                                objectReference: Self.objectReference(for: value, acquisitionDescription: "completion value")
+                                objectReference: Self.objectReference(for: value, acquisitionDescription: "completion value"),
+                                collectionReference: Self.collectionReference(for: value, acquisitionDescription: "completion value")
                             ),
                             RuntimeCompletionHandlerValue(
                                 label: "error",
                                 valueDescription: Self.describe(optionalValue: error),
-                                objectReference: Self.objectReference(for: error, acquisitionDescription: "completion error")
+                                objectReference: Self.objectReference(for: error, acquisitionDescription: "completion error"),
+                                collectionReference: Self.collectionReference(for: error, acquisitionDescription: "completion error")
                             )
                         ]
                     )
@@ -290,6 +296,14 @@ public final class RuntimeCompletionHandler: Identifiable {
         guard let object = value as AnyObject? else { return nil }
         return InspectableObjectReference(object: object, acquisitionDescription: acquisitionDescription)
     }
+
+    private static func collectionReference(
+        for value: Any?,
+        acquisitionDescription: String
+    ) -> InspectableCollectionReference? {
+        guard let object = value as AnyObject? else { return nil }
+        return InspectableCollectionReference(object: object, acquisitionDescription: acquisitionDescription)
+    }
 }
 
 public struct InspectableProperty: Identifiable {
@@ -306,6 +320,7 @@ public struct InspectableProperty: Identifiable {
     public let isDirectIvar: Bool
     public let isValueLoaded: Bool
     public let objectReference: InspectableObjectReference?
+    public let collectionReference: InspectableCollectionReference?
 
     public init(
         name: String,
@@ -320,7 +335,8 @@ public struct InspectableProperty: Identifiable {
         isClassMember: Bool,
         isDirectIvar: Bool,
         isValueLoaded: Bool = true,
-        objectReference: InspectableObjectReference? = nil
+        objectReference: InspectableObjectReference? = nil,
+        collectionReference: InspectableCollectionReference? = nil
     ) {
         self.name = name
         self.getterName = getterName
@@ -335,6 +351,7 @@ public struct InspectableProperty: Identifiable {
         self.isDirectIvar = isDirectIvar
         self.isValueLoaded = isValueLoaded
         self.objectReference = objectReference
+        self.collectionReference = collectionReference
     }
 
     public var id: String {
@@ -401,17 +418,20 @@ public struct InvocationResult: Identifiable {
     public let valueDescription: String
     public let errorMessage: String?
     public let objectReferences: [InspectableObjectReference]
+    public let collectionReferences: [InspectableCollectionReference]
 
     public init(
         selectorName: String,
         valueDescription: String,
         errorMessage: String?,
-        objectReferences: [InspectableObjectReference] = []
+        objectReferences: [InspectableObjectReference] = [],
+        collectionReferences: [InspectableCollectionReference] = []
     ) {
         self.selectorName = selectorName
         self.valueDescription = valueDescription
         self.errorMessage = errorMessage
         self.objectReferences = objectReferences
+        self.collectionReferences = collectionReferences
     }
 
     public var id: String {
