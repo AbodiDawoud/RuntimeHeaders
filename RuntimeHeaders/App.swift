@@ -2,7 +2,6 @@
 //  HeaderViewerApp.swift
 //  HeaderViewer
 
-
 import SwiftUI
 import Toasts
 
@@ -19,8 +18,7 @@ struct HeaderViewerApp: App {
     }
 }
 
-
-private struct _HomeView: View {
+struct _HomeView: View {
     @ObservedObject var settingsManager = PreferenceController.shared
     @StateObject private var navigation = AppNavigation()
     

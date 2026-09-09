@@ -23,8 +23,7 @@ class PreferenceController: ObservableObject {
         guard let savedData = defaults.data(forKey: ds_key),
               let decodedSettings = try? JSONDecoder().decode(Preferences.self, from: savedData)
         else {
-            // When the app starts for the first time, register and then save default values
-            self.preferences = Self.registerDefaultSettings()
+            self.preferences = Preferences()
             saveSettings()
             return
         }
@@ -36,23 +35,6 @@ class PreferenceController: ObservableObject {
     private func saveSettings() {
         let encodedData = try? JSONEncoder().encode(preferences)
         defaults.set(encodedData, forKey: ds_key)
-    }
-    
-    private static func registerDefaultSettings() -> Preferences {
-        let settings = Preferences(
-            historyEnabled: true,
-            historyBadgeEnabled: true,
-            historyLimit: 0, // unlimited
-            restoreLastFrameworkOnLaunch: true,
-            preferredColorScheme: "nil" // defaults to system
-        )
-        
-        let encodedData = try! JSONEncoder().encode(settings)
-        UserDefaults.standard.register(
-            defaults: ["appSettings": encodedData]
-        )
-        
-        return settings
     }
     
     // To be used when SettingsTab appears
@@ -109,12 +91,12 @@ class PreferenceController: ObservableObject {
 
 
 struct Preferences: Codable {
-    var historyEnabled: Bool
-    var historyBadgeEnabled: Bool
-    var historyLimit: Int
-    var restoreLastFrameworkOnLaunch: Bool
+    var historyEnabled: Bool = true
+    var historyBadgeEnabled: Bool = true
+    var historyLimit: Int = 0 // unlimited
+    var restoreLastFrameworkOnLaunch: Bool = true
     
-    var preferredColorScheme: String
+    var preferredColorScheme: String = "nil" // system appearance
     
     
     // Converts the saved string to color scheme object

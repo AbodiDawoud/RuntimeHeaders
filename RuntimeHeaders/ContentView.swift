@@ -2,10 +2,8 @@
 //  ContentView.swift
 //  HeaderViewer
 
-
 import SwiftUI
 import ClassDumpRuntime
-
 
 struct ContentView: View { 
     @EnvironmentObject private var navigation: AppNavigation
@@ -79,12 +77,12 @@ struct _ContentView: View {
                     Button {
                         showBookmarkView.toggle()
                     } label: {
-                        bookmarksButtonLabel
-                            .backport { view in
-                                if #available(iOS 18, *) {
-                                    view.matchedTransitionSource(id: "bookmarks", in: animation)
-                                }
-                            }
+                        if #available(iOS 18, *) {
+                            bookmarksButtonLabel
+                                .matchedTransitionSource(id: "bookmarks", in: animation)
+                        } else {
+                            bookmarksButtonLabel
+                        }
                     }
                     .buttonStyle(.plain)
                     .padding(.vertical, 2)
@@ -103,14 +101,13 @@ struct _ContentView: View {
                 }
             }
             .sheet(isPresented: $showBookmarkView) {
-                BookmarkListingView()
-                    .backport { view in
-                        if #available(iOS 18, *) {
-                            view
-                                .disableZoomInteractiveDismiiss()
-                                .navigationTransition(.zoom(sourceID: "bookmarks", in: animation))
-                        }
-                    }
+                if #available(iOS 18, *) {
+                    BookmarkListingView()
+                        .disableZoomInteractiveDismiiss()
+                        .navigationTransition(.zoom(sourceID: "bookmarks", in: animation))
+                } else {
+                    BookmarkListingView()
+                }
             }
         }
     }

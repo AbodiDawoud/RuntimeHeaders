@@ -53,70 +53,37 @@ enum RuntimeInvocationEngine {
     static func invokeInstanceMethod(
         on object: AnyObject,
         selector: Selector,
-        returnTypeEncoding: String
+        returnTypeEncoding: String,
+        arguments: [RuntimeInvocationArgument] = []
     ) throws -> RuntimeInvocationOutput {
-        try invokeInstanceMethod(
+        try invoke(
             on: object,
             selector: selector,
             returnTypeEncoding: returnTypeEncoding,
-            arguments: []
+            arguments: arguments
         )
-    }
-
-    static func invokeInstanceMethod(
-        on object: AnyObject,
-        selector: Selector,
-        returnTypeEncoding: String,
-        arguments: [RuntimeInvocationArgument]
-    ) throws -> RuntimeInvocationOutput {
-        let methodName = NSStringFromSelector(selector)
-        let preparedArguments = try prepare(arguments)
-        switch returnKind(for: returnTypeEncoding) {
-        case .void:
-            try invokeVoid(on: object, selector: selector, arguments: preparedArguments)
-            return RuntimeInvocationOutput(valueDescription: "Completed")
-        case .object:
-            guard let result = try invokeObject(on: object, selector: selector, arguments: preparedArguments) else {
-                throw RuntimeInvocationError.nilObjectReturn(methodName)
-            }
-            return RuntimeInvocationOutput(valueDescription: describe(value: result), object: result)
-        case .bool:
-            return RuntimeInvocationOutput(valueDescription: try invokeBool(on: object, selector: selector, arguments: preparedArguments) ? "true" : "false")
-        case .integer:
-            return RuntimeInvocationOutput(valueDescription: String(try invokeInt(on: object, selector: selector, arguments: preparedArguments)))
-        case .unsignedInteger:
-            return RuntimeInvocationOutput(valueDescription: String(try invokeUInt(on: object, selector: selector, arguments: preparedArguments)))
-        case .floatingPoint:
-            if returnTypeEncoding == "f" {
-                return RuntimeInvocationOutput(valueDescription: String(try invokeFloat(on: object, selector: selector, arguments: preparedArguments)))
-            } else {
-                return RuntimeInvocationOutput(valueDescription: String(try invokeDouble(on: object, selector: selector, arguments: preparedArguments)))
-            }
-        case .unsupported:
-            throw RuntimeInvocationError.unsupportedReturnType(returnTypeEncoding)
-        }
     }
 
     static func invokeClassMethod(
         on cls: AnyClass,
         selector: Selector,
-        returnTypeEncoding: String
+        returnTypeEncoding: String,
+        arguments: [RuntimeInvocationArgument] = []
     ) throws -> RuntimeInvocationOutput {
-        try invokeClassMethod(
-            on: cls,
+        try invoke(
+            on: cls as AnyObject,
             selector: selector,
             returnTypeEncoding: returnTypeEncoding,
-            arguments: []
+            arguments: arguments
         )
     }
 
-    static func invokeClassMethod(
-        on cls: AnyClass,
+    private static func invoke(
+        on receiver: AnyObject,
         selector: Selector,
         returnTypeEncoding: String,
         arguments: [RuntimeInvocationArgument]
     ) throws -> RuntimeInvocationOutput {
-        let receiver = cls as AnyObject
         let preparedArguments = try prepare(arguments)
         let methodName = NSStringFromSelector(selector)
         switch returnKind(for: returnTypeEncoding) {

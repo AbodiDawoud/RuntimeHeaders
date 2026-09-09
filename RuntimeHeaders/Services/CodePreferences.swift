@@ -33,16 +33,7 @@ final class CodePreferences: ObservableObject {
     }
 
     func apply(_ theme: Theme) {
-        colors.standard = theme.standard
-        colors.comment = theme.comment
-        colors.keyword = theme.keyword
-        colors.variable = theme.variable
-        colors.number = theme.number
-        colors.recordName = theme.recordName
-        colors.class = theme.class
-        colors.protocol = theme.protocol
-        colors.defaultValue = theme.defaultValue
-
+        colors = theme
         selectedTheme = theme.name
     }
 

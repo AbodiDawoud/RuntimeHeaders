@@ -15,10 +15,6 @@ extension View {
             AnyView(self)
         }
     }
-    
-    func backport(@ViewBuilder _ modifier: @escaping (Self) -> some View) -> some View {
-        AnyView(modifier(self))
-    }
 }
 
 extension View {

@@ -7,6 +7,36 @@ import ClassDumpRuntime
 import ObjectiveC
 import SyntaxHighlighting
 
+private enum HeaderExport {
+    static var generationOptions: CDGenerationOptions {
+        let options: CDGenerationOptions = .init()
+        options.stripProtocolConformance = false
+        options.stripOverrides = false
+        options.stripDuplicates = true
+        options.stripSynthesized = true
+        options.stripCtorMethod = true
+        options.stripDtorMethod = true
+        options.addSymbolImageComments = false
+        return options
+    }
+
+    static func plainText(from semanticString: CDSemanticString) -> String {
+        semanticLinesFromString(semanticString).lines
+            .map { $0.content.map(\.string).joined() }
+            .joined(separator: "\n")
+    }
+
+    static func safeFileName(_ rawName: String, fallback: String) -> String {
+        let invalidCharacters = CharacterSet(charactersIn: "/:")
+            .union(.newlines)
+            .union(.controlCharacters)
+        let fileName = rawName.components(separatedBy: invalidCharacters)
+            .joined(separator: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return fileName.isEmpty ? fallback : fileName
+    }
+}
 
 final class NamedNodeExporter {
     private let listings: RuntimeListings
@@ -18,11 +48,8 @@ final class NamedNodeExporter {
     
     func exportHeaders(for node: NamedNode) throws -> URL {
         let imageNodes = leafNodes(in: node)
-        guard imageNodes.isEmpty == false else {
-            throw ExportError.noImages
-        }
         
-        let folderName = "\(safeFileName(node.name, fallback: "RuntimeHeaders"))-Headers-\(UUID().uuidString)"
+        let folderName = "\(HeaderExport.safeFileName(node.name, fallback: "RuntimeHeaders"))-Headers-\(UUID().uuidString)"
         let folderURL = fileManager.temporaryDirectory.appendingPathComponent(folderName, isDirectory: true)
         try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
         
@@ -44,7 +71,7 @@ final class NamedNodeExporter {
         guard splitByImage else { return folderURL  }
         
         let destinationFolder = folderURL.appendingPathComponent(
-            safeFileName(imageNode.name, fallback: "Image"),
+            HeaderExport.safeFileName(imageNode.name, fallback: "Image"),
             isDirectory: true
         )
         try fileManager.createDirectory(at: destinationFolder, withIntermediateDirectories: true)
@@ -112,34 +139,14 @@ final class NamedNodeExporter {
         switch runtimeObject {
         case .class(let name):
             guard let cls = NSClassFromString(name) else { return nil }
-            semanticString = CDClassModel(with: cls).semanticLines(with: defaultGenerationOptions)
+            semanticString = CDClassModel(with: cls).semanticLines(with: HeaderExport.generationOptions)
             
         case .protocol(let name):
             guard let prtcl = NSProtocolFromString(name) else { return nil }
-            semanticString = CDProtocolModel(with: prtcl).semanticLines(with: defaultGenerationOptions)
+            semanticString = CDProtocolModel(with: prtcl).semanticLines(with: HeaderExport.generationOptions)
         }
         
-        return plainText(from: semanticString)
-    }
-    
-    private var defaultGenerationOptions: CDGenerationOptions {
-        let options: CDGenerationOptions = .init()
-        options.stripProtocolConformance = false
-        options.stripOverrides = false
-        options.stripDuplicates = true
-        options.stripSynthesized = true
-        options.stripCtorMethod = true
-        options.stripDtorMethod = true
-        options.addSymbolImageComments = false
-        return options
-    }
-    
-    private func plainText(from semanticString: CDSemanticString) -> String {
-        semanticLinesFromString(semanticString).lines
-            .map { line in
-                line.content.map(\.string).joined()
-            }
-            .joined(separator: "\n")
+        return HeaderExport.plainText(from: semanticString)
     }
     
     private func uniqueHeaderURL(
@@ -147,7 +154,7 @@ final class NamedNodeExporter {
         in folder: URL,
         usedFileNames: inout Set<String>
     ) -> URL {
-        let baseName = safeFileName(runtimeObject.name, fallback: "Header")
+        let baseName = HeaderExport.safeFileName(runtimeObject.name, fallback: "Header")
         var fileName = "\(baseName).h"
         
         if usedFileNames.contains(fileName) {
@@ -171,28 +178,14 @@ final class NamedNodeExporter {
         usedFileNames.insert(candidateName)
         return folder.appendingPathComponent(candidateName)
     }
-    
-    private func safeFileName(_ rawName: String, fallback: String) -> String {
-        let invalidCharacters = CharacterSet(charactersIn: "/:")
-            .union(.newlines)
-            .union(.controlCharacters)
-        let pieces = rawName.components(separatedBy: invalidCharacters)
-        let fileName = pieces.joined(separator: "-")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        return fileName.isEmpty ? fallback : fileName
-    }
 }
 
 extension NamedNodeExporter {
     enum ExportError: LocalizedError {
-        case noImages
         case noHeaders(String)
         
         var errorDescription: String? {
             switch self {
-            case .noImages:
-                return "No framework images were found inside the selected node."
             case .noHeaders(let name):
                 return "No classes or protocols were found in \(name)."
             }
@@ -213,7 +206,7 @@ final class BookmarkFolderHeaderExporter {
             throw ExportError.noBookmarks(folder.name)
         }
         
-        let folderName = "\(safeFileName(folder.name, fallback: "Bookmarks"))-Headers-\(UUID().uuidString)"
+        let folderName = "\(HeaderExport.safeFileName(folder.name, fallback: "Bookmarks"))-Headers-\(UUID().uuidString)"
         let folderURL = fileManager.temporaryDirectory.appendingPathComponent(folderName, isDirectory: true)
         try fileManager.createDirectory(at: folderURL, withIntermediateDirectories: true)
         
@@ -241,40 +234,20 @@ final class BookmarkFolderHeaderExporter {
     
     private func headerContent(for bookmark: Bookmark) -> String? {
         if let cls = NSClassFromString(bookmark.name) {
-            guard let semanticString = CDClassModel(with: cls).semanticLines(with: defaultGenerationOptions) else {
+            guard let semanticString = CDClassModel(with: cls).semanticLines(with: HeaderExport.generationOptions) else {
                 return nil
             }
-            return plainText(from: semanticString)
+            return HeaderExport.plainText(from: semanticString)
         }
         
         if let prtcl = NSProtocolFromString(bookmark.name) {
-            guard let semanticString = CDProtocolModel(with: prtcl).semanticLines(with: defaultGenerationOptions) else {
+            guard let semanticString = CDProtocolModel(with: prtcl).semanticLines(with: HeaderExport.generationOptions) else {
                 return nil
             }
-            return plainText(from: semanticString)
+            return HeaderExport.plainText(from: semanticString)
         }
         
         return nil
-    }
-    
-    private var defaultGenerationOptions: CDGenerationOptions {
-        let options: CDGenerationOptions = .init()
-        options.stripProtocolConformance = false
-        options.stripOverrides = false
-        options.stripDuplicates = true
-        options.stripSynthesized = true
-        options.stripCtorMethod = true
-        options.stripDtorMethod = true
-        options.addSymbolImageComments = false
-        return options
-    }
-    
-    private func plainText(from semanticString: CDSemanticString) -> String {
-        semanticLinesFromString(semanticString).lines
-            .map {
-                $0.content.map(\.string).joined()
-            }
-            .joined(separator: "\n")
     }
     
     private func uniqueHeaderURL(
@@ -282,7 +255,7 @@ final class BookmarkFolderHeaderExporter {
         in folder: URL,
         usedFileNames: inout Set<String>
     ) -> URL {
-        let baseName = safeFileName(bookmark.name, fallback: "Header")
+        let baseName = HeaderExport.safeFileName(bookmark.name, fallback: "Header")
         var candidateName = "\(baseName).h"
         var duplicateIndex = 2
         
@@ -293,17 +266,6 @@ final class BookmarkFolderHeaderExporter {
         
         usedFileNames.insert(candidateName)
         return folder.appendingPathComponent(candidateName)
-    }
-    
-    private func safeFileName(_ rawName: String, fallback: String) -> String {
-        let invalidCharacters = CharacterSet(charactersIn: "/:")
-            .union(.newlines)
-            .union(.controlCharacters)
-        let pieces = rawName.components(separatedBy: invalidCharacters)
-        let fileName = pieces.joined(separator: "-")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        return fileName.isEmpty ? fallback : fileName
     }
 }
 

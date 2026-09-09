@@ -366,11 +366,6 @@ private struct BookmarkFolderDetailView: View {
         UIApplication.shared.open(url)
     }
     
-    private func exportHeaders() {
-        guard let folder else { return }
-        exportHeaders(for: folder)
-    }
-
     private func shareSelectedBookmarks() {
         guard let folder, selectedBookmarks.isEmpty == false else { return }
         let folderName = selectedBookmarks.count == folder.bookmarks.count ? folder.name : "\(folder.name) Selection"

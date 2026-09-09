@@ -23,17 +23,6 @@ class BookmarksStore: ObservableObject {
         loadBookmarks()
     }
     
-    func toggleBookmark(for imageName: String) {
-        guard let parent = LastNodeTracker.path else { return }
-        let bookmark = Bookmark(name: imageName, parentPath: parent, date: Date.now)
-        
-        if isBookmarked(bookmark) {
-            removeBookmark(for: bookmark)
-        } else {
-            addBookmark(bookmark, to: defaultFolderID())
-        }
-    }
-    
     @discardableResult
     func addBookmark(imageName: String, parent: String) -> Int {
         let bookmark = Bookmark(name: imageName, parentPath: parent, date: Date.now)
@@ -51,16 +40,6 @@ class BookmarksStore: ObservableObject {
         
         guard let index = folders.firstIndex(where: { $0.id == folderID }) else { return }
         folders[index].bookmarks.insert(bookmark, at: 0)
-        syncFolders()
-    }
-    
-    func removeBookmark(at index: IndexSet) {
-        let allBookmarks = bookmarks
-        
-        for i in index where allBookmarks.indices.contains(i) {
-            removeBookmark(for: allBookmarks[i], shouldSync: false)
-        }
-        
         syncFolders()
     }
     
@@ -120,24 +99,8 @@ class BookmarksStore: ObservableObject {
         addBookmark(bookmark, to: folder.id)
     }
     
-    func isBookmarked(_ imageName: String) -> Bool {
-        guard let path = LastNodeTracker.path else { return false }
-        return isBookmarked(Bookmark(name: imageName, parentPath: path, date: .now))
-    }
-
     func isBookmarked(imageName: String, parent: String) -> Bool {
         isBookmarked(Bookmark(name: imageName, parentPath: parent, date: .now))
-    }
-    
-    func folderContaining(_ bookmark: Bookmark) -> BookmarkFolder? {
-        folders.first { folder in
-            folder.bookmarks.contains(bookmark)
-        }
-    }
-    
-    func clearBookmarks() {
-        folders.removeAll()
-        syncFolders()
     }
     
     func refresh() {
@@ -195,9 +158,5 @@ class BookmarksStore: ObservableObject {
         }
         
         return decodedBookmarks
-    }
-    
-    var isBookmarkEmpty: Bool {
-        bookmarks.isEmpty
     }
 }

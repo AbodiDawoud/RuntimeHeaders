@@ -459,14 +459,18 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
                 selector: NSSelectorFromString(property.getterName),
                 returnTypeEncoding: propertyReturnType(for: property)
             )
+            let collectionReference = collectionReference(
+                for: output.object,
+                acquisitionDescription: property.getterName
+            )
 
             return property.withValue(
                 output.valueDescription,
-                objectReference: objectReferenceIfNotCollection(
+                objectReference: collectionReference == nil ? objectReference(
                     for: output.object,
                     acquisitionDescription: property.getterName
-                ),
-                collectionReference: collectionReference(for: output.object, acquisitionDescription: property.getterName),
+                ) : nil,
+                collectionReference: collectionReference,
                 errorMessage: nil
             )
         } catch {
@@ -708,16 +712,6 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     ) -> InspectableObjectReference? {
         guard let object else { return nil }
         return InspectableObjectReference(object: object, acquisitionDescription: acquisitionDescription)
-    }
-
-    private func objectReferenceIfNotCollection(
-        for object: AnyObject?,
-        acquisitionDescription: String
-    ) -> InspectableObjectReference? {
-        guard collectionReference(for: object, acquisitionDescription: acquisitionDescription) == nil else {
-            return nil
-        }
-        return objectReference(for: object, acquisitionDescription: acquisitionDescription)
     }
 
     private func objectReferences(

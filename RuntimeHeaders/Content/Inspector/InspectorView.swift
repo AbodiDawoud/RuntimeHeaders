@@ -72,22 +72,18 @@ struct RuntimeObjectInspectorView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(filteredMethods) { method in
-                            if canInvoke(method) {
-                                Button {
-                                    if method.argumentCount > 0 {
-                                        presentedSheet = .arguments(method)
-                                    } else {
-                                        withAnimation(.smooth(duration: 0.08)) {
-                                            viewModel.invoke(method)
-                                        }
+                            Button {
+                                if method.argumentCount > 0 {
+                                    presentedSheet = .arguments(method)
+                                } else {
+                                    withAnimation(.smooth(duration: 0.08)) {
+                                        viewModel.invoke(method)
                                     }
-                                } label: {
-                                    methodRow(method)
                                 }
-                                .buttonStyle(.plain)
-                            } else {
+                            } label: {
                                 methodRow(method)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
                 }

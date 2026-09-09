@@ -24,7 +24,6 @@ struct SemanticStringView: View {
     var frameworkPath: String? = nil
     @State private var resolvedInstance: ResolvedRuntimeInstance?
     @State private var cachedLiveRuntimeInstance: ResolvedRuntimeInstance?
-    @State private var showRuntimeInspector: Bool = false
     @State private var showObjectInfo: Bool = false
     @State private var selectorChooser: RuntimeSelectorChooserState?
     @State private var runtimeInspectorError: String?
@@ -232,19 +231,16 @@ struct SemanticStringView: View {
     }
     
     func toggleBookmark() {
-        let wasBookmarked = bookmarked
-        
-        if let currentBookmark, wasBookmarked {
-            bookmarkManager.removeBookmark(for: currentBookmark)
-        } else {
+        guard bookmarked, let currentBookmark else {
             createBookmark()
             return
         }
-        
+        bookmarkManager.removeBookmark(for: currentBookmark)
+
         presentToast(
             .appToast(
-                icon: wasBookmarked ? "bookmark.slash" : "bookmark.fill",
-                message: wasBookmarked ? "Removed bookmark" : "Bookmarked \(fileName)"
+                icon: "bookmark.slash",
+                message: "Removed bookmark"
             )
         )
     }

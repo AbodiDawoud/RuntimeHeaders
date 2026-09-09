@@ -16,10 +16,6 @@ final class AppNavigation: ObservableObject {
         restoreLastSourceNodeIfNeeded()
     }
 
-    func selectObject(_ object: RuntimeObjectType?, parentPath: String? = nil) {
-        selectedObject = object
-    }
-
     func openNode(_ node: NamedNode) {
         sourcePath.append(node)
         LastNodeTracker.namedNode = node

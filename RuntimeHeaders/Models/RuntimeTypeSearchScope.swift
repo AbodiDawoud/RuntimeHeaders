@@ -11,6 +11,18 @@ enum RuntimeTypeSearchScope: Hashable {
     case classes
     case protocols
 
+    func runtimeObjects(classNames: [String], protocolNames: [String], matching searchString: String) -> [RuntimeObjectType] {
+        var objects: [RuntimeObjectType] = []
+        if includesClasses {
+            objects += classNames.map { .class(named: $0) }
+        }
+        if includesProtocols {
+            objects += protocolNames.map { .protocol(named: $0) }
+        }
+        if searchString.isEmpty { return objects }
+        return objects.filter { $0.name.localizedCaseInsensitiveContains(searchString) }
+    }
+
     
     var includesClasses: Bool {
         switch self {

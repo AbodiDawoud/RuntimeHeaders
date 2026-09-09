@@ -21,7 +21,7 @@ final class RuntimeListings: ObservableObject {
     @Published private(set) var protocolList: [String]
     @Published private(set) var imageList: [String]
     
-    @Published private(set) var protocolToImage: [String: String]
+    private var protocolToImage: [String: String]
     @Published private(set) var imageToProtocols: [String: [String]]
     
     private let shouldReload = PassthroughSubject<Void, Never>()
@@ -62,10 +62,11 @@ final class RuntimeListings: ObservableObject {
         }
         
         $protocolList
-            .combineLatest($protocolToImage, $imageToProtocols)
-            .sink { [unowned self] in
+            .sink { [unowned self] protocolList in
                 guard let (protocolToImage, imageToProtocols) = Self.protocolImageTrackingFor(
-                    protocolList: $0, protocolToImage: $1, imageToProtocols: $2
+                    protocolList: protocolList,
+                    protocolToImage: self.protocolToImage,
+                    imageToProtocols: self.imageToProtocols
                 ) else { return }
                 self.protocolToImage = protocolToImage
                 self.imageToProtocols = imageToProtocols
