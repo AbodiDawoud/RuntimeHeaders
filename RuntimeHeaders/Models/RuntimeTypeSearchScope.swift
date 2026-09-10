@@ -13,14 +13,25 @@ enum RuntimeTypeSearchScope: Hashable {
 
     func runtimeObjects(classNames: [String], protocolNames: [String], matching searchString: String) -> [RuntimeObjectType] {
         var objects: [RuntimeObjectType] = []
+        var swiftClasses: [RuntimeObjectType] = []
         if includesClasses {
-            objects += classNames.map { .class(named: $0) }
+            for name in classNames {
+                let object = RuntimeObjectType.class(named: name)
+                if object.isSwiftClass {
+                    swiftClasses.append(object)
+                } else {
+                    objects.append(object)
+                }
+            }
         }
         if includesProtocols {
             objects += protocolNames.map { .protocol(named: $0) }
         }
+        objects += swiftClasses
         if searchString.isEmpty { return objects }
-        return objects.filter { $0.name.localizedCaseInsensitiveContains(searchString) }
+        return objects.filter {
+            $0.name.localizedCaseInsensitiveContains(searchString) || $0.displayName.localizedCaseInsensitiveContains(searchString)
+        }
     }
 
     

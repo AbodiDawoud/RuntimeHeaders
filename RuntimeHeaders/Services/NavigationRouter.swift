@@ -26,7 +26,11 @@ final class AppNavigation: ObservableObject {
               let node = LastNodeTracker.namedNode
         else { return }
 
-        sourcePath = [node]
+        let listNode = SystemLibraryShortcut.shortcuts
+            .compactMap(\.node)
+            .first { node.path.hasPrefix($0.path + "/") } ?? node.parent
+
+        sourcePath = [listNode, node].compactMap { $0 }
     }
 }
 

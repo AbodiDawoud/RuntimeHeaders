@@ -116,11 +116,13 @@ struct BookmarkListingView: View {
                             .foregroundStyle(.blue.gradient)
                             .padding(.horizontal, 11)
                             .padding(.vertical, 5)
-                            .background(
-                                Capsule()
-                                    .stroke(Color.blue.opacity(0.08), lineWidth: 0.9)
-                                    .fill(.blue.quinary.opacity(scheme == .light ? 0.4 : 0.95))
-                            )
+                            .background {
+                                if #unavailable(iOS 26) {
+                                    Capsule()
+                                        .stroke(Color.blue.opacity(0.08), lineWidth: 0.9)
+                                        .fill(.blue.quinary.opacity(scheme == .light ? 0.4 : 0.95))
+                                }
+                            }
                     }
                     .buttonStyle(.plain)
                 }
@@ -264,11 +266,17 @@ private struct BookmarkFolderDetailView: View {
                     Button {
                         withAnimation { editMode = .inactive }
                     } label: {
-                        Text("Done")
-                            .fontWeight(.semibold).font(.footnote)
-                            .foregroundStyle(.white)
-                            .frame(width: 65, height: 28)
-                            .background(.indigo, in: .capsule)
+                        if #available(iOS 26, *) {
+                            Text("Done")
+                                .font(.footnote.weight(.semibold))
+                                .frame(width: 65, height: 28)
+                        } else {
+                            Text("Done")
+                                .fontWeight(.semibold).font(.footnote)
+                                .foregroundStyle(.white)
+                                .frame(width: 65, height: 28)
+                                .background(.indigo, in: .capsule)
+                        }
                     }
                 }
                 

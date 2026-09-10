@@ -15,38 +15,53 @@ struct NamedNodeRow: View {
     @State private var searchText: String = ""
     @State private var isExporting: Bool = false
     @State private var exportErrorMessage: String?
+    @State private var hasRestoredScrollPosition: Bool = false
     
     let node: NamedNode
     
     
     var body: some View {
-        List(children, id: \.name) { child in
-            let canLoad = couldLoad(node: child)
-            NavigationLink(value: child) {
-                HStack {
-                    Image(
-                        systemName: child.isLeaf == false ? "folder" :
-                                    canLoad ? "lock.document" : "building.columns"
-                    ).foregroundColor(canLoad ? .tangerine : .blue)
-                    
-                    Text(child.name)
-                }
-                .accessibilityLabel(child.name)
-                .contextMenu {
-                    Button("Node Name", systemImage: "square.on.square.dashed") { copy(child.name) }
-                    Button("Node Path", systemImage: "square.on.square.dashed") { copy(child.path) }
-                    Divider()
-                    Button("Search Web", systemImage: "safari") { searchWeb(child.name) }
-                    Button("Export Node", systemImage: "square.and.arrow.up") { exportNode(child) }
-                    Divider()
-                    if canLoad {
-                        Button {
-                            try? CDUtilities.loadImage(at: child.path)
-                        } label: {
-                            Label("Load", systemImage: "ellipsis")
+        ScrollViewReader { proxy in
+            List(children, id: \.name) { child in
+                let canLoad = couldLoad(node: child)
+                NavigationLink(value: child) {
+                    HStack {
+                        Image(
+                            systemName: child.isLeaf == false ? "folder" :
+                                        canLoad ? "lock.document" : "building.columns"
+                        ).foregroundColor(canLoad ? .tangerine : .blue)
+
+                        Text(child.name)
+                    }
+                    .accessibilityLabel(child.name)
+                    .contextMenu {
+                        Button("Node Name", systemImage: "square.on.square.dashed") { copy(child.name) }
+                        Button("Node Path", systemImage: "square.on.square.dashed") { copy(child.path) }
+                        Divider()
+                        Button("Search Web", systemImage: "safari") { searchWeb(child.name) }
+                        Button("Export Node", systemImage: "square.and.arrow.up") { exportNode(child) }
+                        Divider()
+                        if canLoad {
+                            Button {
+                                try? CDUtilities.loadImage(at: child.path)
+                            } label: {
+                                Label("Load", systemImage: "ellipsis")
+                            }
                         }
                     }
                 }
+            }
+            .onAppear {
+                guard !hasRestoredScrollPosition else { return }
+                hasRestoredScrollPosition = true
+
+                guard let lastPath = LastNodeTracker.path,
+                      let child = children.first(where: {
+                          lastPath == $0.path || lastPath.hasPrefix($0.path + "/")
+                      })
+                else { return }
+
+                proxy.scrollTo(child.name, anchor: .center)
             }
         }
         .autocorrectionDisabled() // turn of auto-correct for the search field

@@ -1,11 +1,9 @@
 //
 //  CodeAppearanceView.swift
 //  HeaderViewer
-    
 
 import SwiftUI
 import SyntaxHighlighting
-
 
 struct CodeAppearanceView: View {
     @ObservedObject private var preferences = CodePreferences.shared
@@ -73,12 +71,10 @@ struct CodeAppearanceView: View {
     
     private var dismissButton: some View {
         Button(action: dismiss.callAsFunction) {
-            Image(systemName: "arrow.uturn.backward.circle.fill")
+            Image(systemName: "arrow.uturn.backward")
                 .foregroundStyle(.gray)
                 .bold()
-                .symbolRenderingMode(.hierarchical)
         }
-        .buttonStyle(.plain)
     }
     
     private var resetButton: some View {
@@ -88,11 +84,13 @@ struct CodeAppearanceView: View {
                 .foregroundStyle(.gray.gradient)
                 .padding(.horizontal, 11)
                 .padding(.vertical, 5)
-                .background(
-                    Capsule()
-                        .stroke(Color.pink.opacity(0.06), lineWidth: 0.9)
-                        .fill(.gray.quinary.opacity(scheme == .light ? 0.4 : 0.95))
-                )
+                .background {
+                    if #unavailable(iOS 26) {
+                        Capsule()
+                            .stroke(Color.pink.opacity(0.06), lineWidth: 0.9)
+                            .fill(.gray.quinary.opacity(scheme == .light ? 0.4 : 0.95))
+                    }
+                }
         }
         .buttonStyle(.plain)
     }

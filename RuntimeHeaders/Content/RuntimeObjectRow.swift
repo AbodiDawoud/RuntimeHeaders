@@ -13,7 +13,14 @@ struct RuntimeObjectRow: View {
         HStack(alignment: .firstTextBaseline) {
             Image(systemName: type.systemImageName)
                 .foregroundColor(type.iconColor)
-            Text(type.name)
+            Text(type.displayName)
+            if type.isSwiftClass {
+                Spacer(minLength: 8)
+                Image(systemName: "swift")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .accessibilityLabel("Swift class")
+            }
         }
         .swipeActions(edge: .leading, allowsFullSwipe: true) {
             Button("Copy", systemImage: "square.on.square.dashed", action: copyName)

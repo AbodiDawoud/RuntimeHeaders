@@ -21,6 +21,16 @@ enum RuntimeObjectType {
         }
     }
 
+    var displayName: String {
+        guard isClass, let cls = NSClassFromString(name) else { return name }
+        return String(reflecting: cls)
+    }
+
+    var isSwiftClass: Bool {
+        // Reflection preserves Swift's qualified name, including @objc aliases.
+        isClass && (name.hasPrefix("_Tt") || displayName.contains("."))
+    }
+
     var systemImageName: String {
         switch self {
         case .class: return "c.square.fill"
@@ -30,7 +40,7 @@ enum RuntimeObjectType {
 
     var iconColor: Color {
         switch self {
-        case .class: return .green
+        case .class: return isSwiftClass ? .orange : .green
         case .protocol: return .pink
         }
     }

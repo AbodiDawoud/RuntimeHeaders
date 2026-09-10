@@ -15,7 +15,7 @@ struct RuntimeObjectInspectorView: View {
     @State private var includeInheritedMembers: Bool = false
     @State private var includeNSObjectMembers: Bool = false
     @State private var includeAccessibilityMembers: Bool = false
-    @State private var includeArgumentMethods: Bool = false
+    @State private var includeArgumentMethods: Bool = true
     @State private var includePrivateMethods: Bool = true
     @State private var allowSafetyFilteredMethods: Bool = true
     @State private var searchText: String = ""
@@ -24,7 +24,6 @@ struct RuntimeObjectInspectorView: View {
     init(resolvedInstance: ResolvedRuntimeInstance) {
         _viewModel = StateObject(wrappedValue: RuntimeObjectInspectorViewModel(resolvedInstance: resolvedInstance))
     }
-
     
     var body: some View {
         NavigationStack {
