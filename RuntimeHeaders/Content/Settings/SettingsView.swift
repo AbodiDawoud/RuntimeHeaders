@@ -37,22 +37,22 @@ struct SettingsView: View {
 
                 
                 Section("History") {
-                    Toggle(
-                        "Track History",
-                        image: .clockArrowTriangleheadClockwiseRotate90PathDotted,
-                        isOn: $manager.preferences.historyEnabled.animation()
-                    )
-                    .labelStyle(IconicLabelStyle(Color(red: 0.92549, green: 0.411765, blue: 0.505882)))
-                    .tint(Color(red: 0.352941, green: 0.619608, blue: 0.729412))
+                    Toggle(isOn: $manager.preferences.historyEnabled.animation()) {
+                        Label {
+                            Text("Track History")
+                        } icon: {
+                            Image(_internalSystemName: "clock.circle.righthalf.dotted")
+                                .tint(Color(red: 0.352941, green: 0.619608, blue: 0.729412))
+                        }
+                        .labelStyle(IconicLabelStyle(Color(red: 0.92549, green: 0.411765, blue: 0.505882)))
+                    }
                     
                     if manager.preferences.historyEnabled {
-                        Toggle(
-                            "Badge Enabled",
-                            systemImage: "app.badge.clock.fill",
-                            isOn: $manager.preferences.historyBadgeEnabled.animation()
-                        )
-                        .labelStyle(IconicLabelStyle(Color(red: 0.352941, green: 0.619608, blue: 0.729412)))
-                        .tint(Color(red: 0.352941, green: 0.619608, blue: 0.729412))
+                        Toggle(isOn: $manager.preferences.historyBadgeEnabled.animation()) {
+                            Label("Badge Enbabled", systemImage: "app.badge.clock.fill")
+                                .tint(Color(red: 0.352941, green: 0.619608, blue: 0.729412))
+                                .labelStyle(IconicLabelStyle(Color(red: 0.352941, green: 0.619608, blue: 0.729412)))
+                        }
                         
                         Stepper(value: $manager.preferences.historyLimit.animation(), in: 0...100, step: 10) {
                             let limit = manager.preferences.historyLimit == 0 ? "Unlimited" : String(manager.preferences.historyLimit)
@@ -70,7 +70,6 @@ struct SettingsView: View {
                     }
                 }
                 .padding(.vertical, 1.5)
-                
                 
                 RestoreFrameworkSection()
                 CacheSection()
@@ -90,13 +89,11 @@ fileprivate struct RestoreFrameworkSection: View {
     
     var body: some View {
         Section {
-            Toggle(
-                "Open Last Framework on Launch",
-                systemImage: "arrow.trianglehead.clockwise.rotate.90",
-                isOn: $manager.preferences.restoreLastFrameworkOnLaunch.animation()
-            )
-            .labelStyle(IconicLabelStyle(.blue))
-            .tint(.blue)
+            Toggle(isOn: $manager.preferences.restoreLastFrameworkOnLaunch.animation()) {
+                Label("Open Last Framework on Launch", systemImage: "arrow.trianglehead.clockwise.rotate.90")
+                    .labelStyle(IconicLabelStyle(.blue))
+                    .tint(.blue)
+            }
             
             if let lastFrameworkPath = LastNodeTracker.path {
                 VStack(alignment: .leading) {
