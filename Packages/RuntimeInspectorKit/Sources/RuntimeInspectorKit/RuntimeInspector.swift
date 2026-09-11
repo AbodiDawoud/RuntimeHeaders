@@ -185,11 +185,7 @@ public enum RuntimeInspector {
               supportsZeroArgumentInitialization(cls)
         else { return nil }
 
-        let allocSelector = NSSelectorFromString("alloc")
-        let initSelector = NSSelectorFromString("init")
-
-        guard let allocatedObject = try? RuntimeInvocationEngine.invokeClassObjectMethod(on: cls, selector: allocSelector),
-              let initializedObject = try? RuntimeInvocationEngine.invokeInstanceObjectMethod(on: allocatedObject, selector: initSelector)
+        guard let initializedObject = try? RuntimeInvocationEngine.createInstance(of: cls)
         else { return nil }
 
         return ResolvedRuntimeInstance(

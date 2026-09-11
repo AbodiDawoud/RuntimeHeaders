@@ -20,7 +20,7 @@ public final class InspectableCollectionReference: Identifiable {
         guard let snapshot = RuntimeCollectionSnapshot(
             object: object,
             acquisitionDescription: acquisitionDescription,
-            maxEntries: maxEntries,
+            maxEntries: max(0, maxEntries),
             depth: depth,
             maxDepth: maxDepth
         ) else { return nil }
@@ -195,6 +195,7 @@ private struct RuntimeCollectionSnapshot {
                         role: "Item",
                         value: value,
                         acquisitionDescription: "\(acquisitionDescription)[\(offset)]",
+                        maxEntries: maxEntries,
                         depth: depth,
                         maxDepth: maxDepth
                     )
@@ -229,6 +230,7 @@ private struct RuntimeCollectionSnapshot {
                         role: "Key",
                         value: key,
                         acquisitionDescription: "\(acquisitionDescription).key[\(offset)]",
+                        maxEntries: maxEntries,
                         depth: depth,
                         maxDepth: maxDepth
                     ),
@@ -237,6 +239,7 @@ private struct RuntimeCollectionSnapshot {
                         role: "Value",
                         value: value,
                         acquisitionDescription: "\(acquisitionDescription)[\(RuntimeInvocationEngine.describe(value: key))]",
+                        maxEntries: maxEntries,
                         depth: depth,
                         maxDepth: maxDepth
                     )
@@ -278,6 +281,7 @@ private struct RuntimeCollectionSnapshot {
                         role: "Key",
                         value: pair.key,
                         acquisitionDescription: "\(acquisitionDescription).key[\(offset)]",
+                        maxEntries: maxEntries,
                         depth: depth,
                         maxDepth: maxDepth
                     ),
@@ -286,6 +290,7 @@ private struct RuntimeCollectionSnapshot {
                         role: "Value",
                         value: pair.value,
                         acquisitionDescription: "\(acquisitionDescription)[\(RuntimeInvocationEngine.describe(value: pair.key))]",
+                        maxEntries: maxEntries,
                         depth: depth,
                         maxDepth: maxDepth
                     )
@@ -306,6 +311,7 @@ private struct RuntimeCollectionSnapshot {
         role: String,
         value: Any,
         acquisitionDescription: String,
+        maxEntries: Int,
         depth: Int,
         maxDepth: Int
     ) -> InspectableCollectionValue {
@@ -315,6 +321,7 @@ private struct RuntimeCollectionSnapshot {
             collectionReference = InspectableCollectionReference(
                 object: object,
                 acquisitionDescription: acquisitionDescription,
+                maxEntries: maxEntries,
                 depth: depth + 1,
                 maxDepth: maxDepth
             )

@@ -1,52 +1,26 @@
-import Darwin
 import Foundation
 import ObjectiveC.runtime
+import RuntimeInvocationBridge
 
 enum RuntimeInvocationEngine {
-    private static let objcMessageSendPointer: UnsafeMutableRawPointer = {
-        guard let pointer = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "objc_msgSend") else {
-            fatalError("Failed to resolve objc_msgSend")
-        }
-        return pointer
-    }()
-
     static func invokeClassObjectMethod(on cls: AnyClass, selector: Selector) throws -> AnyObject {
         guard let method = class_getClassMethod(cls, selector) else {
             throw RuntimeInvocationError.missingMethod(NSStringFromSelector(selector))
         }
-
         let returnType = methodReturnType(method)
         guard returnKind(for: returnType) == .object else {
             throw RuntimeInvocationError.unsupportedReturnType(returnType)
         }
-
-        typealias Function = @convention(c) (AnyClass, Selector) -> Unmanaged<AnyObject>?
-        let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-
-        guard let object = function(cls, selector)?.takeUnretainedValue() else {
+        guard let result = try send(on: cls as AnyObject, selector: selector, arguments: []) else {
             throw RuntimeInvocationError.nilObjectReturn(NSStringFromSelector(selector))
         }
-
-        return object
+        return result
     }
 
-    static func invokeInstanceObjectMethod(on object: AnyObject, selector: Selector) throws -> AnyObject {
-        guard let method = class_getInstanceMethod(type(of: object), selector) else {
-            throw RuntimeInvocationError.missingMethod(NSStringFromSelector(selector))
-        }
-
-        let returnType = methodReturnType(method)
-        guard returnKind(for: returnType) == .object else {
-            throw RuntimeInvocationError.unsupportedReturnType(returnType)
-        }
-
-        typealias Function = @convention(c) (AnyObject, Selector) -> Unmanaged<AnyObject>?
-        let function = unsafeBitCast(objcMessageSendPointer, to: Function.self)
-
-        guard let result = function(object, selector)?.takeUnretainedValue() else {
-            throw RuntimeInvocationError.nilObjectReturn(NSStringFromSelector(selector))
-        }
-
+    static func createInstance(of cls: AnyClass) throws -> AnyObject {
+        var result: AnyObject?
+        if let error = RICreateInstance(cls, &result) { throw error }
+        guard let result else { throw RuntimeInvocationError.nilObjectReturn("init") }
         return result
     }
 
@@ -56,12 +30,7 @@ enum RuntimeInvocationEngine {
         returnTypeEncoding: String,
         arguments: [RuntimeInvocationArgument] = []
     ) throws -> RuntimeInvocationOutput {
-        try invoke(
-            on: object,
-            selector: selector,
-            returnTypeEncoding: returnTypeEncoding,
-            arguments: arguments
-        )
+        try invoke(on: object, selector: selector, returnTypeEncoding: returnTypeEncoding, arguments: arguments)
     }
 
     static func invokeClassMethod(
@@ -70,12 +39,7 @@ enum RuntimeInvocationEngine {
         returnTypeEncoding: String,
         arguments: [RuntimeInvocationArgument] = []
     ) throws -> RuntimeInvocationOutput {
-        try invoke(
-            on: cls as AnyObject,
-            selector: selector,
-            returnTypeEncoding: returnTypeEncoding,
-            arguments: arguments
-        )
+        try invoke(on: cls as AnyObject, selector: selector, returnTypeEncoding: returnTypeEncoding, arguments: arguments)
     }
 
     private static func invoke(
@@ -84,32 +48,43 @@ enum RuntimeInvocationEngine {
         returnTypeEncoding: String,
         arguments: [RuntimeInvocationArgument]
     ) throws -> RuntimeInvocationOutput {
-        let preparedArguments = try prepare(arguments)
-        let methodName = NSStringFromSelector(selector)
-        switch returnKind(for: returnTypeEncoding) {
+        guard let method = class_getInstanceMethod(object_getClass(receiver), selector) else {
+            throw RuntimeInvocationError.missingMethod(NSStringFromSelector(selector))
+        }
+        let returnType = normalizedTypeEncoding(methodReturnType(method))
+        guard returnType == normalizedTypeEncoding(returnTypeEncoding) else {
+            throw RuntimeInvocationError.signatureChanged(NSStringFromSelector(selector))
+        }
+        let kind = returnKind(for: returnType)
+        guard kind != .unsupported else {
+            throw RuntimeInvocationError.unsupportedReturnType(returnType)
+        }
+        let encodings = methodArgumentTypes(method)
+        guard arguments.count == encodings.count else {
+            throw RuntimeInvocationError.invalidArgumentList(expected: encodings.count, actual: arguments.count)
+        }
+        guard arguments.count <= 3 else {
+            throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
+        }
+        let prepared = try zip(arguments, encodings).map { try prepare($0.0, encoding: $0.1) }
+        let result = try send(on: receiver, selector: selector, arguments: prepared)
+
+        switch kind {
         case .void:
-            try invokeVoid(on: receiver, selector: selector, arguments: preparedArguments)
             return RuntimeInvocationOutput(valueDescription: "Completed")
         case .object:
-            guard let result = try invokeObject(on: receiver, selector: selector, arguments: preparedArguments) else {
-                throw RuntimeInvocationError.nilObjectReturn(methodName)
-            }
-            return RuntimeInvocationOutput(valueDescription: describe(value: result), object: result)
+            return RuntimeInvocationOutput(valueDescription: result.map { describe(value: $0) } ?? "nil", object: result)
         case .bool:
-            return RuntimeInvocationOutput(valueDescription: try invokeBool(on: receiver, selector: selector, arguments: preparedArguments) ? "true" : "false")
-        case .integer:
-            return RuntimeInvocationOutput(valueDescription: String(try invokeInt(on: receiver, selector: selector, arguments: preparedArguments)))
-        case .unsignedInteger:
-            return RuntimeInvocationOutput(valueDescription: String(try invokeUInt(on: receiver, selector: selector, arguments: preparedArguments)))
-        case .floatingPoint:
-            if returnTypeEncoding == "f" {
-                return RuntimeInvocationOutput(valueDescription: String(try invokeFloat(on: receiver, selector: selector, arguments: preparedArguments)))
-            } else {
-                return RuntimeInvocationOutput(valueDescription: String(try invokeDouble(on: receiver, selector: selector, arguments: preparedArguments)))
-            }
-        case .unsupported:
-            throw RuntimeInvocationError.unsupportedReturnType(returnTypeEncoding)
+            return RuntimeInvocationOutput(valueDescription: (result as? NSNumber)?.boolValue == true ? "true" : "false")
+        default:
+            return RuntimeInvocationOutput(valueDescription: result.map { describe(value: $0) } ?? "nil")
         }
+    }
+
+    private static func send(on receiver: AnyObject, selector: Selector, arguments: [AnyObject]) throws -> AnyObject? {
+        var result: AnyObject?
+        if let error = RIInvoke(receiver, selector, arguments, &result) { throw error }
+        return result
     }
 
     static func returnKind(for encoding: String) -> InspectableMethodReturnKind {
@@ -125,41 +100,34 @@ enum RuntimeInvocationEngine {
     }
 
     static func argumentKind(for encoding: String) -> InspectableMethodArgumentKind {
-        let normalizedEncoding = normalizedTypeEncoding(encoding)
-        switch normalizedEncoding.first {
-        case "B":
-            return .bool
-        case "q", "i", "s", "l":
-            return .integer
-        case "Q", "I", "S", "L":
-            return .unsignedInteger
-        case "d":
-            return .floatingPoint
+        let encoding = normalizedTypeEncoding(encoding)
+        switch encoding.first {
+        case "B": return .bool
+        case "q", "i", "s", "l": return .integer
+        case "Q", "I", "S", "L": return .unsignedInteger
+        case "d": return .floatingPoint
         case "@":
-            if normalizedEncoding.hasPrefix("@?") {
-                return .completionHandler
-            }
-            return isStringObjectEncoding(normalizedEncoding) ? .string : .unsupported
-        default:
-            return .unsupported
+            if encoding.hasPrefix("@?") { return .completionHandler }
+            return encoding == "@" || encoding.contains("NSString") || encoding.contains("NSMutableString")
+                ? .string : .unsupported
+        default: return .unsupported
         }
     }
 
     static func methodArgumentTypes(_ method: Method) -> [String] {
         let count = Int(method_getNumberOfArguments(method))
         guard count > 2 else { return [] }
-
         return (2..<count).map { index in
-            var buffer = [CChar](repeating: 0, count: 128)
-            method_getArgumentType(method, UInt32(index), &buffer, buffer.count)
-            return String(cString: buffer)
+            guard let encoding = method_copyArgumentType(method, UInt32(index)) else { return "" }
+            defer { free(encoding) }
+            return String(cString: encoding)
         }
     }
 
     static func methodReturnType(_ method: Method) -> String {
-        var buffer = [CChar](repeating: 0, count: 128)
-        method_getReturnType(method, &buffer, buffer.count)
-        return String(cString: buffer)
+        let encoding = method_copyReturnType(method)
+        defer { free(encoding) }
+        return String(cString: encoding)
     }
 
     static func describe(value: Any) -> String {
@@ -170,12 +138,54 @@ enum RuntimeInvocationEngine {
             number.stringValue
         case let url as URL:
             url.absoluteString
-        case let array as [Any]:
-            "[\(array.count) items] " + String(describing: array)
-        case let dictionary as [AnyHashable: Any]:
-            "[\(dictionary.count) pairs] " + String(describing: dictionary)
+        case let array as NSArray:
+            "[\(array.count) items]"
+        case let dictionary as NSDictionary:
+            "[\(dictionary.count) pairs]"
+        case let set as NSSet:
+            "[\(set.count) items]"
+        case let set as NSOrderedSet:
+            "[\(set.count) items]"
         default:
             String(describing: value)
+        }
+    }
+
+    private static func normalizedTypeEncoding(_ encoding: String) -> String {
+        String(encoding.drop(while: { "rnNoORV".contains($0) }))
+    }
+
+    private static func prepare(_ argument: RuntimeInvocationArgument, encoding: String) throws -> AnyObject {
+        let normalized = normalizedTypeEncoding(encoding)
+        switch (argument, argumentKind(for: normalized)) {
+        case (.bool(let value), .bool):
+            return NSNumber(value: value)
+        case (.integer(let value), .integer):
+            let fits: Bool
+            switch normalized {
+            case "s": fits = Int16(exactly: value) != nil
+            case "i", "l": fits = Int32(exactly: value) != nil
+            default: fits = Int64(exactly: value) != nil
+            }
+            guard fits else { throw RuntimeInvocationError.argumentOutOfRange(encoding) }
+            return NSNumber(value: value)
+        case (.unsignedInteger(let value), .unsignedInteger):
+            let fits: Bool
+            switch normalized {
+            case "S": fits = UInt16(exactly: value) != nil
+            case "I", "L": fits = UInt32(exactly: value) != nil
+            default: fits = UInt64(exactly: value) != nil
+            }
+            guard fits else { throw RuntimeInvocationError.argumentOutOfRange(encoding) }
+            return NSNumber(value: value)
+        case (.double(let value), .floatingPoint):
+            return NSNumber(value: value)
+        case (.string(let value), .string):
+            return value as NSString
+        case (.completionHandler(let handler), .completionHandler):
+            return handler.blockObject
+        default:
+            throw RuntimeInvocationError.unsupportedArgumentType(encoding)
         }
     }
 }
@@ -186,6 +196,8 @@ enum RuntimeInvocationError: LocalizedError {
     case unsupportedArgumentType(String)
     case unsupportedArgumentCount(Int)
     case invalidArgumentList(expected: Int, actual: Int)
+    case argumentOutOfRange(String)
+    case signatureChanged(String)
     case nilObjectReturn(String)
 
     var errorDescription: String? {
@@ -200,6 +212,10 @@ enum RuntimeInvocationError: LocalizedError {
             "Calling methods with \(count) arguments is not supported yet."
         case .invalidArgumentList(let expected, let actual):
             "Expected \(expected) argument\(expected == 1 ? "" : "s"), received \(actual)."
+        case .argumentOutOfRange(let encoding):
+            "The value is outside the range of argument type '\(encoding)'."
+        case .signatureChanged(let selectorName):
+            "The signature of '\(selectorName)' changed. Refresh the inspector."
         case .nilObjectReturn(let selectorName):
             "'\(selectorName)' returned nil."
         }
@@ -214,370 +230,4 @@ struct RuntimeInvocationOutput {
         self.valueDescription = valueDescription
         self.object = object
     }
-}
-
-private struct PreparedInvocationArgument {
-    let kind: Kind
-    let retainedObject: AnyObject?
-
-    init(kind: Kind, retainedObject: AnyObject? = nil) {
-        self.kind = kind
-        self.retainedObject = retainedObject
-    }
-
-    enum Kind {
-        case general(UInt64)
-        case double(Double)
-    }
-
-    var pattern: Character {
-        switch kind {
-        case .general:
-            return "g"
-        case .double:
-            return "d"
-        }
-    }
-}
-
-private extension RuntimeInvocationEngine {
-    static func normalizedTypeEncoding(_ encoding: String) -> String {
-        let qualifiers = Set("rnNoORV")
-        var result = encoding
-        while let first = result.first, qualifiers.contains(first) {
-            result.removeFirst()
-        }
-        return result
-    }
-
-    static func isStringObjectEncoding(_ encoding: String) -> Bool {
-        encoding == "@" || encoding.contains("NSString") || encoding.contains("NSMutableString")
-    }
-
-    static func prepare(_ arguments: [RuntimeInvocationArgument]) throws -> [PreparedInvocationArgument] {
-        guard arguments.count <= 3 else {
-            throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
-        }
-
-        return arguments.map { argument in
-            switch argument {
-            case .bool(let value):
-                return PreparedInvocationArgument(kind: .general(value ? 1 : 0))
-            case .integer(let value):
-                return PreparedInvocationArgument(kind: .general(UInt64(bitPattern: Int64(value))))
-            case .unsignedInteger(let value):
-                return PreparedInvocationArgument(kind: .general(UInt64(value)))
-            case .double(let value):
-                return PreparedInvocationArgument(kind: .double(value))
-            case .string(let value):
-                let object = value as NSString
-                let pointer = Unmanaged.passUnretained(object).toOpaque()
-                return PreparedInvocationArgument(
-                    kind: .general(UInt64(UInt(bitPattern: pointer))),
-                    retainedObject: object
-                )
-            case .completionHandler(let handler):
-                let object = handler.blockObject
-                let pointer = Unmanaged.passUnretained(object).toOpaque()
-                return PreparedInvocationArgument(
-                    kind: .general(UInt64(UInt(bitPattern: pointer))),
-                    retainedObject: object
-                )
-            }
-        }
-    }
-
-    static func pattern(for arguments: [PreparedInvocationArgument]) throws -> String {
-        guard arguments.count <= 3 else {
-            throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
-        }
-        return String(arguments.map(\.pattern))
-    }
-
-    static func general(_ arguments: [PreparedInvocationArgument], _ index: Int) -> UInt64 {
-        guard case .general(let value) = arguments[index].kind else { return 0 }
-        return value
-    }
-
-    static func double(_ arguments: [PreparedInvocationArgument], _ index: Int) -> Double {
-        guard case .double(let value) = arguments[index].kind else { return 0 }
-        return value
-    }
-
-    static func invokeVoid(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws {
-        switch try pattern(for: arguments) {
-        case "":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector) -> Void).self)
-            function(object, selector)
-        case "g":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64) -> Void).self)
-            function(object, selector, general(arguments, 0))
-        case "d":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double) -> Void).self)
-            function(object, selector, double(arguments, 0))
-        case "gg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64) -> Void).self)
-            function(object, selector, general(arguments, 0), general(arguments, 1))
-        case "gd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double) -> Void).self)
-            function(object, selector, general(arguments, 0), double(arguments, 1))
-        case "dg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64) -> Void).self)
-            function(object, selector, double(arguments, 0), general(arguments, 1))
-        case "dd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double) -> Void).self)
-            function(object, selector, double(arguments, 0), double(arguments, 1))
-        case "ggg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, UInt64) -> Void).self)
-            function(object, selector, general(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "ggd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, Double) -> Void).self)
-            function(object, selector, general(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "gdg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, UInt64) -> Void).self)
-            function(object, selector, general(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "gdd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, Double) -> Void).self)
-            function(object, selector, general(arguments, 0), double(arguments, 1), double(arguments, 2))
-        case "dgg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, UInt64) -> Void).self)
-            function(object, selector, double(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "dgd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, Double) -> Void).self)
-            function(object, selector, double(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "ddg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, UInt64) -> Void).self)
-            function(object, selector, double(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "ddd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, Double) -> Void).self)
-            function(object, selector, double(arguments, 0), double(arguments, 1), double(arguments, 2))
-        default:
-            throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
-        }
-    }
-
-    static func invokeObject(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> AnyObject? {
-        let result = try invokeGeneralReturn(on: object, selector: selector, arguments: arguments)
-        guard result != 0,
-              let pointer = UnsafeRawPointer(bitPattern: UInt(result))
-        else { return nil }
-        return Unmanaged<AnyObject>.fromOpaque(pointer).takeUnretainedValue()
-    }
-
-    static func invokeBool(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> Bool {
-        try invokeGeneralReturn(on: object, selector: selector, arguments: arguments) != 0
-    }
-
-    static func invokeInt(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> Int {
-        Int(bitPattern: UInt(try invokeGeneralReturn(on: object, selector: selector, arguments: arguments)))
-    }
-
-    static func invokeUInt(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> UInt {
-        UInt(try invokeGeneralReturn(on: object, selector: selector, arguments: arguments))
-    }
-
-    static func invokeFloat(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> Float {
-        try invokeFloatReturn(on: object, selector: selector, arguments: arguments)
-    }
-
-    static func invokeDouble(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> Double {
-        try invokeDoubleReturn(on: object, selector: selector, arguments: arguments)
-    }
-
-    static func invokeGeneralReturn(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> UInt64 {
-        switch try pattern(for: arguments) {
-        case "":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector) -> UInt64).self)
-            return function(object, selector)
-        case "g":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64) -> UInt64).self)
-            return function(object, selector, general(arguments, 0))
-        case "d":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double) -> UInt64).self)
-            return function(object, selector, double(arguments, 0))
-        case "gg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64) -> UInt64).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1))
-        case "gd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double) -> UInt64).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1))
-        case "dg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64) -> UInt64).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1))
-        case "dd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double) -> UInt64).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1))
-        case "ggg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, UInt64) -> UInt64).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "ggd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, Double) -> UInt64).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "gdg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, UInt64) -> UInt64).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "gdd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, Double) -> UInt64).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1), double(arguments, 2))
-        case "dgg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, UInt64) -> UInt64).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "dgd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, Double) -> UInt64).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "ddg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, UInt64) -> UInt64).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "ddd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, Double) -> UInt64).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1), double(arguments, 2))
-        default:
-            throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
-        }
-    }
-
-    static func invokeFloatReturn(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> Float {
-        switch try pattern(for: arguments) {
-        case "":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector) -> Float).self)
-            return function(object, selector)
-        case "g":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64) -> Float).self)
-            return function(object, selector, general(arguments, 0))
-        case "d":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double) -> Float).self)
-            return function(object, selector, double(arguments, 0))
-        case "gg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64) -> Float).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1))
-        case "gd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double) -> Float).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1))
-        case "dg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64) -> Float).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1))
-        case "dd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double) -> Float).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1))
-        case "ggg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, UInt64) -> Float).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "ggd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, Double) -> Float).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "gdg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, UInt64) -> Float).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "gdd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, Double) -> Float).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1), double(arguments, 2))
-        case "dgg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, UInt64) -> Float).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "dgd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, Double) -> Float).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "ddg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, UInt64) -> Float).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "ddd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, Double) -> Float).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1), double(arguments, 2))
-        default:
-            throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
-        }
-    }
-
-    static func invokeDoubleReturn(
-        on object: AnyObject,
-        selector: Selector,
-        arguments: [PreparedInvocationArgument]
-    ) throws -> Double {
-        switch try pattern(for: arguments) {
-        case "":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector) -> Double).self)
-            return function(object, selector)
-        case "g":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64) -> Double).self)
-            return function(object, selector, general(arguments, 0))
-        case "d":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double) -> Double).self)
-            return function(object, selector, double(arguments, 0))
-        case "gg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64) -> Double).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1))
-        case "gd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double) -> Double).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1))
-        case "dg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64) -> Double).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1))
-        case "dd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double) -> Double).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1))
-        case "ggg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, UInt64) -> Double).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "ggd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, UInt64, Double) -> Double).self)
-            return function(object, selector, general(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "gdg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, UInt64) -> Double).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "gdd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, UInt64, Double, Double) -> Double).self)
-            return function(object, selector, general(arguments, 0), double(arguments, 1), double(arguments, 2))
-        case "dgg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, UInt64) -> Double).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1), general(arguments, 2))
-        case "dgd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, UInt64, Double) -> Double).self)
-            return function(object, selector, double(arguments, 0), general(arguments, 1), double(arguments, 2))
-        case "ddg":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, UInt64) -> Double).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1), general(arguments, 2))
-        case "ddd":
-            let function = unsafeBitCast(objcMessageSendPointer, to: (@convention(c) (AnyObject, Selector, Double, Double, Double) -> Double).self)
-            return function(object, selector, double(arguments, 0), double(arguments, 1), double(arguments, 2))
-        default:
-            throw RuntimeInvocationError.unsupportedArgumentCount(arguments.count)
-        }
-    }
-
 }

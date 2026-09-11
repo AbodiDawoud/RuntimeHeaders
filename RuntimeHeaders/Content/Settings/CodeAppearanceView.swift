@@ -44,16 +44,12 @@ struct CodeAppearanceView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    HStack {
-                        dismissButton
-                        
-                        Text("Code Appearance")
-                            .font(.system(.title3, design: .rounded, weight: .semibold))
-                    }
+                    Button("", systemImage: "arrow.uturn.backward", action: dismiss.callAsFunction)
                 }
                 
                 ToolbarItem(placement: .topBarTrailing) { resetButton }
             }
+            .navigationTitle("Code Appearance")
         }
     }
     
@@ -66,14 +62,6 @@ struct CodeAppearanceView: View {
             
             ColorPicker("", selection: color, supportsOpacity: false)
                 .labelsHidden()
-        }
-    }
-    
-    private var dismissButton: some View {
-        Button(action: dismiss.callAsFunction) {
-            Image(systemName: "arrow.uturn.backward")
-                .foregroundStyle(.gray)
-                .bold()
         }
     }
     

@@ -55,6 +55,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     
     public func invoke(_ method: InspectableMethod, arguments: [RuntimeInvocationArgument] = []) {
         let completionHandlerIDs = arguments.completionHandlerIDs
+        activeCompletionHandlers = activeCompletionHandlers.filter { completionHandlerIDs.contains($0.key) }
 
         do {
             guard arguments.count == method.argumentCount else {
@@ -136,7 +137,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
         _ event: RuntimeCompletionHandlerEvent,
         selectorName: String
     ) {
-        releaseCompletionHandlers([event.handlerID])
+        guard activeCompletionHandlers.removeValue(forKey: event.handlerID) != nil else { return }
 
         let valueDescription: String
         if event.values.isEmpty {
@@ -671,14 +672,10 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
             return (String(rawPointer.loadUnaligned(as: Int16.self)), nil, nil, nil)
         case "S":
             return (String(rawPointer.loadUnaligned(as: UInt16.self)), nil, nil, nil)
-        case "i":
+        case "i", "l":
             return (String(rawPointer.loadUnaligned(as: Int32.self)), nil, nil, nil)
-        case "I":
+        case "I", "L":
             return (String(rawPointer.loadUnaligned(as: UInt32.self)), nil, nil, nil)
-        case "l":
-            return (String(rawPointer.loadUnaligned(as: CLong.self)), nil, nil, nil)
-        case "L":
-            return (String(rawPointer.loadUnaligned(as: CUnsignedLong.self)), nil, nil, nil)
         case "q":
             return (String(rawPointer.loadUnaligned(as: Int64.self)), nil, nil, nil)
         case "Q":
@@ -752,6 +749,7 @@ public final class RuntimeObjectInspectorViewModel: ObservableObject {
     }
     
     public func clearLastInvocationResult() {
+        activeCompletionHandlers.removeAll()
         lastInvocation = nil
     }
 }

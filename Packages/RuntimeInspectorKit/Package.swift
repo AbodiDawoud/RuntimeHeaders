@@ -15,7 +15,15 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "RuntimeInspectorKit"
+            name: "RuntimeInspectorKit",
+            dependencies: ["RuntimeInvocationBridge"]
+        ),
+        .target(
+            name: "RuntimeInvocationBridge"
+        ),
+        .testTarget(
+            name: "RuntimeInspectorKitTests",
+            dependencies: ["RuntimeInspectorKit"]
         )
     ]
 )
